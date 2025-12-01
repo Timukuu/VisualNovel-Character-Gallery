@@ -1292,8 +1292,10 @@ async function renderCharacterImages() {
                     imageCard.classList.remove("drag-over");
                     
                     const draggedImageId = e.dataTransfer.getData("text/plain");
+                    const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
+                    
                     if (draggedImageId && draggedImageId !== defaultImage.id) {
-                        await handleImageReorder(draggedImageId, defaultImage.id);
+                        await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
                     }
                 });
             }
@@ -1748,7 +1750,7 @@ async function handleImageFormSubmit(event) {
 }
 
 // Resim sıralamasını güncelle (drag & drop için)
-async function handleImageReorder(draggedImageId, targetImageId) {
+async function handleImageReorder(draggedImageId, targetImageId, draggedGroupTitle = null, targetGroupTitle = null) {
     if (!currentCharacterId) return;
 
     try {
@@ -1758,18 +1760,52 @@ async function handleImageReorder(draggedImageId, targetImageId) {
         
         const images = await response.json();
         
-        // Yeni sıralamayı hesapla
-        const draggedIndex = images.findIndex(img => img.id === draggedImageId);
-        const targetIndex = images.findIndex(img => img.id === targetImageId);
+        // Resimleri başlığa göre grupla
+        const groupedImages = {};
+        images.forEach((img) => {
+            const title = img.title || "İsimsiz";
+            if (!groupedImages[title]) {
+                groupedImages[title] = [];
+            }
+            groupedImages[title].push(img);
+        });
         
-        if (draggedIndex === -1 || targetIndex === -1) return;
+        // Grup sıralamasını hesapla
+        const groupKeys = Object.keys(groupedImages);
+        const draggedGroupIndex = groupKeys.findIndex(key => {
+            const group = groupedImages[key];
+            return group.some(img => img.id === draggedImageId);
+        });
+        const targetGroupIndex = groupKeys.findIndex(key => {
+            const group = groupedImages[key];
+            return group.some(img => img.id === targetImageId);
+        });
         
-        // Array'den çıkar ve yeni pozisyona ekle
-        const [draggedImage] = images.splice(draggedIndex, 1);
-        images.splice(targetIndex, 0, draggedImage);
+        if (draggedGroupIndex === -1 || targetGroupIndex === -1 || draggedGroupIndex === targetGroupIndex) return;
         
-        // Yeni sıralamadaki ID'leri al
-        const imageIds = images.map(img => img.id);
+        // Grupları yeniden sırala
+        const [draggedGroup] = groupKeys.splice(draggedGroupIndex, 1);
+        groupKeys.splice(targetGroupIndex, 0, draggedGroup);
+        
+        // Yeni sıralamaya göre tüm resimlerin orderIndex'lerini güncelle
+        let currentOrder = 0;
+        const imageIds = [];
+        
+        groupKeys.forEach(groupTitle => {
+            const groupImages = groupedImages[groupTitle];
+            // Grup içindeki resimleri orderIndex'e göre sırala
+            groupImages.sort((a, b) => {
+                const aOrder = a.orderIndex !== undefined ? a.orderIndex : 999999;
+                const bOrder = b.orderIndex !== undefined ? b.orderIndex : 999999;
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+            });
+            
+            // Her resmin ID'sini ekle
+            groupImages.forEach(img => {
+                imageIds.push(img.id);
+            });
+        });
         
         // Backend'e gönder
         const reorderResponse = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images/reorder`, {
