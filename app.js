@@ -47,7 +47,6 @@ const projectNameInput = document.getElementById("project-name");
 const projectDescriptionInput = document.getElementById("project-description");
 const discardProjectBtn = document.getElementById("discard-project-btn");
 let editingProjectId = null;
-let editingCharacterId = null;
 
 // Modal
 const characterModal = document.getElementById("character-modal");
