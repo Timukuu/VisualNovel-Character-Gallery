@@ -37,7 +37,7 @@
         <section id="main-screen" class="screen hidden">
             <header class="topbar">
                 <div class="topbar-left">
-                    <h1>Karakter Katalogu</h1>
+                    <h1>Character Gallery</h1>
                     <span id="current-user-info" class="pill"></span>
                 </div>
                 <div class="topbar-right" style="display: flex; gap: 8px; align-items: center;">
@@ -48,31 +48,99 @@
                 </div>
             </header>
 
-            <main class="layout">
-                <!-- PROJE LİSTESİ -->
-                <aside class="sidebar">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <h2 style="margin: 0;">Projeler</h2>
-                        <button id="add-project-btn" class="btn primary" style="font-size: 12px; padding: 4px 8px; display: none;">
-                            + Ekle
-                        </button>
+            <main class="two-column-layout">
+                <!-- SOL SÜTUN: PROJE + KARAKTER LİSTESİ -->
+                <aside class="left-column">
+                    <!-- PROJE LİSTESİ -->
+                    <div class="projects-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h2 style="margin: 0; font-size: 16px; font-weight: 600;">Projeler</h2>
+                            <button id="add-project-btn" class="btn primary" style="font-size: 12px; padding: 4px 8px; display: none;">
+                                + Ekle
+                            </button>
+                        </div>
+                        <div id="project-list" class="project-accordion">
+                            <!-- JS ile doldurulacak -->
+                        </div>
                     </div>
-                    <ul id="project-list" class="project-list">
-                        <!-- JS ile doldurulacak -->
-                    </ul>
+
+                    <!-- KARAKTER LİSTESİ (Seçili proje altında) -->
+                    <div id="characters-sidebar-section" class="characters-sidebar-section hidden">
+                        <div class="characters-sidebar-header">
+                            <h3 id="sidebar-project-title" style="margin: 0; font-size: 14px; font-weight: 600;"></h3>
+                            <div class="characters-sidebar-actions">
+                                <input type="text" id="character-search-input" placeholder="Ara..." class="search-input" />
+                                <button id="add-character-sidebar-btn" class="btn primary" style="font-size: 12px; padding: 4px 8px; display: none;">
+                                    + Karakter
+                                </button>
+                            </div>
+                        </div>
+                        <div id="character-filters" class="character-filters" style="display: none;">
+                            <!-- Filtreler buraya eklenecek -->
+                        </div>
+                        <ul id="characters-sidebar-list" class="characters-sidebar-list">
+                            <!-- JS ile doldurulacak -->
+                        </ul>
+                    </div>
                 </aside>
 
-                <!-- KATALOG / KARAKTERLER -->
-                <section class="content">
-                    <div class="content-header">
-                        <h2 id="current-project-title">Proje Seçilmedi</h2>
-                        <button id="add-character-btn" class="btn primary" disabled>
-                            + Karakter Ekle
-                        </button>
-                    </div>
+                <!-- SAĞ SÜTUN: KARAKTER DETAY PANELİ -->
+                <section class="right-column">
+                    <div id="character-detail-panel" class="character-detail-panel">
+                        <!-- Boş durum -->
+                        <div id="empty-state" class="empty-state">
+                            <div class="empty-state-icon">👤</div>
+                            <h3>Karakter Seçilmedi</h3>
+                            <p>Sol taraftan bir karakter seçin veya yeni bir karakter ekleyin.</p>
+                        </div>
 
-                    <div id="characters-container" class="characters-grid">
-                        <!-- JS ile doldurulacak -->
+                        <!-- Karakter Detay İçeriği (gizli başlangıçta) -->
+                        <div id="character-detail-content" class="character-detail-content hidden">
+                            <!-- Hero Alanı -->
+                            <div class="character-detail-hero">
+                                <div class="character-detail-avatar-wrapper">
+                                    <img id="detail-main-image" src="" alt="Ana görsel" />
+                                    <button id="set-main-image-btn" class="btn subtle" style="display: none; position: absolute; bottom: 8px; right: 8px; font-size: 11px;">
+                                        Ana Görsel
+                                    </button>
+                                </div>
+                                <div class="character-detail-hero-info">
+                                    <h2 id="detail-full-name" class="character-name-display"></h2>
+                                    <div id="detail-meta" class="character-meta-display"></div>
+                                    <div id="detail-project-badge" class="project-badge"></div>
+                                </div>
+                            </div>
+
+                            <!-- Traits Alanı -->
+                            <div class="character-traits-section">
+                                <div class="section-header">
+                                    <h3>Karakteristik Özellikler</h3>
+                                    <button id="edit-traits-btn" class="btn subtle" style="display: none; font-size: 12px;">Düzenle</button>
+                                </div>
+                                <div id="traits-display" class="traits-display"></div>
+                                <div id="traits-edit" class="traits-edit hidden">
+                                    <textarea id="traits-textarea" rows="4" placeholder="Karakteristik özellikler..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Resim Kataloğu -->
+                            <div class="character-images-section">
+                                <div class="section-header">
+                                    <h3>Resim Kataloğu</h3>
+                                    <div class="section-actions">
+                                        <div id="tag-filters" class="tag-filters">
+                                            <!-- Tag filtreleri buraya eklenecek -->
+                                        </div>
+                                        <button id="add-image-btn-panel" class="btn primary" style="display: none; font-size: 12px;">
+                                            + Resim Ekle
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="character-images-grid" class="character-images-grid">
+                                    <!-- JS ile doldurulacak -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </main>

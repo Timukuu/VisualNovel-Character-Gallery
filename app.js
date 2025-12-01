@@ -67,10 +67,33 @@ const usersManagementBtn = document.getElementById("users-management-btn");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
 const blurToggleBtn = document.getElementById("blur-toggle-btn");
 
+// Yeni layout DOM referansları
 const projectListEl = document.getElementById("project-list");
+const addProjectBtn = document.getElementById("add-project-btn");
+const charactersSidebarSection = document.getElementById("characters-sidebar-section");
+const sidebarProjectTitle = document.getElementById("sidebar-project-title");
+const characterSearchInput = document.getElementById("character-search-input");
+const addCharacterSidebarBtn = document.getElementById("add-character-sidebar-btn");
+const characterFiltersEl = document.getElementById("character-filters");
+const charactersSidebarList = document.getElementById("characters-sidebar-list");
+const characterDetailPanel = document.getElementById("character-detail-panel");
+const emptyState = document.getElementById("empty-state");
+const characterDetailContent = document.getElementById("character-detail-content");
+const detailMainImage = document.getElementById("detail-main-image");
+const detailFullName = document.getElementById("detail-full-name");
+const detailMeta = document.getElementById("detail-meta");
+const detailProjectBadge = document.getElementById("detail-project-badge");
+const traitsDisplay = document.getElementById("traits-display");
+const traitsEdit = document.getElementById("traits-edit");
+const traitsTextarea = document.getElementById("traits-textarea");
+const editTraitsBtn = document.getElementById("edit-traits-btn");
+const addImageBtnPanel = document.getElementById("add-image-btn-panel");
+const tagFiltersEl = document.getElementById("tag-filters");
+const characterImagesGrid = document.getElementById("character-images-grid");
+
+// Eski referanslar (geriye dönük uyumluluk için)
 const currentProjectTitleEl = document.getElementById("current-project-title");
 const addCharacterBtn = document.getElementById("add-character-btn");
-const addProjectBtn = document.getElementById("add-project-btn");
 const charactersContainer = document.getElementById("characters-container");
 
 // Proje modal
@@ -283,7 +306,7 @@ async function loadProjectsFromBackend() {
     }
 }
 
-function renderProjects() {
+async function renderProjects() {
     projectListEl.innerHTML = "";
 
     if (!currentUser) return;
@@ -296,107 +319,163 @@ function renderProjects() {
     }
 
     const userProjectIds = currentUser.projects || [];
-
     const userProjects = projects.filter((p) => userProjectIds.includes(p.id));
 
     if (userProjects.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "Bu kullanıcıya atanmış proje yok.";
-        li.style.fontSize = "13px";
-        li.style.color = "#a0a0b3";
-        projectListEl.appendChild(li);
+        const emptyMsg = document.createElement("div");
+        emptyMsg.textContent = "Bu kullanıcıya atanmış proje yok.";
+        emptyMsg.style.fontSize = "13px";
+        emptyMsg.style.color = "var(--text-muted)";
+        emptyMsg.style.padding = "12px";
+        projectListEl.appendChild(emptyMsg);
         return;
     }
 
+    // Karakter sayılarını yükle
+    const projectCharacterCounts = {};
+    for (const project of userProjects) {
+        try {
+            const response = await fetch(getCharactersUrl(project.id));
+            if (response.ok) {
+                const characters = await response.json();
+                projectCharacterCounts[project.id] = characters.length;
+            }
+        } catch (err) {
+            projectCharacterCounts[project.id] = 0;
+        }
+    }
+
     userProjects.forEach((project) => {
-        const li = document.createElement("li");
-        li.className = "project-item";
+        const accordionItem = document.createElement("div");
+        accordionItem.className = "project-accordion-item";
+        if (project.id === currentProjectId) {
+            accordionItem.classList.add("active", "expanded");
+        }
 
-        const projectWrapper = document.createElement("div");
-        projectWrapper.style.display = "flex";
-        projectWrapper.style.alignItems = "center";
-        projectWrapper.style.gap = "6px";
-        projectWrapper.style.width = "100%";
+        const header = document.createElement("div");
+        header.className = "project-accordion-header";
 
-        const btn = document.createElement("button");
-        btn.className = "project-btn";
-        btn.style.flex = "1";
-        btn.style.textAlign = "left";
-        btn.style.display = "flex";
-        btn.style.flexDirection = "column";
-        btn.style.alignItems = "flex-start";
-        btn.style.gap = "4px";
-        
+        const titleDiv = document.createElement("div");
+        titleDiv.className = "project-accordion-title";
+
         const nameSpan = document.createElement("span");
         nameSpan.textContent = project.name;
         nameSpan.style.fontWeight = "500";
-        
-        btn.appendChild(nameSpan);
-        
-        if (project.description) {
-            const descSpan = document.createElement("span");
-            descSpan.textContent = project.description;
-            descSpan.style.fontSize = "11px";
-            descSpan.style.color = "var(--text-muted)";
-            descSpan.style.overflow = "hidden";
-            descSpan.style.textOverflow = "ellipsis";
-            descSpan.style.whiteSpace = "nowrap";
-            descSpan.style.maxWidth = "100%";
-            btn.appendChild(descSpan);
-        }
-        
-        btn.dataset.projectId = project.id;
 
-        if (project.id === currentProjectId) {
-            btn.classList.add("active");
+        const badge = document.createElement("span");
+        badge.className = "project-badge-count";
+        badge.textContent = `${projectCharacterCounts[project.id] || 0} karakter`;
+
+        titleDiv.appendChild(nameSpan);
+        titleDiv.appendChild(badge);
+
+        // Admin için menü butonu
+        if (currentUser.role === "admin") {
+            const menuBtn = document.createElement("button");
+            menuBtn.className = "project-menu-btn";
+            menuBtn.textContent = "⋯";
+            menuBtn.title = "Proje menüsü";
+            menuBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openProjectMenu(project, menuBtn);
+            });
+            header.appendChild(menuBtn);
         }
 
-        btn.addEventListener("click", () => {
-            currentProjectId = project.id;
-            renderProjects();
-            onProjectSelected(project);
+        header.appendChild(titleDiv);
+
+        // Accordion içeriği
+        const content = document.createElement("div");
+        content.className = "project-accordion-content";
+
+        header.addEventListener("click", () => {
+            const isExpanded = accordionItem.classList.contains("expanded");
+            
+            // Tüm accordion'ları kapat
+            document.querySelectorAll(".project-accordion-item").forEach(item => {
+                item.classList.remove("expanded", "active");
+            });
+
+            if (!isExpanded) {
+                accordionItem.classList.add("expanded", "active");
+                currentProjectId = project.id;
+                sidebarProjectTitle.textContent = project.name;
+                charactersSidebarSection.classList.remove("hidden");
+                renderCharactersSidebar();
+            } else {
+                currentProjectId = null;
+                charactersSidebarSection.classList.add("hidden");
+                showEmptyState();
+            }
         });
 
-        projectWrapper.appendChild(btn);
-
-        // Admin ise düzenle/sil butonları
-        if (currentUser.role === "admin") {
-            const editBtn = document.createElement("button");
-            editBtn.className = "btn subtle";
-            editBtn.textContent = "✎";
-            editBtn.style.fontSize = "14px";
-            editBtn.style.padding = "4px 8px";
-            editBtn.style.minWidth = "28px";
-            editBtn.style.cursor = "pointer";
-            editBtn.title = "Düzenle";
-            editBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                openProjectModal(project);
-            });
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "btn subtle";
-            deleteBtn.textContent = "×";
-            deleteBtn.style.fontSize = "18px";
-            deleteBtn.style.padding = "2px 8px";
-            deleteBtn.style.minWidth = "28px";
-            deleteBtn.style.cursor = "pointer";
-            deleteBtn.style.color = "var(--danger)";
-            deleteBtn.title = "Sil";
-            deleteBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                deleteProject(project.id);
-            });
-
-            projectWrapper.appendChild(editBtn);
-            projectWrapper.appendChild(deleteBtn);
-        }
-
-        li.appendChild(projectWrapper);
-        projectListEl.appendChild(li);
+        accordionItem.appendChild(header);
+        accordionItem.appendChild(content);
+        projectListEl.appendChild(accordionItem);
     });
+}
+
+// Proje menüsü (admin için)
+function openProjectMenu(project, button) {
+    const menu = document.createElement("div");
+    menu.style.position = "absolute";
+    menu.style.background = "var(--bg-elevated)";
+    menu.style.border = "1px solid var(--border-soft)";
+    menu.style.borderRadius = "var(--radius-md)";
+    menu.style.padding = "8px";
+    menu.style.zIndex = "1000";
+    menu.style.minWidth = "150px";
+    menu.style.boxShadow = "var(--shadow-soft)";
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Proje Ayarları";
+    editBtn.style.width = "100%";
+    editBtn.style.textAlign = "left";
+    editBtn.style.padding = "6px 10px";
+    editBtn.style.background = "transparent";
+    editBtn.style.border = "none";
+    editBtn.style.color = "var(--text)";
+    editBtn.style.cursor = "pointer";
+    editBtn.style.borderRadius = "4px";
+    editBtn.addEventListener("click", () => {
+        openProjectModal(project);
+        menu.remove();
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Sil";
+    deleteBtn.style.width = "100%";
+    deleteBtn.style.textAlign = "left";
+    deleteBtn.style.padding = "6px 10px";
+    deleteBtn.style.background = "transparent";
+    deleteBtn.style.border = "none";
+    deleteBtn.style.color = "var(--danger)";
+    deleteBtn.style.cursor = "pointer";
+    deleteBtn.style.borderRadius = "4px";
+    deleteBtn.addEventListener("click", async () => {
+        if (confirm(`"${project.name}" projesini silmek istediğinize emin misiniz?`)) {
+            await deleteProject(project.id);
+        }
+        menu.remove();
+    });
+
+    menu.appendChild(editBtn);
+    menu.appendChild(deleteBtn);
+
+    const rect = button.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 4}px`;
+    menu.style.left = `${rect.left}px`;
+
+    document.body.appendChild(menu);
+
+    setTimeout(() => {
+        document.addEventListener("click", function closeMenu(e) {
+            if (!menu.contains(e.target) && e.target !== button) {
+                menu.remove();
+                document.removeEventListener("click", closeMenu);
+            }
+        });
+    }, 0);
 }
 
 async function onProjectSelected(project) {
@@ -511,6 +590,212 @@ async function deleteProject(projectId) {
 }
 
 // --- Karakterler ---
+
+// Sol sütunda karakter listesi
+async function renderCharactersSidebar() {
+    if (!charactersSidebarList) return;
+    
+    charactersSidebarList.innerHTML = "";
+
+    if (!currentProjectId) {
+        return;
+    }
+
+    // Loading göster
+    const loadingEl = document.createElement("li");
+    loadingEl.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted);">Yükleniyor...</div>';
+    charactersSidebarList.appendChild(loadingEl);
+
+    const characters = await loadCharacters(currentProjectId);
+    
+    // Loading'i kaldır
+    loadingEl.remove();
+
+    if (!characters.length) {
+        const emptyMsg = document.createElement("li");
+        emptyMsg.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">Bu projede henüz karakter yok.</div>';
+        charactersSidebarList.appendChild(emptyMsg);
+        return;
+    }
+
+    // Arama filtresi uygula
+    const searchTerm = characterSearchInput ? characterSearchInput.value.toLowerCase() : "";
+    const filteredCharacters = characters.filter(char => {
+        if (!searchTerm) return true;
+        const fullName = `${char.firstName} ${char.lastName}`.toLowerCase();
+        const traits = (char.traits || "").toLowerCase();
+        return fullName.includes(searchTerm) || traits.includes(searchTerm);
+    });
+
+    filteredCharacters.forEach((char) => {
+        const item = document.createElement("li");
+        item.className = "character-sidebar-item";
+        if (char.id === currentCharacterId) {
+            item.classList.add("active");
+        }
+
+        // Avatar
+        const avatar = document.createElement("img");
+        avatar.className = "character-sidebar-avatar";
+        avatar.alt = `${char.firstName} ${char.lastName}`;
+        const imageUrl = char.mainImageUrl || char.imageUrl;
+        if (imageUrl) {
+            avatar.src = imageUrl;
+        } else {
+            avatar.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect fill='%2320202a' width='32' height='32'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23a0a0b3' font-size='12'%3E👤%3C/text%3E%3C/svg%3E";
+        }
+
+        // Bilgi
+        const info = document.createElement("div");
+        info.className = "character-sidebar-info";
+
+        const name = document.createElement("div");
+        name.className = "character-sidebar-name";
+        name.textContent = `${char.firstName} ${char.lastName}`;
+
+        const meta = document.createElement("div");
+        meta.className = "character-sidebar-meta";
+        if (char.zodiac) {
+            const zodiacSpan = document.createElement("span");
+            zodiacSpan.textContent = `♈ ${char.zodiac}`;
+            meta.appendChild(zodiacSpan);
+        }
+        if (char.age) {
+            const ageSpan = document.createElement("span");
+            ageSpan.textContent = `${char.age} yaş`;
+            meta.appendChild(ageSpan);
+        }
+
+        info.appendChild(name);
+        info.appendChild(meta);
+
+        // Aksiyon butonları (hover'da görünür)
+        const actions = document.createElement("div");
+        actions.className = "character-item-actions";
+        
+        if (currentUser.role === "admin") {
+            const editBtn = document.createElement("button");
+            editBtn.className = "character-item-action-btn";
+            editBtn.textContent = "✎";
+            editBtn.title = "Düzenle";
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openCharacterEditMode(char);
+            });
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "character-item-action-btn";
+            deleteBtn.textContent = "×";
+            deleteBtn.title = "Sil";
+            deleteBtn.style.color = "var(--danger)";
+            deleteBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (confirm(`"${char.firstName} ${char.lastName}" karakterini silmek istediğinize emin misiniz?`)) {
+                    await deleteCharacter(char.id);
+                }
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+        }
+
+        item.appendChild(avatar);
+        item.appendChild(info);
+        item.appendChild(actions);
+
+        item.addEventListener("click", () => {
+            currentCharacterId = char.id;
+            showCharacterDetail(char);
+            // Aktif item'ı güncelle
+            document.querySelectorAll(".character-sidebar-item").forEach(li => {
+                li.classList.remove("active");
+            });
+            item.classList.add("active");
+        });
+
+        charactersSidebarList.appendChild(item);
+    });
+}
+
+// Sağ panelde karakter detayı göster
+async function showCharacterDetail(character) {
+    if (!characterDetailContent || !emptyState) return;
+
+    emptyState.classList.add("hidden");
+    characterDetailContent.classList.remove("hidden");
+
+    // Hero alanı
+    const imageUrl = character.mainImageUrl || character.imageUrl;
+    if (detailMainImage) {
+        if (imageUrl) {
+            detailMainImage.src = imageUrl;
+            detailMainImage.style.display = "block";
+        } else {
+            detailMainImage.style.display = "none";
+        }
+    }
+
+    if (detailFullName) {
+        detailFullName.textContent = `${character.firstName} ${character.lastName}`;
+    }
+
+    if (detailMeta) {
+        detailMeta.innerHTML = "";
+        if (character.age) {
+            const ageItem = document.createElement("div");
+            ageItem.className = "character-meta-item";
+            ageItem.textContent = `${character.age} yaş`;
+            detailMeta.appendChild(ageItem);
+        }
+        if (character.zodiac) {
+            const zodiacItem = document.createElement("div");
+            zodiacItem.className = "character-meta-item";
+            zodiacItem.textContent = `♈ ${character.zodiac}`;
+            detailMeta.appendChild(zodiacItem);
+        }
+    }
+
+    // Proje badge
+    const project = projects.find(p => p.id === character.projectId);
+    if (detailProjectBadge && project) {
+        detailProjectBadge.textContent = project.name;
+        detailProjectBadge.style.display = "inline-block";
+    } else if (detailProjectBadge) {
+        detailProjectBadge.style.display = "none";
+    }
+
+    // Traits
+    if (traitsDisplay) {
+        const traitsText = character.traits || "Karakteristik özellikler belirtilmemiş.";
+        traitsDisplay.textContent = traitsText;
+    }
+
+    // Admin butonları
+    if (editTraitsBtn) {
+        editTraitsBtn.style.display = currentUser.role === "admin" ? "block" : "none";
+    }
+    if (addImageBtnPanel) {
+        addImageBtnPanel.style.display = currentUser.role === "admin" ? "block" : "none";
+    }
+
+    // Resim kataloğunu yükle
+    await renderCharacterImagesPanel(character.id);
+}
+
+// Inline edit modu
+function openCharacterEditMode(character) {
+    // Bu fonksiyon karakter detay panelini edit moduna alır
+    // Şimdilik modal kullanıyoruz, ileride inline edit eklenebilir
+    openCharacterModal(character);
+}
+
+// Boş durum göster
+function showEmptyState() {
+    if (!emptyState || !characterDetailContent) return;
+    emptyState.classList.remove("hidden");
+    characterDetailContent.classList.add("hidden");
+    currentCharacterId = null;
+}
 
 async function renderCharacters() {
     charactersContainer.innerHTML = "";
@@ -1180,6 +1465,122 @@ async function openCharacterDetail(character) {
 
     // Resim kataloğunu yükle
     await renderCharacterImages();
+}
+
+// Sağ panelde resim kataloğu
+async function renderCharacterImagesPanel(characterId) {
+    if (!characterImagesGrid || !characterId) return;
+
+    characterImagesGrid.innerHTML = "";
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${characterId}/images`);
+        if (!response.ok) throw new Error("Görseller yüklenemedi");
+        
+        const images = await response.json();
+        
+        // Tag filtrelerini oluştur
+        renderTagFilters(images);
+        
+        // Resimleri render et
+        renderImagesInGrid(images, characterImagesGrid);
+    } catch (err) {
+        console.error("Görseller yüklenirken hata:", err);
+        characterImagesGrid.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted);">Görseller yüklenemedi.</div>';
+    }
+}
+
+// Tag filtrelerini render et
+function renderTagFilters(images) {
+    if (!tagFiltersEl) return;
+    
+    tagFiltersEl.innerHTML = "";
+    
+    // Tüm tag'leri topla
+    const allTags = new Set();
+    images.forEach(img => {
+        if (img.tags && Array.isArray(img.tags)) {
+            img.tags.forEach(tag => allTags.add(tag));
+        }
+    });
+    
+    if (allTags.size === 0) return;
+    
+    // "Tümü" chip'i
+    const allChip = document.createElement("div");
+    allChip.className = "tag-chip active";
+    allChip.textContent = "Tümü";
+    allChip.dataset.tag = "all";
+    allChip.addEventListener("click", () => {
+        document.querySelectorAll(".tag-chip").forEach(chip => chip.classList.remove("active"));
+        allChip.classList.add("active");
+        filterImagesByTag("all");
+    });
+    tagFiltersEl.appendChild(allChip);
+    
+    // Her tag için chip
+    Array.from(allTags).sort().forEach(tag => {
+        const chip = document.createElement("div");
+        chip.className = "tag-chip";
+        chip.textContent = tag;
+        chip.dataset.tag = tag;
+        chip.addEventListener("click", () => {
+            document.querySelectorAll(".tag-chip").forEach(chip => chip.classList.remove("active"));
+            chip.classList.add("active");
+            filterImagesByTag(tag);
+        });
+        tagFiltersEl.appendChild(chip);
+    });
+}
+
+// Tag'e göre filtrele
+function filterImagesByTag(tag) {
+    // Bu fonksiyon renderCharacterImagesPanel içinde çağrılacak
+    // Şimdilik basit bir implementasyon
+    const imageCards = characterImagesGrid.querySelectorAll(".character-image-card");
+    imageCards.forEach(card => {
+        const cardTags = card.dataset.tags ? card.dataset.tags.split(",") : [];
+        if (tag === "all" || cardTags.includes(tag)) {
+            card.style.display = "";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+
+// Resimleri grid'e render et
+function renderImagesInGrid(images, container) {
+    if (!container) return;
+    
+    images.forEach((img) => {
+        const card = document.createElement("div");
+        card.className = "character-image-card";
+        card.dataset.imageId = img.id;
+        card.dataset.tags = (img.tags || []).join(",");
+        
+        const imgEl = document.createElement("img");
+        imgEl.src = img.url;
+        imgEl.alt = img.title || "Görsel";
+        imgEl.style.width = "100%";
+        imgEl.style.aspectRatio = "2 / 3";
+        imgEl.style.objectFit = "cover";
+        imgEl.style.borderRadius = "var(--radius-md)";
+        
+        const titleEl = document.createElement("div");
+        titleEl.textContent = img.title || "İsimsiz";
+        titleEl.style.marginTop = "8px";
+        titleEl.style.fontSize = "13px";
+        titleEl.style.fontWeight = "500";
+        
+        card.appendChild(imgEl);
+        card.appendChild(titleEl);
+        
+        card.addEventListener("click", () => {
+            openImageViewModal(img, images);
+        });
+        
+        container.appendChild(card);
+    });
 }
 
 async function renderCharacterImages() {
