@@ -61,34 +61,16 @@ const usersManagementBtn = document.getElementById("users-management-btn");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
 const blurToggleBtn = document.getElementById("blur-toggle-btn");
 
-// Yeni layout DOM referansları
-const projectListEl = document.getElementById("project-list");
-const addProjectBtn = document.getElementById("add-project-btn");
-const charactersSidebarSection = document.getElementById("characters-sidebar-section");
-const sidebarProjectTitle = document.getElementById("sidebar-project-title");
-const characterSearchInput = document.getElementById("character-search-input");
-const addCharacterSidebarBtn = document.getElementById("add-character-sidebar-btn");
-const characterFiltersEl = document.getElementById("character-filters");
-const charactersSidebarList = document.getElementById("characters-sidebar-list");
-const characterDetailPanel = document.getElementById("character-detail-panel");
-const emptyState = document.getElementById("empty-state");
-const characterDetailContent = document.getElementById("character-detail-content");
-const detailMainImage = document.getElementById("detail-main-image");
-const detailFullName = document.getElementById("detail-full-name");
-const detailMeta = document.getElementById("detail-meta");
-const detailProjectBadge = document.getElementById("detail-project-badge");
-const traitsDisplay = document.getElementById("traits-display");
-const traitsEdit = document.getElementById("traits-edit");
-const traitsTextarea = document.getElementById("traits-textarea");
-const editTraitsBtn = document.getElementById("edit-traits-btn");
-const addImageBtnPanel = document.getElementById("add-image-btn-panel");
-const tagFiltersEl = document.getElementById("tag-filters");
-const characterImagesGrid = document.getElementById("character-images-grid");
+// Yeni layout DOM referansları (initializeEventListeners içinde alınacak)
+let projectListEl, addProjectBtn, charactersSidebarSection, sidebarProjectTitle;
+let characterSearchInput, addCharacterSidebarBtn, characterFiltersEl, charactersSidebarList;
+let characterDetailPanel, emptyState, characterDetailContent;
+let detailMainImage, detailFullName, detailMeta, detailProjectBadge;
+let traitsDisplay, traitsEdit, traitsTextarea, editTraitsBtn;
+let addImageBtnPanel, tagFiltersEl, characterImagesGrid;
 
 // Eski referanslar (geriye dönük uyumluluk için)
-const currentProjectTitleEl = document.getElementById("current-project-title");
-const addCharacterBtn = document.getElementById("add-character-btn");
-const charactersContainer = document.getElementById("characters-container");
+let currentProjectTitleEl, addCharacterBtn, charactersContainer;
 
 // Proje modal
 const projectModal = document.getElementById("project-modal");
@@ -1278,6 +1260,35 @@ function initializeEventListeners() {
     usernameInput = document.getElementById("username");
     passwordInput = document.getElementById("password");
     loginErrorEl = document.getElementById("login-error");
+    
+    // Yeni layout DOM referansları
+    projectListEl = document.getElementById("project-list");
+    addProjectBtn = document.getElementById("add-project-btn");
+    charactersSidebarSection = document.getElementById("characters-sidebar-section");
+    sidebarProjectTitle = document.getElementById("sidebar-project-title");
+    characterSearchInput = document.getElementById("character-search-input");
+    addCharacterSidebarBtn = document.getElementById("add-character-sidebar-btn");
+    characterFiltersEl = document.getElementById("character-filters");
+    charactersSidebarList = document.getElementById("characters-sidebar-list");
+    characterDetailPanel = document.getElementById("character-detail-panel");
+    emptyState = document.getElementById("empty-state");
+    characterDetailContent = document.getElementById("character-detail-content");
+    detailMainImage = document.getElementById("detail-main-image");
+    detailFullName = document.getElementById("detail-full-name");
+    detailMeta = document.getElementById("detail-meta");
+    detailProjectBadge = document.getElementById("detail-project-badge");
+    traitsDisplay = document.getElementById("traits-display");
+    traitsEdit = document.getElementById("traits-edit");
+    traitsTextarea = document.getElementById("traits-textarea");
+    editTraitsBtn = document.getElementById("edit-traits-btn");
+    addImageBtnPanel = document.getElementById("add-image-btn-panel");
+    tagFiltersEl = document.getElementById("tag-filters");
+    characterImagesGrid = document.getElementById("character-images-grid");
+    
+    // Eski referanslar (geriye dönük uyumluluk için)
+    currentProjectTitleEl = document.getElementById("current-project-title");
+    addCharacterBtn = document.getElementById("add-character-btn");
+    charactersContainer = document.getElementById("characters-container");
     
     // Blur toggle
     if (blurToggleBtn) {
