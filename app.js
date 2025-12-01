@@ -7,8 +7,10 @@ let projects = [];
 let currentUser = null;
 let currentProjectId = null;
 
-// Backend upload endpoint (Render'da host edilmiş)
-const BACKEND_UPLOAD_URL = "https://character-backend-buw3.onrender.com/upload";
+// Backend endpoints (Render'da host edilmiş)
+const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
+const BACKEND_UPLOAD_URL = `${BACKEND_BASE_URL}/upload`;
+const BACKEND_PROJECTS_URL = `${BACKEND_BASE_URL}/api/projects`;
 
 // DOM referansları
 const loginScreen = document.getElementById("login-screen");
@@ -25,7 +27,17 @@ const logoutBtn = document.getElementById("logout-btn");
 const projectListEl = document.getElementById("project-list");
 const currentProjectTitleEl = document.getElementById("current-project-title");
 const addCharacterBtn = document.getElementById("add-character-btn");
+const addProjectBtn = document.getElementById("add-project-btn");
 const charactersContainer = document.getElementById("characters-container");
+
+// Proje modal
+const projectModal = document.getElementById("project-modal");
+const projectModalBackdrop = document.getElementById("project-modal-backdrop");
+const projectForm = document.getElementById("project-form");
+const projectModalTitle = document.getElementById("project-modal-title");
+const projectNameInput = document.getElementById("project-name");
+const discardProjectBtn = document.getElementById("discard-project-btn");
+let editingProjectId = null;
 
 // Modal
 const characterModal = document.getElementById("character-modal");
@@ -78,7 +90,7 @@ function generateId() {
 
 // --- Giriş / Çıkış ---
 
-function handleLoginSubmit(event) {
+async function handleLoginSubmit(event) {
     event.preventDefault();
     loginErrorEl.textContent = "";
 
@@ -106,7 +118,8 @@ function handleLoginSubmit(event) {
     // Kullanıcı bilgisi
     currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
 
-    renderProjects();
+    // Projeleri backend'den yükle
+    await loadProjectsFromBackend();
     currentProjectId = null;
     currentProjectTitleEl.textContent = "Proje Seçilmedi";
     charactersContainer.innerHTML = "";
@@ -128,10 +141,29 @@ function handleLogout() {
 
 // --- Projeler ---
 
+async function loadProjectsFromBackend() {
+    try {
+        const response = await fetch(BACKEND_PROJECTS_URL);
+        if (!response.ok) throw new Error("Projeler yüklenemedi");
+        projects = await response.json();
+        renderProjects();
+    } catch (err) {
+        console.error("Projeler yüklenirken hata:", err);
+        alert("Projeler yüklenemedi. Konsolu kontrol edin.");
+    }
+}
+
 function renderProjects() {
     projectListEl.innerHTML = "";
 
     if (!currentUser) return;
+
+    // Admin ise "Proje Ekle" butonunu göster
+    if (currentUser.role === "admin") {
+        addProjectBtn.style.display = "block";
+    } else {
+        addProjectBtn.style.display = "none";
+    }
 
     const userProjectIds = currentUser.projects || [];
 
@@ -150,10 +182,17 @@ function renderProjects() {
         const li = document.createElement("li");
         li.className = "project-item";
 
+        const projectWrapper = document.createElement("div");
+        projectWrapper.style.display = "flex";
+        projectWrapper.style.alignItems = "center";
+        projectWrapper.style.gap = "6px";
+        projectWrapper.style.width = "100%";
+
         const btn = document.createElement("button");
         btn.className = "project-btn";
         btn.textContent = project.name;
         btn.dataset.projectId = project.id;
+        btn.style.flex = "1";
 
         if (project.id === currentProjectId) {
             btn.classList.add("active");
@@ -165,7 +204,37 @@ function renderProjects() {
             onProjectSelected(project);
         });
 
-        li.appendChild(btn);
+        projectWrapper.appendChild(btn);
+
+        // Admin ise düzenle/sil butonları
+        if (currentUser.role === "admin") {
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn subtle";
+            editBtn.textContent = "✎";
+            editBtn.style.fontSize = "12px";
+            editBtn.style.padding = "4px 6px";
+            editBtn.title = "Düzenle";
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openProjectModal(project);
+            });
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn subtle";
+            deleteBtn.textContent = "×";
+            deleteBtn.style.fontSize = "16px";
+            deleteBtn.style.padding = "2px 6px";
+            deleteBtn.title = "Sil";
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteProject(project.id);
+            });
+
+            projectWrapper.appendChild(editBtn);
+            projectWrapper.appendChild(deleteBtn);
+        }
+
+        li.appendChild(projectWrapper);
         projectListEl.appendChild(li);
     });
 }
@@ -177,6 +246,86 @@ function onProjectSelected(project) {
     addCharacterBtn.disabled = currentUser.role !== "admin";
 
     renderCharacters();
+}
+
+// --- Proje Yönetimi (Admin) ---
+
+function openProjectModal(project = null) {
+    editingProjectId = project ? project.id : null;
+    projectModalTitle.textContent = project ? "Proje Düzenle" : "Yeni Proje";
+    projectNameInput.value = project ? project.name : "";
+    projectModal.classList.remove("hidden");
+}
+
+function closeProjectModal() {
+    projectModal.classList.add("hidden");
+    editingProjectId = null;
+    projectForm.reset();
+}
+
+async function handleProjectFormSubmit(event) {
+    event.preventDefault();
+
+    const name = projectNameInput.value.trim();
+    if (!name) {
+        alert("Proje adı gerekli.");
+        return;
+    }
+
+    try {
+        if (editingProjectId) {
+            // Güncelle
+            const response = await fetch(`${BACKEND_PROJECTS_URL}/${editingProjectId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+
+            if (!response.ok) throw new Error("Proje güncellenemedi");
+        } else {
+            // Yeni proje oluştur
+            const response = await fetch(BACKEND_PROJECTS_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+
+            if (!response.ok) throw new Error("Proje oluşturulamadı");
+        }
+
+        closeProjectModal();
+        await loadProjectsFromBackend();
+    } catch (err) {
+        console.error("Proje kaydedilirken hata:", err);
+        alert("Proje kaydedilemedi: " + err.message);
+    }
+}
+
+async function deleteProject(projectId) {
+    if (!confirm("Bu projeyi silmek istediğinize emin misiniz? Projeye ait tüm karakterler de silinecektir.")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${BACKEND_PROJECTS_URL}/${projectId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Proje silinemedi");
+
+        // Eğer silinen proje seçiliyse, seçimi temizle
+        if (currentProjectId === projectId) {
+            currentProjectId = null;
+            currentProjectTitleEl.textContent = "Proje Seçilmedi";
+            charactersContainer.innerHTML = "";
+            addCharacterBtn.disabled = true;
+        }
+
+        await loadProjectsFromBackend();
+    } catch (err) {
+        console.error("Proje silinirken hata:", err);
+        alert("Proje silinemedi: " + err.message);
+    }
 }
 
 // --- Karakterler ---
@@ -402,8 +551,8 @@ function handleImageChange() {
 // --- Başlatma ---
 
 function init() {
-    // users ve projects JSON'larını yükle
-    Promise.all([loadJSON("data/users.json"), loadJSON("data/projects.json")])
+    // users JSON'unu yükle, projects backend'den gelecek
+    Promise.all([loadJSON("data/users.json"), fetch(BACKEND_PROJECTS_URL).then(res => res.json())])
         .then(([usersData, projectsData]) => {
             users = usersData;
             projects = projectsData;
@@ -418,6 +567,12 @@ function init() {
 
             characterForm.addEventListener("submit", handleCharacterFormSubmit);
             charImageInput.addEventListener("change", handleImageChange);
+
+            // Proje yönetimi
+            addProjectBtn.addEventListener("click", () => openProjectModal());
+            discardProjectBtn.addEventListener("click", closeProjectModal);
+            projectModalBackdrop.addEventListener("click", closeProjectModal);
+            projectForm.addEventListener("submit", handleProjectFormSubmit);
         })
         .catch((err) => {
             console.error("Başlangıç verileri yüklenemedi:", err);

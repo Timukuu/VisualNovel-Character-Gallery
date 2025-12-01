@@ -43,7 +43,12 @@
             <main class="layout">
                 <!-- PROJE LİSTESİ -->
                 <aside class="sidebar">
-                    <h2>Projeler</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <h2 style="margin: 0;">Projeler</h2>
+                        <button id="add-project-btn" class="btn primary" style="font-size: 12px; padding: 4px 8px; display: none;">
+                            + Ekle
+                        </button>
+                    </div>
                     <ul id="project-list" class="project-list">
                         <!-- JS ile doldurulacak -->
                     </ul>
@@ -64,6 +69,28 @@
                 </section>
             </main>
         </section>
+
+        <!-- PROJE EKLE / DÜZENLE MODALI -->
+        <div id="project-modal" class="modal hidden">
+            <div class="modal-backdrop" id="project-modal-backdrop"></div>
+            <div class="modal-content">
+                <h3 id="project-modal-title">Yeni Proje</h3>
+                <form id="project-form">
+                    <label>
+                        Proje Adı
+                        <input type="text" id="project-name" required />
+                    </label>
+                    <div class="modal-actions">
+                        <button type="button" id="discard-project-btn" class="btn subtle">
+                            Discard
+                        </button>
+                        <button type="submit" class="btn primary">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- KARAKTER EKLE / DÜZENLE MODALI -->
         <div id="character-modal" class="modal hidden">
