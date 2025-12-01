@@ -51,15 +51,9 @@ function getCharactersUrl(projectId) {
     return `${BACKEND_BASE_URL}/api/projects/${projectId}/characters`;
 }
 
-// DOM referansları
-const loginScreen = document.getElementById("login-screen");
-const mainScreen = document.getElementById("main-screen");
-const characterDetailScreen = document.getElementById("character-detail-screen");
-
-const loginForm = document.getElementById("login-form");
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-const loginErrorEl = document.getElementById("login-error");
+// DOM referansları (DOM yüklendikten sonra alınacak)
+let loginScreen, mainScreen, characterDetailScreen;
+let loginForm, usernameInput, passwordInput, loginErrorEl;
 
 const currentUserInfoEl = document.getElementById("current-user-info");
 const logoutBtn = document.getElementById("logout-btn");
@@ -273,19 +267,28 @@ async function handleLoginSubmit(event) {
 function handleLogout() {
     currentUser = null;
     currentProjectId = null;
+    currentCharacterId = null;
 
     // Session'ı temizle
     localStorage.removeItem("currentUser");
 
+    // DOM referanslarını al
+    if (!loginForm) loginForm = document.getElementById("login-form");
+    if (!loginErrorEl) loginErrorEl = document.getElementById("login-error");
+    if (!mainScreen) mainScreen = document.getElementById("main-screen");
+    if (!loginScreen) loginScreen = document.getElementById("login-screen");
+    if (!characterDetailScreen) characterDetailScreen = document.getElementById("character-detail-screen");
+    if (!usersManagementScreen) usersManagementScreen = document.getElementById("users-management-screen");
+
     // Formu temizle
-    loginForm.reset();
-    loginErrorEl.textContent = "";
+    if (loginForm) loginForm.reset();
+    if (loginErrorEl) loginErrorEl.textContent = "";
 
     // Ekran geçişi
-    mainScreen.classList.add("hidden");
-    characterDetailScreen.classList.add("hidden");
-    usersManagementScreen.classList.add("hidden");
-    loginScreen.classList.remove("hidden");
+    if (mainScreen) mainScreen.classList.add("hidden");
+    if (characterDetailScreen) characterDetailScreen.classList.add("hidden");
+    if (usersManagementScreen) usersManagementScreen.classList.add("hidden");
+    if (loginScreen) loginScreen.classList.remove("hidden");
 }
 
 // --- Projeler ---
@@ -398,7 +401,7 @@ async function renderProjects() {
 
             if (!isExpanded) {
                 accordionItem.classList.add("expanded", "active");
-                currentProjectId = project.id;
+            currentProjectId = project.id;
                 sidebarProjectTitle.textContent = project.name;
                 charactersSidebarSection.classList.remove("hidden");
                 renderCharactersSidebar();
@@ -1267,19 +1270,34 @@ function updateBlurButton(isBlurred) {
 }
 
 function initializeEventListeners() {
-            // Blur toggle
-            if (blurToggleBtn) {
-                blurToggleBtn.addEventListener("click", toggleBlur);
-            }
-            
-            // Tema toggle
-            if (themeToggleBtn) {
-                themeToggleBtn.addEventListener("click", toggleTheme);
-            }
+    // DOM referanslarını al
+    loginScreen = document.getElementById("login-screen");
+    mainScreen = document.getElementById("main-screen");
+    characterDetailScreen = document.getElementById("character-detail-screen");
+    loginForm = document.getElementById("login-form");
+    usernameInput = document.getElementById("username");
+    passwordInput = document.getElementById("password");
+    loginErrorEl = document.getElementById("login-error");
+    
+    // Blur toggle
+    if (blurToggleBtn) {
+        blurToggleBtn.addEventListener("click", toggleBlur);
+    }
+    
+    // Tema toggle
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener("click", toggleTheme);
+    }
 
             // Event listeners
+    if (loginForm) {
             loginForm.addEventListener("submit", handleLoginSubmit);
+    } else {
+        console.error("loginForm bulunamadı! HTML'de login-form id'li element var mı kontrol edin.");
+    }
+    if (logoutBtn) {
             logoutBtn.addEventListener("click", handleLogout);
+    }
 
             addCharacterBtn.addEventListener("click", openCharacterModal);
             discardCharacterBtn.addEventListener("click", closeCharacterModal);
@@ -1576,7 +1594,12 @@ function renderImagesInGrid(images, container) {
         card.appendChild(titleEl);
         
         card.addEventListener("click", () => {
-            openImageViewModal(img, images);
+            // openImageViewModal fonksiyonu zaten var, parametreleri kontrol et
+            if (images && images.length > 0) {
+                openImageViewModal(img, null, images);
+            } else {
+                openImageViewModal(img);
+            }
         });
         
         container.appendChild(card);
