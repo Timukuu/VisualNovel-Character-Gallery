@@ -8,6 +8,7 @@ let currentUser = null;
 let currentProjectId = null;
 let currentCharacterId = null;
 let currentCharacter = null;
+let previousScreen = null; // Modal açılmadan önce hangi ekrandaydık
 
 // Backend endpoints (Render'da host edilmiş)
 const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
@@ -579,6 +580,13 @@ async function deleteCharacter(projectId, characterId) {
 function openCharacterModal(character = null) {
     if (!currentProjectId) return;
     
+    // Hangi ekrandan açıldığını kaydet
+    if (characterDetailScreen && !characterDetailScreen.classList.contains("hidden")) {
+        previousScreen = "characterDetail";
+    } else {
+        previousScreen = "main";
+    }
+    
     editingCharacterId = character ? character.id : null;
     characterModalTitle.textContent = character ? "Karakter Düzenle" : "Yeni Karakter";
     
@@ -608,6 +616,18 @@ function closeCharacterModal() {
     editingCharacterId = null;
     characterForm.reset();
     clearImagePreview();
+    
+    // Önceki ekrana geri dön
+    if (previousScreen === "characterDetail" && currentCharacter) {
+        // Karakter detay ekranına geri dön
+        mainScreen.classList.add("hidden");
+        characterDetailScreen.classList.remove("hidden");
+    } else {
+        // Main screen'e geri dön
+        characterDetailScreen.classList.add("hidden");
+        mainScreen.classList.remove("hidden");
+    }
+    previousScreen = null;
 }
 
 function clearImagePreview() {
