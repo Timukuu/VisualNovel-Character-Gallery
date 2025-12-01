@@ -315,6 +315,7 @@ function openProjectModal(project = null) {
     editingProjectId = project ? project.id : null;
     projectModalTitle.textContent = project ? "Proje Düzenle" : "Yeni Proje";
     projectNameInput.value = project ? project.name : "";
+    projectDescriptionInput.value = project ? (project.description || "") : "";
     projectModal.classList.remove("hidden");
 }
 
@@ -328,6 +329,8 @@ async function handleProjectFormSubmit(event) {
     event.preventDefault();
 
     const name = projectNameInput.value.trim();
+    const description = projectDescriptionInput.value.trim();
+    
     if (!name) {
         alert("Proje adı gerekli.");
         return;
@@ -339,7 +342,7 @@ async function handleProjectFormSubmit(event) {
             const response = await fetch(`${BACKEND_PROJECTS_URL}/${editingProjectId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name, description })
             });
 
             if (!response.ok) throw new Error("Proje güncellenemedi");
@@ -348,7 +351,7 @@ async function handleProjectFormSubmit(event) {
             const response = await fetch(BACKEND_PROJECTS_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name, description })
             });
 
             if (!response.ok) throw new Error("Proje oluşturulamadı");
