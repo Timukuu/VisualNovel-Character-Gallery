@@ -998,9 +998,13 @@ async function openCharacterDetail(character) {
             const fullCharacter = await response.json();
             currentCharacter = fullCharacter;
             character = fullCharacter;
+        } else if (response.status === 404) {
+            // Karakter backend'de yoksa, mevcut karakter bilgisini kullan
+            console.warn("Karakter backend'de bulunamadı, mevcut bilgiler kullanılıyor:", character.id);
         }
     } catch (err) {
         console.error("Karakter detayları yüklenirken hata:", err);
+        // Hata durumunda mevcut karakter bilgisini kullanmaya devam et
     }
 
     // Ekran geçişi
@@ -1264,6 +1268,14 @@ async function handleImageFormSubmit(event) {
     if (!title) {
         alert("Resim başlığı gerekli.");
         return;
+    }
+
+    // Butonu disable ederek iki kere tıklamayı engelle
+    const submitBtn = imageForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("loading");
+        submitBtn.textContent = "Kaydediliyor...";
     }
 
     try {
