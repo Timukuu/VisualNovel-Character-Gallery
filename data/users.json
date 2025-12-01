@@ -1,7 +1,7 @@
 [
   {
-    "username": "timuku",
-    "password": "timuku",
+    "username": "admin",
+    "password": "admin123",
     "role": "admin",
     "projects": ["proje-1", "proje-2"]
   },
@@ -9,12 +9,6 @@
     "username": "user1",
     "password": "user123",
     "role": "user",
-    "projects": ["proje-1"]
-  },
-  {
-    "username": "merycim",
-    "password": "merycim",
-    "role": "admin",
     "projects": ["proje-1"]
   }
 ]
