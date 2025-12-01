@@ -248,7 +248,7 @@ async function handleLoginSubmit(event) {
 
     // Kullanıcı bilgisi
     if (currentUserInfoEl) {
-        currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+    currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
     } else {
         console.warn("current-user-info element bulunamadı!");
     }
@@ -605,7 +605,12 @@ async function deleteProject(projectId) {
 
 // Sol sütunda karakter listesi
 async function renderCharactersSidebar() {
-    if (!charactersSidebarList) return;
+    // DOM referanslarını kontrol et
+    if (!charactersSidebarList) charactersSidebarList = document.getElementById("characters-sidebar-list");
+    if (!charactersSidebarList) {
+        console.error("characters-sidebar-list element bulunamadı!");
+        return;
+    }
     
     charactersSidebarList.innerHTML = "";
 
@@ -731,7 +736,21 @@ async function renderCharactersSidebar() {
 
 // Sağ panelde karakter detayı göster
 async function showCharacterDetail(character) {
-    if (!characterDetailContent || !emptyState) return;
+    // DOM referanslarını kontrol et ve al
+    if (!characterDetailContent) characterDetailContent = document.getElementById("character-detail-content");
+    if (!emptyState) emptyState = document.getElementById("empty-state");
+    if (!detailMainImage) detailMainImage = document.getElementById("detail-main-image");
+    if (!detailFullName) detailFullName = document.getElementById("detail-full-name");
+    if (!detailMeta) detailMeta = document.getElementById("detail-meta");
+    if (!detailProjectBadge) detailProjectBadge = document.getElementById("detail-project-badge");
+    if (!traitsDisplay) traitsDisplay = document.getElementById("traits-display");
+    if (!editTraitsBtn) editTraitsBtn = document.getElementById("edit-traits-btn");
+    if (!addImageBtnPanel) addImageBtnPanel = document.getElementById("add-image-btn-panel");
+    
+    if (!characterDetailContent || !emptyState) {
+        console.error("character-detail-content veya empty-state element bulunamadı!");
+        return;
+    }
 
     emptyState.classList.add("hidden");
     characterDetailContent.classList.remove("hidden");
