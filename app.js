@@ -1252,6 +1252,8 @@ async function renderCharacterImages() {
             imgEl.style.borderRadius = "var(--radius-md)";
             imgEl.style.backgroundColor = "var(--bg-soft)";
             imgEl.loading = "lazy"; // Lazy loading
+            imgEl.draggable = false; // Resim kendisi draggable olmasın, sadece kart
+            imgEl.style.pointerEvents = "none"; // Resim tıklamalarını kart'a yönlendir
             
             // Lazy loading için Intersection Observer kullan
             if ("IntersectionObserver" in window) {
@@ -1273,15 +1275,18 @@ async function renderCharacterImages() {
                 imgEl.src = img.url;
             }
 
-            // Resim tıklaması - drag sırasında engelle
-            imgEl.addEventListener("click", (e) => {
+            // Resim tıklaması - kart üzerinden yönet
+            imageCard.addEventListener("click", (e) => {
                 // Drag işlemi sırasında tıklamayı engelle
-                if (currentUser.role === "admin" && imageCard.classList.contains("dragging")) {
+                if (imageCard.classList.contains("dragging")) {
                     e.preventDefault();
                     e.stopPropagation();
                     return;
                 }
-                openImageViewModal(img);
+                // Eğer butonlara tıklanmadıysa resim modal'ını aç
+                if (!e.target.closest("button")) {
+                    openImageViewModal(img);
+                }
             });
 
             const titleEl = document.createElement("div");

@@ -547,6 +547,7 @@ textarea {
     display: flex;
     flex-direction: column;
     position: relative;
+    user-select: none; /* Drag sırasında text seçimini engelle */
 }
 
 .character-image-card:hover {
