@@ -974,14 +974,16 @@ function initializeEventListeners() {
             document.addEventListener("keydown", (e) => {
                 if (!imageViewModal || imageViewModal.classList.contains("hidden")) return;
                 if (e.key === "ArrowLeft") {
+                    e.preventDefault();
                     prevImage();
                 } else if (e.key === "ArrowRight") {
+                    e.preventDefault();
                     nextImage();
                 } else if (e.key === "Escape") {
                     closeImageViewModal();
                 }
             });
-        })
+}
         .catch((err) => {
             console.error("Başlangıç verileri yüklenemedi:", err);
             alert("Veri dosyaları (users.json / projects.json) yüklenemedi. Konsolu kontrol edin.");
