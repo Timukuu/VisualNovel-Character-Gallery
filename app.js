@@ -1179,12 +1179,38 @@ async function renderCharacterImages() {
             return;
         }
 
-        images.forEach((img, index) => {
+        // Resimleri başlığa göre grupla
+        const groupedImages = {};
+        images.forEach((img) => {
+            const title = img.title || "İsimsiz";
+            if (!groupedImages[title]) {
+                groupedImages[title] = [];
+            }
+            groupedImages[title].push(img);
+        });
+
+        // Her grup için kart oluştur
+        Object.keys(groupedImages).forEach((title, groupIndex) => {
+            const groupImages = groupedImages[title];
+            const isGrouped = groupImages.length > 1;
+            
+            // Default görsel: ilk eklenen (en eski createdAt) veya defaultImageId varsa o
+            let defaultImage = groupImages[0];
+            if (isGrouped) {
+                const defaultImg = groupImages.find(img => img.defaultImageId === img.id) || 
+                                   groupImages.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))[0];
+                defaultImage = defaultImg;
+            }
+
             const imageCard = document.createElement("div");
             imageCard.className = "character-image-card";
+            if (isGrouped) {
+                imageCard.classList.add("grouped-image-card");
+            }
             imageCard.style.cursor = "pointer";
-            imageCard.dataset.imageId = img.id;
-            imageCard.dataset.orderIndex = img.orderIndex !== undefined ? img.orderIndex : index;
+            imageCard.dataset.imageId = defaultImage.id;
+            imageCard.dataset.groupTitle = title;
+            imageCard.dataset.orderIndex = defaultImage.orderIndex !== undefined ? defaultImage.orderIndex : groupIndex;
 
             // Admin ise drag & drop ekle
             if (currentUser.role === "admin") {
@@ -1197,7 +1223,8 @@ async function renderCharacterImages() {
                 imageCard.addEventListener("dragstart", (e) => {
                     isDragging = true;
                     e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData("text/plain", img.id);
+                    e.dataTransfer.setData("text/plain", defaultImage.id);
+                    e.dataTransfer.setData("text/group-title", title);
                     imageCard.classList.add("dragging");
                     characterImagesGrid.classList.add("drag-active");
                     // Resim tıklamasını engelle
@@ -1238,14 +1265,14 @@ async function renderCharacterImages() {
                     imageCard.classList.remove("drag-over");
                     
                     const draggedImageId = e.dataTransfer.getData("text/plain");
-                    if (draggedImageId && draggedImageId !== img.id) {
-                        await handleImageReorder(draggedImageId, img.id);
+                    if (draggedImageId && draggedImageId !== defaultImage.id) {
+                        await handleImageReorder(draggedImageId, defaultImage.id);
                     }
                 });
             }
 
             const imgEl = document.createElement("img");
-            imgEl.alt = img.title;
+            imgEl.alt = defaultImage.title;
             imgEl.style.width = "100%";
             imgEl.style.aspectRatio = "2 / 3"; // 768x1152 oranı
             imgEl.style.objectFit = "cover";
@@ -1261,18 +1288,18 @@ async function renderCharacterImages() {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             const imgElement = entry.target;
-                            imgElement.src = imgElement.dataset.src || img.url;
+                            imgElement.src = imgElement.dataset.src || defaultImage.url;
                             imgElement.classList.add("loaded");
                             observer.unobserve(imgElement);
                         }
                     });
                 }, { rootMargin: "50px" });
                 
-                imgEl.dataset.src = img.url;
+                imgEl.dataset.src = defaultImage.url;
                 observer.observe(imgEl);
             } else {
                 // Fallback: Eski tarayıcılar için direkt yükle
-                imgEl.src = img.url;
+                imgEl.src = defaultImage.url;
             }
 
             // Resim tıklaması - kart üzerinden yönet
@@ -1285,13 +1312,14 @@ async function renderCharacterImages() {
                 }
                 // Eğer butonlara tıklanmadıysa resim modal'ını aç
                 if (!e.target.closest("button")) {
-                    openImageViewModal(img);
+                    // Gruplu resimler için ilk resmi göster
+                    openImageViewModal(defaultImage);
                 }
             });
 
             const titleEl = document.createElement("div");
             titleEl.className = "character-image-title";
-            titleEl.textContent = img.title;
+            titleEl.textContent = title + (isGrouped ? ` (${groupImages.length})` : "");
             titleEl.style.marginTop = "8px";
             titleEl.style.fontSize = "13px";
             titleEl.style.fontWeight = "500";
@@ -1299,8 +1327,24 @@ async function renderCharacterImages() {
             imageCard.appendChild(imgEl);
             imageCard.appendChild(titleEl);
 
+            // Gruplu resimler için badge
+            if (isGrouped) {
+                const groupBadge = document.createElement("div");
+                groupBadge.textContent = `📁 ${groupImages.length} resim`;
+                groupBadge.style.fontSize = "10px";
+                groupBadge.style.color = "var(--accent)";
+                groupBadge.style.fontWeight = "600";
+                groupBadge.style.marginTop = "4px";
+                groupBadge.style.cursor = "pointer";
+                groupBadge.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openImageGroupModal(title, groupImages, defaultImage.id);
+                });
+                imageCard.appendChild(groupBadge);
+            }
+
             // Ana görsel işareti
-            if (currentCharacter && currentCharacter.mainImageId === img.id) {
+            if (currentCharacter && currentCharacter.mainImageId === defaultImage.id) {
                 const mainBadge = document.createElement("div");
                 mainBadge.textContent = "★ Ana Görsel";
                 mainBadge.style.fontSize = "10px";
@@ -1377,6 +1421,119 @@ async function renderCharacterImages() {
 }
 
 // --- Resim Yönetimi ---
+
+// Gruplu resimler için modal
+function openImageGroupModal(title, images, currentDefaultId) {
+    // Basit bir modal ile resim seçimi
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.style.position = "fixed";
+    modal.style.top = "0";
+    modal.style.left = "0";
+    modal.style.width = "100%";
+    modal.style.height = "100%";
+    modal.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+    modal.style.zIndex = "10000";
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    
+    const content = document.createElement("div");
+    content.className = "modal-content";
+    content.style.backgroundColor = "var(--bg-elevated)";
+    content.style.padding = "24px";
+    content.style.borderRadius = "var(--radius-lg)";
+    content.style.maxWidth = "600px";
+    content.style.maxHeight = "80vh";
+    content.style.overflow = "auto";
+    
+    const titleEl = document.createElement("h3");
+    titleEl.textContent = `"${title}" - Görsel Seç (${images.length} resim)`;
+    titleEl.style.marginTop = "0";
+    content.appendChild(titleEl);
+    
+    const grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
+    grid.style.gap = "12px";
+    grid.style.marginTop = "16px";
+    
+    images.forEach((img) => {
+        const card = document.createElement("div");
+        card.style.cursor = "pointer";
+        card.style.border = currentDefaultId === img.id ? "2px solid var(--accent)" : "1px solid var(--border-soft)";
+        card.style.borderRadius = "var(--radius-md)";
+        card.style.padding = "8px";
+        card.style.transition = "border-color 0.2s";
+        
+        const imgEl = document.createElement("img");
+        imgEl.src = img.url;
+        imgEl.style.width = "100%";
+        imgEl.style.aspectRatio = "2 / 3";
+        imgEl.style.objectFit = "cover";
+        imgEl.style.borderRadius = "var(--radius-md)";
+        
+        const label = document.createElement("div");
+        label.textContent = currentDefaultId === img.id ? "✓ Seçili" : "Seç";
+        label.style.fontSize = "11px";
+        label.style.marginTop = "4px";
+        label.style.textAlign = "center";
+        label.style.color = currentDefaultId === img.id ? "var(--accent)" : "var(--text-muted)";
+        
+        card.appendChild(imgEl);
+        card.appendChild(label);
+        
+        card.addEventListener("click", async () => {
+            // Default görseli güncelle
+            await setGroupDefaultImage(title, img.id);
+            modal.remove();
+            await renderCharacterImages();
+        });
+        
+        grid.appendChild(card);
+    });
+    
+    content.appendChild(grid);
+    
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "btn subtle";
+    closeBtn.textContent = "Kapat";
+    closeBtn.style.marginTop = "16px";
+    closeBtn.addEventListener("click", () => modal.remove());
+    content.appendChild(closeBtn);
+    
+    modal.appendChild(content);
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.remove();
+    });
+    
+    document.body.appendChild(modal);
+}
+
+async function setGroupDefaultImage(title, imageId) {
+    // Backend'de defaultImageId'yi güncelle (şimdilik sadece frontend'de sakla)
+    // TODO: Backend'e defaultImageId desteği ekle
+    const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+    if (response.ok) {
+        const images = await response.json();
+        const groupImages = images.filter(img => img.title === title);
+        
+        // Her resmi güncelle (defaultImageId ekle)
+        for (const img of groupImages) {
+            if (img.id === imageId) {
+                // Default görsel olarak işaretle
+                await fetch(`${BACKEND_BASE_URL}/api/images/${img.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        ...img, 
+                        defaultImageId: img.id 
+                    })
+                });
+            }
+        }
+    }
+}
 
 function openImageModal(image = null) {
     editingImageId = image ? image.id : null;
