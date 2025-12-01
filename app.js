@@ -1567,27 +1567,45 @@ function openImageGroupModal(title, images, currentDefaultId) {
 }
 
 async function setGroupDefaultImage(title, imageId) {
-    // Backend'de defaultImageId'yi güncelle (şimdilik sadece frontend'de sakla)
-    // TODO: Backend'e defaultImageId desteği ekle
-    const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
-    if (response.ok) {
+    try {
+        // Backend'de defaultImageId'yi güncelle
+        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+        if (!response.ok) throw new Error("Resimler yüklenemedi");
+        
         const images = await response.json();
         const groupImages = images.filter(img => img.title === title);
         
-        // Her resmi güncelle (defaultImageId ekle)
+        // Grup içindeki tüm resimleri güncelle
         for (const img of groupImages) {
+            const updateData = {
+                title: img.title,
+                description: img.description || "",
+                tags: img.tags || []
+            };
+            
+            // Seçilen resim için defaultImageId = kendi id'si, diğerleri için null
             if (img.id === imageId) {
-                // Default görsel olarak işaretle
-                await fetch(`${BACKEND_BASE_URL}/api/images/${img.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        ...img, 
-                        defaultImageId: img.id 
-                    })
-                });
+                updateData.defaultImageId = img.id;
+            } else {
+                // Diğer resimlerden defaultImageId'yi kaldır
+                updateData.defaultImageId = null;
+            }
+            
+            const updateResponse = await fetch(`${BACKEND_BASE_URL}/api/images/${img.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (!updateResponse.ok) {
+                console.error(`Resim ${img.id} güncellenemedi`);
             }
         }
+        
+        showToast("Default görsel güncellendi", "success", 2000);
+    } catch (err) {
+        console.error("Default görsel güncellenirken hata:", err);
+        alert("Default görsel güncellenemedi: " + err.message);
     }
 }
 
