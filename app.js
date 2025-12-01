@@ -7,6 +7,10 @@ let projects = [];
 let currentUser = null;
 let currentProjectId = null;
 
+// Backend upload endpoint (lokalde test için):
+// Yayına aldığında kendi Render / hosting URL'ini buraya yazacaksın.
+const BACKEND_UPLOAD_URL = "http://localhost:4000/upload";
+
 // DOM referansları
 const loginScreen = document.getElementById("login-screen");
 const mainScreen = document.getElementById("main-screen");
@@ -209,9 +213,9 @@ function renderCharacters() {
         const imageWrapper = document.createElement("div");
         imageWrapper.className = "character-image-wrapper";
 
-        if (ch.imageDataUrl) {
+        if (ch.imageUrl) {
             const img = document.createElement("img");
-            img.src = ch.imageDataUrl;
+            img.src = ch.imageUrl;
             img.alt = `${ch.firstName} ${ch.lastName}`;
             imageWrapper.appendChild(img);
         } else {
@@ -291,7 +295,7 @@ function clearImagePreview() {
     charImagePreview.src = "";
 }
 
-// Save sırasında, resim varsa FileReader ile Base64'e çeviriyoruz
+// Save sırasında, dosya varsa backend'e upload edip dönen URL'yi saklıyoruz
 function handleCharacterFormSubmit(event) {
     event.preventDefault();
 
@@ -306,14 +310,14 @@ function handleCharacterFormSubmit(event) {
     const zodiac = charZodiacInput.value.trim();
     const ageRaw = charAgeInput.value;
     const age = ageRaw ? parseInt(ageRaw, 10) : null;
+    const file = charImageInput.files[0] || null;
 
     if (!firstName || !lastName) {
         alert("İsim ve soyisim zorunludur.");
         return;
     }
 
-    const file = charImageInput.files[0];
-
+    // Karakter objesi (imageUrl daha sonra dolacak)
     const baseCharacter = {
         id: generateId(),
         firstName,
@@ -321,26 +325,54 @@ function handleCharacterFormSubmit(event) {
         traits,
         zodiac,
         age,
-        imageDataUrl: null
+        imageUrl: null
     };
 
+    // Dosya yoksa direkt kaydet
     if (!file) {
-        // Görsel yoksa direkt kaydet
         saveNewCharacter(baseCharacter);
         return;
     }
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        baseCharacter.imageDataUrl = e.target.result;
-        saveNewCharacter(baseCharacter);
-    };
-    reader.onerror = function () {
-        alert("Görsel okunurken hata oluştu. Karakter görselsiz kaydedilecek.");
-        saveNewCharacter(baseCharacter);
-    };
+    // Butonu disable ederek iki kere tıklamayı engelle
+    const submitBtn = characterForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Yükleniyor...";
+    }
 
-    reader.readAsDataURL(file);
+    // Dosyayı backend'e POST et
+    const formData = new FormData();
+    formData.append("file", file);
+
+    fetch(BACKEND_UPLOAD_URL, {
+        method: "POST",
+        body: formData
+    })
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error("Upload başarısız: " + res.status);
+            }
+            return res.json();
+        })
+        .then((data) => {
+            if (!data || !data.url) {
+                throw new Error("Backend yanıtında url yok");
+            }
+            baseCharacter.imageUrl = data.url;
+            saveNewCharacter(baseCharacter);
+        })
+        .catch((err) => {
+            console.error("Upload hatası:", err);
+            alert("Görsel yüklenirken hata oluştu. Karakter görselsiz kaydedilecek.");
+            saveNewCharacter(baseCharacter);
+        })
+        .finally(() => {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Save";
+            }
+        });
 }
 
 function saveNewCharacter(character) {
@@ -351,7 +383,7 @@ function saveNewCharacter(character) {
     renderCharacters();
 }
 
-// Resim seçilince önizleme
+// Resim seçilince önizleme (lokalde)
 function handleImageChange() {
     const file = charImageInput.files[0];
     if (!file) {
