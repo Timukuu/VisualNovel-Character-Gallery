@@ -1326,8 +1326,10 @@ async function renderCharacterImages() {
                     setMainBtn.style.fontSize = "11px";
                     setMainBtn.style.padding = "4px 8px";
                     setMainBtn.style.color = "var(--accent)";
+                    setMainBtn.style.pointerEvents = "auto"; // Buton tıklamalarını aktif tut
                     setMainBtn.addEventListener("click", (e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         setMainImage(img.id, img.url);
                     });
                     actions.appendChild(setMainBtn);
@@ -1338,8 +1340,10 @@ async function renderCharacterImages() {
                 editBtn.textContent = "Düzenle";
                 editBtn.style.fontSize = "11px";
                 editBtn.style.padding = "4px 8px";
+                editBtn.style.pointerEvents = "auto"; // Buton tıklamalarını aktif tut
                 editBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     openImageModal(img);
                 });
 
@@ -1349,8 +1353,10 @@ async function renderCharacterImages() {
                 deleteBtn.style.fontSize = "11px";
                 deleteBtn.style.padding = "4px 8px";
                 deleteBtn.style.color = "var(--danger)";
+                deleteBtn.style.pointerEvents = "auto"; // Buton tıklamalarını aktif tut
                 deleteBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     deleteImage(img.id);
                 });
 
