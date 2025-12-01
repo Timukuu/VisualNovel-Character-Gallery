@@ -602,11 +602,15 @@ async function deleteCharacter(projectId, characterId) {
 function openCharacterModal(character = null) {
     if (!currentProjectId) return;
     
-    // Hangi ekrandan açıldığını kaydet
+    // Hangi ekrandan açıldığını kaydet (modal açılmadan önce)
     if (characterDetailScreen && !characterDetailScreen.classList.contains("hidden")) {
         previousScreen = "characterDetail";
+        // Karakter detay ekranını gizle (modal açılırken)
+        characterDetailScreen.classList.add("hidden");
     } else {
         previousScreen = "main";
+        // Main screen'i gizle (modal açılırken)
+        mainScreen.classList.add("hidden");
     }
     
     editingCharacterId = character ? character.id : null;
@@ -619,8 +623,8 @@ function openCharacterModal(character = null) {
         charZodiacInput.value = character.zodiac || "";
         charAgeInput.value = character.age || "";
         // Ana görsel önizlemesi (eğer varsa)
-        if (character.imageUrl) {
-            charImagePreview.src = character.imageUrl;
+        if (character.imageUrl || character.mainImageUrl) {
+            charImagePreview.src = character.mainImageUrl || character.imageUrl;
             charImagePreviewWrapper.style.display = "block";
         } else {
             clearImagePreview();
@@ -640,7 +644,7 @@ function closeCharacterModal() {
     clearImagePreview();
     
     // Önceki ekrana geri dön
-    if (previousScreen === "characterDetail" && currentCharacter) {
+    if (previousScreen === "characterDetail") {
         // Karakter detay ekranına geri dön
         mainScreen.classList.add("hidden");
         characterDetailScreen.classList.remove("hidden");
