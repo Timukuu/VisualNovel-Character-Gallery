@@ -82,6 +82,10 @@ body {
     display: none;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .screen {
     min-height: 90vh;
 }
