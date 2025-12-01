@@ -798,6 +798,50 @@ function init() {
             if (userForm) {
                 userForm.addEventListener("submit", handleUserFormSubmit);
             }
+
+            // Karakter detay ekranı
+            if (backToListBtn) {
+                backToListBtn.addEventListener("click", () => {
+                    characterDetailScreen.classList.add("hidden");
+                    mainScreen.classList.remove("hidden");
+                    currentCharacterId = null;
+                    currentCharacter = null;
+                });
+            }
+            if (editCharacterBtn) {
+                editCharacterBtn.addEventListener("click", () => {
+                    if (currentCharacter) {
+                        characterDetailScreen.classList.add("hidden");
+                        openCharacterModal(currentCharacter);
+                    }
+                });
+            }
+            if (logoutBtn2) {
+                logoutBtn2.addEventListener("click", handleLogout);
+            }
+            if (addImageBtn) {
+                addImageBtn.addEventListener("click", () => openImageModal());
+            }
+            if (discardImageBtn) {
+                discardImageBtn.addEventListener("click", closeImageModal);
+            }
+            if (imageModalBackdrop) {
+                imageModalBackdrop.addEventListener("click", closeImageModal);
+            }
+            if (imageForm) {
+                imageForm.addEventListener("submit", handleImageFormSubmit);
+            }
+            if (imageFileInput) {
+                imageFileInput.addEventListener("change", handleImageFileChange);
+            }
+
+            // Resim görüntüleme modal
+            if (closeImageViewBtn) {
+                closeImageViewBtn.addEventListener("click", closeImageViewModal);
+            }
+            if (imageViewModalBackdrop) {
+                imageViewModalBackdrop.addEventListener("click", closeImageViewModal);
+            }
         })
         .catch((err) => {
             console.error("Başlangıç verileri yüklenemedi:", err);
