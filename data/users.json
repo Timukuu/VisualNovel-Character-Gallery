@@ -9,7 +9,6 @@
     "username": "merycim",
     "password": "merycim",
     "role": "admin",
-    "projects": ["proje-1"], "proje-2"]
+    "projects": ["proje-1", "proje-2"]
   }
-  //d
 ]
