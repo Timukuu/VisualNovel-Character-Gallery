@@ -932,11 +932,26 @@ async function openCharacterDetail(character) {
 
     characterDetailTraits.textContent = character.traits || "";
 
-    // Ana görsel - mainImageId varsa onu kullan, yoksa imageUrl
+    // Ana görsel - mainImageId varsa resim kataloğundan bul, yoksa imageUrl kullan
     let mainImageUrl = null;
     if (character.mainImageId) {
-        // mainImageId varsa, resim kataloğundan bulacağız
-        mainImageUrl = character.mainImageUrl || character.imageUrl;
+        // Resim kataloğunu yükle ve mainImageId'ye göre bul
+        try {
+            const imagesResponse = await fetch(`${BACKEND_BASE_URL}/api/characters/${character.id}/images`);
+            if (imagesResponse.ok) {
+                const images = await imagesResponse.json();
+                const mainImage = images.find(img => img.id === character.mainImageId);
+                if (mainImage) {
+                    mainImageUrl = mainImage.url;
+                }
+            }
+        } catch (err) {
+            console.error("Ana görsel yüklenirken hata:", err);
+        }
+        // Fallback olarak imageUrl kullan
+        if (!mainImageUrl) {
+            mainImageUrl = character.mainImageUrl || character.imageUrl;
+        }
     } else {
         mainImageUrl = character.imageUrl;
     }
@@ -971,6 +986,15 @@ async function renderCharacterImages() {
         if (!response.ok) throw new Error("Görseller yüklenemedi");
         
         const images = await response.json();
+        
+        // Karakterin mainImageId'sine göre resimleri sırala (ana görsel en üstte)
+        if (currentCharacter && currentCharacter.mainImageId) {
+            images.sort((a, b) => {
+                if (a.id === currentCharacter.mainImageId) return -1;
+                if (b.id === currentCharacter.mainImageId) return 1;
+                return 0;
+            });
+        }
 
         if (images.length === 0) {
             const info = document.createElement("p");
@@ -1271,6 +1295,43 @@ function openImageViewModal(image) {
 
 function closeImageViewModal() {
     imageViewModal.classList.add("hidden");
+}
+
+// Ana görseli ayarla
+async function setMainImage(imageId, imageUrl) {
+    if (!currentCharacterId || !currentCharacter) return;
+
+    try {
+        const response = await fetch(`${getCharactersUrl(currentProjectId)}/${currentCharacterId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...currentCharacter,
+                mainImageId: imageId,
+                mainImageUrl: imageUrl
+            })
+        });
+
+        if (!response.ok) throw new Error("Ana görsel güncellenemedi");
+
+        const updatedCharacter = await response.json();
+        currentCharacter = updatedCharacter;
+
+        // Ana görseli güncelle
+        characterDetailMainImage.src = imageUrl;
+        characterDetailMainImage.style.display = "block";
+
+        // Resim kataloğunu yenile
+        await renderCharacterImages();
+        
+        // Karakter listesini de güncelle (eğer main screen'deyse)
+        if (mainScreen && !mainScreen.classList.contains("hidden")) {
+            await renderCharacters();
+        }
+    } catch (err) {
+        console.error("Ana görsel ayarlanırken hata:", err);
+        alert("Ana görsel ayarlanamadı: " + err.message);
+    }
 }
 
 // --- Kullanıcı Yönetimi (Admin) ---
