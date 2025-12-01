@@ -1011,9 +1011,9 @@ async function renderCharacterImages() {
             imgEl.src = img.url;
             imgEl.alt = img.title;
             imgEl.style.width = "100%";
-            imgEl.style.height = "150px";
+            imgEl.style.aspectRatio = "2 / 3"; // 768x1152 oranı
             imgEl.style.objectFit = "cover";
-            imgEl.style.borderRadius = "8px";
+            imgEl.style.borderRadius = "var(--radius-md)";
 
             imgEl.addEventListener("click", () => {
                 openImageViewModal(img);
