@@ -195,20 +195,32 @@ function generateId() {
 
 async function handleLoginSubmit(event) {
     event.preventDefault();
-    loginErrorEl.textContent = "";
+    
+    // DOM referanslarını kontrol et ve al
+    if (!loginErrorEl) loginErrorEl = document.getElementById("login-error");
+    if (!usernameInput) usernameInput = document.getElementById("username");
+    if (!passwordInput) passwordInput = document.getElementById("password");
+    
+    if (loginErrorEl) loginErrorEl.textContent = "";
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
+    const username = usernameInput ? usernameInput.value.trim() : "";
+    const password = passwordInput ? passwordInput.value : "";
 
     if (!username || !password) {
-        loginErrorEl.textContent = "Kullanıcı adı ve şifre gerekli.";
+        if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı adı ve şifre gerekli.";
+        return;
+    }
+
+    if (!users || users.length === 0) {
+        if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
+        console.error("users array boş!");
         return;
     }
 
     const user = users.find((u) => u.username === username && u.password === password);
 
     if (!user) {
-        loginErrorEl.textContent = "Kullanıcı adı veya şifre hatalı.";
+        if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı adı veya şifre hatalı.";
         return;
     }
 
@@ -221,12 +233,25 @@ async function handleLoginSubmit(event) {
         projects: user.projects
     }));
 
+    // DOM referanslarını al
+    if (!loginScreen) loginScreen = document.getElementById("login-screen");
+    if (!mainScreen) mainScreen = document.getElementById("main-screen");
+    if (!currentUserInfoEl) currentUserInfoEl = document.getElementById("current-user-info");
+    if (!usersManagementBtn) usersManagementBtn = document.getElementById("users-management-btn");
+    if (!currentProjectTitleEl) currentProjectTitleEl = document.getElementById("current-project-title");
+    if (!charactersContainer) charactersContainer = document.getElementById("characters-container");
+    if (!addCharacterBtn) addCharacterBtn = document.getElementById("add-character-btn");
+
     // Ekran geçişi
-    loginScreen.classList.add("hidden");
-    mainScreen.classList.remove("hidden");
+    if (loginScreen) loginScreen.classList.add("hidden");
+    if (mainScreen) mainScreen.classList.remove("hidden");
 
     // Kullanıcı bilgisi
-    currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+    if (currentUserInfoEl) {
+        currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+    } else {
+        console.warn("current-user-info element bulunamadı!");
+    }
 
     // Admin ise kullanıcı yönetimi butonunu göster
     if (currentUser.role === "admin" && usersManagementBtn) {
@@ -238,9 +263,14 @@ async function handleLoginSubmit(event) {
     // Projeleri backend'den yükle
     await loadProjectsFromBackend();
     currentProjectId = null;
-    currentProjectTitleEl.textContent = "Proje Seçilmedi";
-    charactersContainer.innerHTML = "";
-    addCharacterBtn.disabled = true;
+    
+    // Eski referanslar (geriye dönük uyumluluk)
+    if (currentProjectTitleEl) currentProjectTitleEl.textContent = "Proje Seçilmedi";
+    if (charactersContainer) charactersContainer.innerHTML = "";
+    if (addCharacterBtn) addCharacterBtn.disabled = true;
+    
+    // Yeni layout için
+    showEmptyState();
 }
 
 function handleLogout() {
