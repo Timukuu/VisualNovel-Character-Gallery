@@ -30,6 +30,7 @@ const loginErrorEl = document.getElementById("login-error");
 
 const currentUserInfoEl = document.getElementById("current-user-info");
 const logoutBtn = document.getElementById("logout-btn");
+const usersManagementBtn = document.getElementById("users-management-btn");
 
 const projectListEl = document.getElementById("project-list");
 const currentProjectTitleEl = document.getElementById("current-project-title");
@@ -189,6 +190,13 @@ async function handleLoginSubmit(event) {
 
     // Kullanıcı bilgisi
     currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+
+    // Admin ise kullanıcı yönetimi butonunu göster
+    if (currentUser.role === "admin" && usersManagementBtn) {
+        usersManagementBtn.style.display = "block";
+    } else if (usersManagementBtn) {
+        usersManagementBtn.style.display = "none";
+    }
 
     // Projeleri backend'den yükle
     await loadProjectsFromBackend();
@@ -764,6 +772,32 @@ function init() {
             discardProjectBtn.addEventListener("click", closeProjectModal);
             projectModalBackdrop.addEventListener("click", closeProjectModal);
             projectForm.addEventListener("submit", handleProjectFormSubmit);
+
+            // Kullanıcı yönetimi
+            if (usersManagementBtn) {
+                usersManagementBtn.addEventListener("click", openUsersManagement);
+            }
+            if (backToMainBtn) {
+                backToMainBtn.addEventListener("click", () => {
+                    usersManagementScreen.classList.add("hidden");
+                    mainScreen.classList.remove("hidden");
+                });
+            }
+            if (logoutBtn3) {
+                logoutBtn3.addEventListener("click", handleLogout);
+            }
+            if (addUserBtn) {
+                addUserBtn.addEventListener("click", () => openUserModal());
+            }
+            if (discardUserBtn) {
+                discardUserBtn.addEventListener("click", closeUserModal);
+            }
+            if (userModalBackdrop) {
+                userModalBackdrop.addEventListener("click", closeUserModal);
+            }
+            if (userForm) {
+                userForm.addEventListener("submit", handleUserFormSubmit);
+            }
         })
         .catch((err) => {
             console.error("Başlangıç verileri yüklenemedi:", err);
@@ -1068,6 +1102,180 @@ function openImageViewModal(image) {
 
 function closeImageViewModal() {
     imageViewModal.classList.add("hidden");
+}
+
+// --- Kullanıcı Yönetimi (Admin) ---
+
+async function openUsersManagement() {
+    mainScreen.classList.add("hidden");
+    usersManagementScreen.classList.remove("hidden");
+    await renderUsers();
+}
+
+async function renderUsers() {
+    usersList.innerHTML = "";
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/users`);
+        if (!response.ok) throw new Error("Kullanıcılar yüklenemedi");
+        
+        const users = await response.json();
+
+        if (users.length === 0) {
+            const info = document.createElement("p");
+            info.textContent = "Henüz kullanıcı yok.";
+            info.style.color = "#a0a0b3";
+            usersList.appendChild(info);
+            return;
+        }
+
+        users.forEach((user) => {
+            const userCard = document.createElement("div");
+            userCard.className = "character-card";
+            userCard.style.marginBottom = "12px";
+
+            const nameEl = document.createElement("div");
+            nameEl.className = "character-name";
+            nameEl.textContent = `${user.username} (${user.role})`;
+
+            const projectsEl = document.createElement("div");
+            projectsEl.className = "character-meta";
+            projectsEl.textContent = `Projeler: ${user.projects.length > 0 ? user.projects.join(", ") : "Yok"}`;
+
+            userCard.appendChild(nameEl);
+            userCard.appendChild(projectsEl);
+
+            const actions = document.createElement("div");
+            actions.className = "character-actions";
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn subtle";
+            editBtn.textContent = "Düzenle";
+            editBtn.addEventListener("click", () => openUserModal(user));
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn subtle";
+            deleteBtn.textContent = "Sil";
+            deleteBtn.style.color = "var(--danger)";
+            deleteBtn.addEventListener("click", () => deleteUser(user.id));
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+            userCard.appendChild(actions);
+
+            usersList.appendChild(userCard);
+        });
+    } catch (err) {
+        console.error("Kullanıcılar yüklenirken hata:", err);
+        const error = document.createElement("p");
+        error.textContent = "Kullanıcılar yüklenemedi.";
+        error.style.color = "#f45b69";
+        usersList.appendChild(error);
+    }
+}
+
+function openUserModal(user = null) {
+    editingUserId = user ? user.id : null;
+    userModalTitle.textContent = user ? "Kullanıcı Düzenle" : "Yeni Kullanıcı";
+    
+    if (user) {
+        userUsernameInput.value = user.username;
+        userPasswordInput.value = "";
+        userPasswordInput.required = false;
+        userRoleInput.value = user.role;
+        userProjectsInput.value = Array.isArray(user.projects) ? user.projects.join(", ") : "";
+    } else {
+        userForm.reset();
+        userPasswordInput.required = true;
+    }
+    
+    userModal.classList.remove("hidden");
+}
+
+function closeUserModal() {
+    userModal.classList.add("hidden");
+    editingUserId = null;
+    userForm.reset();
+}
+
+async function handleUserFormSubmit(event) {
+    event.preventDefault();
+
+    const username = userUsernameInput.value.trim();
+    const password = userPasswordInput.value;
+    const role = userRoleInput.value;
+    const projectsStr = userProjectsInput.value.trim();
+
+    if (!username) {
+        alert("Kullanıcı adı gerekli.");
+        return;
+    }
+
+    if (!editingUserId && !password) {
+        alert("Yeni kullanıcı için şifre gerekli.");
+        return;
+    }
+
+    const projects = projectsStr ? projectsStr.split(",").map(p => p.trim()).filter(p => p) : [];
+
+    try {
+        if (editingUserId) {
+            // Güncelle
+            const updateData = {
+                username,
+                role,
+                projects
+            };
+            if (password) {
+                updateData.password = password;
+            }
+
+            const response = await fetch(`${BACKEND_BASE_URL}/api/users/${editingUserId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) throw new Error("Kullanıcı güncellenemedi");
+        } else {
+            // Yeni kullanıcı
+            const response = await fetch(`${BACKEND_BASE_URL}/api/users`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username,
+                    password,
+                    role,
+                    projects
+                })
+            });
+
+            if (!response.ok) throw new Error("Kullanıcı oluşturulamadı");
+        }
+
+        closeUserModal();
+        await renderUsers();
+    } catch (err) {
+        console.error("Kullanıcı kaydedilirken hata:", err);
+        alert("Kullanıcı kaydedilemedi: " + err.message);
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/users/${userId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Kullanıcı silinemedi");
+
+        await renderUsers();
+    } catch (err) {
+        console.error("Kullanıcı silinirken hata:", err);
+        alert("Kullanıcı silinemedi: " + err.message);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", init);
