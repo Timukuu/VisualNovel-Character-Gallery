@@ -1254,22 +1254,57 @@ async function renderCharacterImages() {
                 imageCard.classList.add("draggable");
                 imageCard.draggable = true;
                 
-                let isDragging = false;
+                let dragStartX = 0;
+                let dragStartY = 0;
+                let isDragStarted = false;
+                
+                // Mousedown ile drag başlatma kontrolü
+                imageCard.addEventListener("mousedown", (e) => {
+                    // Butonlara tıklanmadıysa drag başlat
+                    if (!e.target.closest("button") && !e.target.closest(".character-image-title")) {
+                        dragStartX = e.clientX;
+                        dragStartY = e.clientY;
+                        isDragStarted = false;
+                    }
+                });
+                
+                // Mouse move ile drag başlatma
+                imageCard.addEventListener("mousemove", (e) => {
+                    if (dragStartX !== 0 && dragStartY !== 0 && !isDragStarted) {
+                        const deltaX = Math.abs(e.clientX - dragStartX);
+                        const deltaY = Math.abs(e.clientY - dragStartY);
+                        // 5px'den fazla hareket varsa drag başlat
+                        if (deltaX > 5 || deltaY > 5) {
+                            isDragStarted = true;
+                            // Programatik olarak drag başlat
+                            const dragEvent = new DragEvent("dragstart", {
+                                bubbles: true,
+                                cancelable: true,
+                                dataTransfer: new DataTransfer()
+                            });
+                            imageCard.dispatchEvent(dragEvent);
+                        }
+                    }
+                });
                 
                 // Drag event handlers
                 imageCard.addEventListener("dragstart", (e) => {
-                    isDragging = true;
+                    if (!isDragStarted && dragStartX === 0) {
+                        // Manuel drag başlatıldı
+                        isDragStarted = true;
+                    }
                     e.dataTransfer.effectAllowed = "move";
                     e.dataTransfer.setData("text/plain", defaultImage.id);
                     e.dataTransfer.setData("text/group-title", title);
                     imageCard.classList.add("dragging");
                     characterImagesGrid.classList.add("drag-active");
-                    // Resim tıklamasını engelle
                     e.stopPropagation();
                 });
 
                 imageCard.addEventListener("dragend", (e) => {
-                    isDragging = false;
+                    isDragStarted = false;
+                    dragStartX = 0;
+                    dragStartY = 0;
                     imageCard.classList.remove("dragging");
                     characterImagesGrid.classList.remove("drag-active");
                     // Tüm drag-over class'larını temizle
