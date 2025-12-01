@@ -1252,7 +1252,7 @@ async function renderCharacterImages() {
             // Admin ise drag & drop ekle
             if (currentUser.role === "admin") {
                 imageCard.classList.add("draggable");
-                imageCard.draggable = true;
+                // Kartın kendisini draggable yapma, sadece handle kullan
                 
                 // Drag handle için özel bir alan ekle (kartın üst kısmı)
                 const dragHandle = document.createElement("div");
