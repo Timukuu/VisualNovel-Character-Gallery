@@ -1226,12 +1226,17 @@ async function renderCharacterImages() {
             const groupImages = groupedImages[title];
             const isGrouped = groupImages.length > 1;
             
-            // Default görsel: ilk eklenen (en eski createdAt) veya defaultImageId varsa o
+            // Default görsel: defaultImageId varsa o, yoksa ilk eklenen (en eski createdAt)
             let defaultImage = groupImages[0];
             if (isGrouped) {
-                const defaultImg = groupImages.find(img => img.defaultImageId === img.id) || 
-                                   groupImages.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))[0];
-                defaultImage = defaultImg;
+                // Önce defaultImageId'ye sahip olanı bul
+                const defaultImg = groupImages.find(img => img.defaultImageId === img.id);
+                if (defaultImg) {
+                    defaultImage = defaultImg;
+                } else {
+                    // Yoksa en eski olanı al
+                    defaultImage = groupImages.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))[0];
+                }
             }
 
             const imageCard = document.createElement("div");
