@@ -1351,8 +1351,12 @@ async function renderCharacterImages() {
                 }
                 // Eğer butonlara tıklanmadıysa resim modal'ını aç
                 if (!e.target.closest("button")) {
-                    // Gruplu resimler için ilk resmi göster
-                    openImageViewModal(defaultImage);
+                    // Gruplu resimler için sadece o gruba ait resimleri göster
+                    if (isGrouped) {
+                        openImageViewModal(defaultImage, title, groupImages);
+                    } else {
+                        openImageViewModal(defaultImage);
+                    }
                 }
             });
 
@@ -1872,22 +1876,29 @@ async function deleteImage(imageId) {
 let currentImageIndex = 0;
 let allImagesForCarousel = [];
 
-async function openImageViewModal(image) {
-    // Tüm resimleri yükle
-    try {
-        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
-        if (response.ok) {
-            allImagesForCarousel = await response.json();
-            currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
-            if (currentImageIndex === -1) currentImageIndex = 0;
-        } else {
+async function openImageViewModal(image, groupTitle = null, groupImages = null) {
+    // Eğer grup bilgisi verilmişse, sadece o gruba ait resimleri kullan
+    if (groupTitle && groupImages && groupImages.length > 0) {
+        allImagesForCarousel = groupImages;
+        currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
+        if (currentImageIndex === -1) currentImageIndex = 0;
+    } else {
+        // Grup bilgisi yoksa, tüm resimleri yükle (eski davranış - geriye dönük uyumluluk)
+        try {
+            const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+            if (response.ok) {
+                allImagesForCarousel = await response.json();
+                currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
+                if (currentImageIndex === -1) currentImageIndex = 0;
+            } else {
+                allImagesForCarousel = [image];
+                currentImageIndex = 0;
+            }
+        } catch (err) {
+            console.error("Resimler yüklenirken hata:", err);
             allImagesForCarousel = [image];
             currentImageIndex = 0;
         }
-    } catch (err) {
-        console.error("Resimler yüklenirken hata:", err);
-        allImagesForCarousel = [image];
-        currentImageIndex = 0;
     }
 
     renderImageCarousel();
