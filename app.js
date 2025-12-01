@@ -882,6 +882,9 @@ function init() {
     // Tema yükle
     initTheme();
     
+    // Blur yükle
+    initBlur();
+    
     // Önce localStorage'dan session kontrolü yap
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
