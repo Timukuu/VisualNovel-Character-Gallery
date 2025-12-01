@@ -105,7 +105,7 @@ const characterDetailFullName = document.getElementById("character-detail-full-n
 const characterDetailMeta = document.getElementById("character-detail-meta");
 const characterDetailTraits = document.getElementById("character-detail-traits");
 const characterDetailMainImage = document.getElementById("character-detail-main-image");
-const characterImagesGrid = document.getElementById("character-images-grid");
+// characterImagesGrid artık initializeEventListeners içinde alınıyor (satır 67'de let olarak tanımlı)
 const addImageBtn = document.getElementById("add-image-btn");
 
 // Resim modal
