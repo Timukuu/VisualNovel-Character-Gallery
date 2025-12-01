@@ -43,6 +43,7 @@ const projectModalBackdrop = document.getElementById("project-modal-backdrop");
 const projectForm = document.getElementById("project-form");
 const projectModalTitle = document.getElementById("project-modal-title");
 const projectNameInput = document.getElementById("project-name");
+const projectDescriptionInput = document.getElementById("project-description");
 const discardProjectBtn = document.getElementById("discard-project-btn");
 let editingProjectId = null;
 let editingCharacterId = null;
@@ -100,6 +101,23 @@ const imageViewTags = document.getElementById("image-view-tags");
 
 let editingImageId = null;
 let editingCharacterId = null;
+
+// Kullanıcı yönetimi
+const usersManagementScreen = document.getElementById("users-management-screen");
+const backToMainBtn = document.getElementById("back-to-main-btn");
+const logoutBtn3 = document.getElementById("logout-btn-3");
+const addUserBtn = document.getElementById("add-user-btn");
+const usersList = document.getElementById("users-list");
+const userModal = document.getElementById("user-modal");
+const userModalBackdrop = document.getElementById("user-modal-backdrop");
+const userForm = document.getElementById("user-form");
+const userModalTitle = document.getElementById("user-modal-title");
+const userUsernameInput = document.getElementById("user-username");
+const userPasswordInput = document.getElementById("user-password");
+const userRoleInput = document.getElementById("user-role");
+const userProjectsInput = document.getElementById("user-projects");
+const discardUserBtn = document.getElementById("discard-user-btn");
+let editingUserId = null;
 
 // --- Yardımcılar ---
 
@@ -244,9 +262,32 @@ function renderProjects() {
 
         const btn = document.createElement("button");
         btn.className = "project-btn";
-        btn.textContent = project.name;
-        btn.dataset.projectId = project.id;
         btn.style.flex = "1";
+        btn.style.textAlign = "left";
+        btn.style.display = "flex";
+        btn.style.flexDirection = "column";
+        btn.style.alignItems = "flex-start";
+        btn.style.gap = "4px";
+        
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = project.name;
+        nameSpan.style.fontWeight = "500";
+        
+        btn.appendChild(nameSpan);
+        
+        if (project.description) {
+            const descSpan = document.createElement("span");
+            descSpan.textContent = project.description;
+            descSpan.style.fontSize = "11px";
+            descSpan.style.color = "var(--text-muted)";
+            descSpan.style.overflow = "hidden";
+            descSpan.style.textOverflow = "ellipsis";
+            descSpan.style.whiteSpace = "nowrap";
+            descSpan.style.maxWidth = "100%";
+            btn.appendChild(descSpan);
+        }
+        
+        btn.dataset.projectId = project.id;
 
         if (project.id === currentProjectId) {
             btn.classList.add("active");
@@ -302,6 +343,19 @@ function renderProjects() {
 
 async function onProjectSelected(project) {
     currentProjectTitleEl.textContent = project.name;
+    
+    // Proje açıklamasını göster (varsa)
+    let projectDesc = document.getElementById("current-project-description");
+    if (!projectDesc) {
+        projectDesc = document.createElement("p");
+        projectDesc.id = "current-project-description";
+        projectDesc.style.margin = "4px 0 0";
+        projectDesc.style.fontSize = "13px";
+        projectDesc.style.color = "var(--text-muted)";
+        currentProjectTitleEl.parentElement.appendChild(projectDesc);
+    }
+    projectDesc.textContent = project.description || "";
+    projectDesc.style.display = project.description ? "block" : "none";
 
     // Admin ise "Karakter Ekle" aktif, değilse pasif (sadece görüntüleme)
     addCharacterBtn.disabled = currentUser.role !== "admin";

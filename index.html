@@ -36,6 +36,7 @@
                     <span id="current-user-info" class="pill"></span>
                 </div>
                 <div class="topbar-right">
+                    <button id="users-management-btn" class="btn subtle" style="display: none; margin-right: 8px;">Kullanıcı Yönetimi</button>
                     <button id="logout-btn" class="btn subtle">Çıkış</button>
                 </div>
             </header>
@@ -79,6 +80,10 @@
                     <label>
                         Proje Adı
                         <input type="text" id="project-name" required />
+                    </label>
+                    <label>
+                        Açıklama
+                        <textarea id="project-description" rows="3" placeholder="Proje hakkında kısa açıklama..."></textarea>
                     </label>
                     <div class="modal-actions">
                         <button type="button" id="discard-project-btn" class="btn subtle">
@@ -233,6 +238,65 @@
                     <p id="image-view-description"></p>
                     <div id="image-view-tags"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- KULLANICI YÖNETİMİ EKRANI -->
+        <section id="users-management-screen" class="screen hidden">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="back-to-main-btn" class="btn subtle" style="margin-right: 12px;">← Geri</button>
+                    <h1>Kullanıcı Yönetimi</h1>
+                </div>
+                <div class="topbar-right">
+                    <button id="add-user-btn" class="btn primary">+ Kullanıcı Ekle</button>
+                    <button id="logout-btn-3" class="btn subtle">Çıkış</button>
+                </div>
+            </header>
+
+            <main class="content" style="padding: 16px;">
+                <div id="users-list" class="users-list">
+                    <!-- JS ile doldurulacak -->
+                </div>
+            </main>
+        </section>
+
+        <!-- KULLANICI EKLE / DÜZENLE MODALI -->
+        <div id="user-modal" class="modal hidden">
+            <div class="modal-backdrop" id="user-modal-backdrop"></div>
+            <div class="modal-content">
+                <h3 id="user-modal-title">Yeni Kullanıcı</h3>
+                <form id="user-form">
+                    <label>
+                        Kullanıcı Adı
+                        <input type="text" id="user-username" required />
+                    </label>
+                    <label>
+                        Şifre
+                        <input type="password" id="user-password" />
+                        <small style="color: var(--text-muted); font-size: 12px;">Düzenleme sırasında boş bırakırsanız şifre değişmez</small>
+                    </label>
+                    <label>
+                        Rol
+                        <select id="user-role" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </label>
+                    <label>
+                        Projeler (virgülle ayırın, proje ID'leri)
+                        <input type="text" id="user-projects" placeholder="proje-1, proje-2" />
+                        <small style="color: var(--text-muted); font-size: 12px;">Kullanıcının erişebileceği proje ID'lerini virgülle ayırarak girin</small>
+                    </label>
+                    <div class="modal-actions">
+                        <button type="button" id="discard-user-btn" class="btn subtle">
+                            Discard
+                        </button>
+                        <button type="submit" class="btn primary">
+                            Save
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 

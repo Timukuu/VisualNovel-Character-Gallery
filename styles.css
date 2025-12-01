@@ -504,6 +504,34 @@ textarea {
 
 /* Responsive */
 
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+select {
+    margin-top: 6px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-soft);
+    color: var(--text);
+    outline: none;
+    font-size: 14px;
+}
+
+select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+small {
+    display: block;
+    margin-top: 4px;
+}
+
 @media (max-width: 900px) {
     #app {
         padding: 16px;
