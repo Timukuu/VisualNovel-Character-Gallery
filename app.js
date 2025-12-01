@@ -55,11 +55,8 @@ function getCharactersUrl(projectId) {
 let loginScreen, mainScreen, characterDetailScreen;
 let loginForm, usernameInput, passwordInput, loginErrorEl;
 
-const currentUserInfoEl = document.getElementById("current-user-info");
-const logoutBtn = document.getElementById("logout-btn");
-const usersManagementBtn = document.getElementById("users-management-btn");
-const themeToggleBtn = document.getElementById("theme-toggle-btn");
-const blurToggleBtn = document.getElementById("blur-toggle-btn");
+// Bu referanslar initializeEventListeners içinde alınacak
+let currentUserInfoEl, logoutBtn, usersManagementBtn, themeToggleBtn, blurToggleBtn;
 
 // Yeni layout DOM referansları (initializeEventListeners içinde alınacak)
 let projectListEl, addProjectBtn, charactersSidebarSection, sidebarProjectTitle;
