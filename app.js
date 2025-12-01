@@ -222,6 +222,9 @@ function handleLogout() {
 // --- Projeler ---
 
 async function loadProjectsFromBackend() {
+    // Loading göster
+    projectListEl.innerHTML = '<li class="loading-overlay" style="list-style: none;"><div class="loading-content"><div class="loading-spinner"></div><span>Projeler yükleniyor...</span></div></li>';
+    
     try {
         const response = await fetch(BACKEND_PROJECTS_URL);
         if (!response.ok) throw new Error("Projeler yüklenemedi");
@@ -229,6 +232,7 @@ async function loadProjectsFromBackend() {
         renderProjects();
     } catch (err) {
         console.error("Projeler yüklenirken hata:", err);
+        projectListEl.innerHTML = '<li style="color: var(--danger);">Projeler yüklenemedi.</li>';
         alert("Projeler yüklenemedi. Konsolu kontrol edin.");
     }
 }
@@ -424,6 +428,12 @@ async function handleProjectFormSubmit(event) {
     } catch (err) {
         console.error("Proje kaydedilirken hata:", err);
         alert("Proje kaydedilemedi: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("loading");
+            submitBtn.textContent = "Save";
+        }
     }
 }
 
@@ -468,7 +478,16 @@ async function renderCharacters() {
         return;
     }
 
+    // Loading göster
+    const loadingEl = document.createElement("div");
+    loadingEl.className = "loading-overlay";
+    loadingEl.innerHTML = '<div class="loading-content"><div class="loading-spinner"></div><span>Karakterler yükleniyor...</span></div>';
+    charactersContainer.appendChild(loadingEl);
+
     const characters = await loadCharacters(currentProjectId);
+    
+    // Loading'i kaldır
+    loadingEl.remove();
 
     if (!characters.length) {
         const info = document.createElement("p");
@@ -483,13 +502,22 @@ async function renderCharacters() {
         const card = document.createElement("div");
         card.className = "character-card";
 
-        // Görsel
+        // Görsel - önce mainImageId'ye bak, yoksa imageUrl'e bak
         const imageWrapper = document.createElement("div");
         imageWrapper.className = "character-image-wrapper";
 
-        if (ch.imageUrl) {
+        let imageUrl = null;
+        if (ch.mainImageId) {
+            // mainImageId varsa, resim kataloğundan bul
+            // Bu async olduğu için şimdilik imageUrl kullan, sonra güncelle
+            imageUrl = ch.mainImageUrl || ch.imageUrl; // mainImageUrl backend'den gelecek
+        } else {
+            imageUrl = ch.imageUrl;
+        }
+
+        if (imageUrl) {
             const img = document.createElement("img");
-            img.src = ch.imageUrl;
+            img.src = imageUrl;
             img.alt = `${ch.firstName} ${ch.lastName}`;
             imageWrapper.appendChild(img);
         } else {
@@ -678,7 +706,8 @@ function handleCharacterFormSubmit(event) {
     const submitBtn = characterForm.querySelector('button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = "Yükleniyor...";
+        submitBtn.classList.add("loading");
+        submitBtn.textContent = "Kaydediliyor...";
     }
 
     // Dosyayı backend'e POST et
@@ -711,6 +740,7 @@ function handleCharacterFormSubmit(event) {
         .finally(() => {
             if (submitBtn) {
                 submitBtn.disabled = false;
+                submitBtn.classList.remove("loading");
                 submitBtn.textContent = "Save";
             }
         });
@@ -875,6 +905,18 @@ async function openCharacterDetail(character) {
     currentCharacter = character;
     currentCharacterId = character.id;
 
+    // Karakteri backend'den tekrar yükle (mainImageId bilgisi için)
+    try {
+        const response = await fetch(`${getCharactersUrl(currentProjectId)}/${character.id}`);
+        if (response.ok) {
+            const fullCharacter = await response.json();
+            currentCharacter = fullCharacter;
+            character = fullCharacter;
+        }
+    } catch (err) {
+        console.error("Karakter detayları yüklenirken hata:", err);
+    }
+
     // Ekran geçişi
     mainScreen.classList.add("hidden");
     characterDetailScreen.classList.remove("hidden");
@@ -890,9 +932,17 @@ async function openCharacterDetail(character) {
 
     characterDetailTraits.textContent = character.traits || "";
 
-    // Ana görsel
-    if (character.imageUrl) {
-        characterDetailMainImage.src = character.imageUrl;
+    // Ana görsel - mainImageId varsa onu kullan, yoksa imageUrl
+    let mainImageUrl = null;
+    if (character.mainImageId) {
+        // mainImageId varsa, resim kataloğundan bulacağız
+        mainImageUrl = character.mainImageUrl || character.imageUrl;
+    } else {
+        mainImageUrl = character.imageUrl;
+    }
+    
+    if (mainImageUrl) {
+        characterDetailMainImage.src = mainImageUrl;
         characterDetailMainImage.style.display = "block";
     } else {
         characterDetailMainImage.style.display = "none";
@@ -958,12 +1008,39 @@ async function renderCharacterImages() {
             imageCard.appendChild(imgEl);
             imageCard.appendChild(titleEl);
 
+            // Ana görsel işareti
+            if (currentCharacter && currentCharacter.mainImageId === img.id) {
+                const mainBadge = document.createElement("div");
+                mainBadge.textContent = "★ Ana Görsel";
+                mainBadge.style.fontSize = "10px";
+                mainBadge.style.color = "var(--accent)";
+                mainBadge.style.fontWeight = "600";
+                mainBadge.style.marginTop = "4px";
+                imageCard.appendChild(mainBadge);
+            }
+
             // Admin aksiyonları
             if (currentUser.role === "admin") {
                 const actions = document.createElement("div");
                 actions.style.display = "flex";
                 actions.style.gap = "6px";
                 actions.style.marginTop = "6px";
+                actions.style.flexWrap = "wrap";
+
+                // Ana görsel yap butonu
+                if (!currentCharacter || currentCharacter.mainImageId !== img.id) {
+                    const setMainBtn = document.createElement("button");
+                    setMainBtn.className = "btn subtle";
+                    setMainBtn.textContent = "Ana Görsel";
+                    setMainBtn.style.fontSize = "11px";
+                    setMainBtn.style.padding = "4px 8px";
+                    setMainBtn.style.color = "var(--accent)";
+                    setMainBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        setMainImage(img.id, img.url);
+                    });
+                    actions.appendChild(setMainBtn);
+                }
 
                 const editBtn = document.createElement("button");
                 editBtn.className = "btn subtle";
@@ -1035,10 +1112,32 @@ function closeImageModal() {
 
 function handleImageFileChange() {
     const file = imageFileInput.files[0];
+    const errorEl = document.getElementById("image-file-error");
+    
     if (!file) {
+        imagePreviewWrapper.style.display = "none";
+        if (errorEl) errorEl.textContent = "";
+        return;
+    }
+
+    // Dosya boyutu kontrolü (5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        if (errorEl) errorEl.textContent = "Dosya boyutu 5MB'dan büyük olamaz.";
+        imageFileInput.value = "";
         imagePreviewWrapper.style.display = "none";
         return;
     }
+
+    // Dosya tipi kontrolü
+    if (!file.type.startsWith("image/")) {
+        if (errorEl) errorEl.textContent = "Lütfen geçerli bir resim dosyası seçin.";
+        imageFileInput.value = "";
+        imagePreviewWrapper.style.display = "none";
+        return;
+    }
+
+    if (errorEl) errorEl.textContent = "";
 
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -1128,6 +1227,12 @@ async function handleImageFormSubmit(event) {
     } catch (err) {
         console.error("Resim kaydedilirken hata:", err);
         alert("Resim kaydedilemedi: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("loading");
+            submitBtn.textContent = "Save";
+        }
     }
 }
 
@@ -1322,6 +1427,12 @@ async function handleUserFormSubmit(event) {
     } catch (err) {
         console.error("Kullanıcı kaydedilirken hata:", err);
         alert("Kullanıcı kaydedilemedi: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("loading");
+            submitBtn.textContent = "Save";
+        }
     }
 }
 

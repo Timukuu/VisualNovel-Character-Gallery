@@ -170,6 +170,8 @@
                     <label>
                         Karakter Resmi
                         <input type="file" id="char-image" accept="image/*" />
+                        <span class="form-error" id="char-image-error"></span>
+                        <small style="color: var(--text-muted); font-size: 12px;">Maksimum dosya boyutu: 5MB</small>
                     </label>
 
                     <div class="image-preview" id="char-image-preview-wrapper">
@@ -209,6 +211,8 @@
                     <label>
                         Resim Dosyası
                         <input type="file" id="image-file" accept="image/*" required />
+                        <span class="form-error" id="image-file-error"></span>
+                        <small style="color: var(--text-muted); font-size: 12px;">Maksimum dosya boyutu: 5MB</small>
                     </label>
                     <div class="image-preview" id="image-preview-wrapper">
                         <img id="image-preview" alt="Önizleme" />
