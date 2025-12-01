@@ -6,6 +6,8 @@ let projects = [];
 
 let currentUser = null;
 let currentProjectId = null;
+let currentCharacterId = null;
+let currentCharacter = null;
 
 // Backend endpoints (Render'da host edilmiş)
 const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
@@ -19,6 +21,7 @@ function getCharactersUrl(projectId) {
 // DOM referansları
 const loginScreen = document.getElementById("login-screen");
 const mainScreen = document.getElementById("main-screen");
+const characterDetailScreen = document.getElementById("character-detail-screen");
 
 const loginForm = document.getElementById("login-form");
 const usernameInput = document.getElementById("username");
@@ -42,6 +45,7 @@ const projectModalTitle = document.getElementById("project-modal-title");
 const projectNameInput = document.getElementById("project-name");
 const discardProjectBtn = document.getElementById("discard-project-btn");
 let editingProjectId = null;
+let editingCharacterId = null;
 
 // Modal
 const characterModal = document.getElementById("character-modal");
@@ -59,6 +63,43 @@ const charImagePreviewWrapper = document.getElementById("char-image-preview-wrap
 const charImagePreview = document.getElementById("char-image-preview");
 
 const discardCharacterBtn = document.getElementById("discard-character-btn");
+
+// Karakter detay ekranı
+const backToListBtn = document.getElementById("back-to-list-btn");
+const editCharacterBtn = document.getElementById("edit-character-btn");
+const logoutBtn2 = document.getElementById("logout-btn-2");
+const characterDetailName = document.getElementById("character-detail-name");
+const characterDetailFullName = document.getElementById("character-detail-full-name");
+const characterDetailMeta = document.getElementById("character-detail-meta");
+const characterDetailTraits = document.getElementById("character-detail-traits");
+const characterDetailMainImage = document.getElementById("character-detail-main-image");
+const characterImagesGrid = document.getElementById("character-images-grid");
+const addImageBtn = document.getElementById("add-image-btn");
+
+// Resim modal
+const imageModal = document.getElementById("image-modal");
+const imageModalBackdrop = document.getElementById("image-modal-backdrop");
+const imageForm = document.getElementById("image-form");
+const imageModalTitle = document.getElementById("image-modal-title");
+const imageTitleInput = document.getElementById("image-title");
+const imageDescriptionInput = document.getElementById("image-description");
+const imageTagsInput = document.getElementById("image-tags");
+const imageFileInput = document.getElementById("image-file");
+const imagePreviewWrapper = document.getElementById("image-preview-wrapper");
+const imagePreview = document.getElementById("image-preview");
+const discardImageBtn = document.getElementById("discard-image-btn");
+
+// Resim görüntüleme modal
+const imageViewModal = document.getElementById("image-view-modal");
+const imageViewModalBackdrop = document.getElementById("image-view-modal-backdrop");
+const closeImageViewBtn = document.getElementById("close-image-view-btn");
+const imageViewLarge = document.getElementById("image-view-large");
+const imageViewTitle = document.getElementById("image-view-title");
+const imageViewDescription = document.getElementById("image-view-description");
+const imageViewTags = document.getElementById("image-view-tags");
+
+let editingImageId = null;
+let editingCharacterId = null;
 
 // --- Yardımcılar ---
 
@@ -415,23 +456,40 @@ async function renderCharacters() {
         card.appendChild(metaEl);
         card.appendChild(traitsEl);
 
+        // Aksiyonlar
+        const actions = document.createElement("div");
+        actions.className = "character-actions";
+
+        // Detay butonu (herkes için)
+        const detailBtn = document.createElement("button");
+        detailBtn.className = "btn subtle";
+        detailBtn.textContent = "Detay";
+        detailBtn.addEventListener("click", () => {
+            openCharacterDetail(ch);
+        });
+        actions.appendChild(detailBtn);
+
         // Admin aksiyonları
         if (currentUser.role === "admin") {
-            const actions = document.createElement("div");
-            actions.className = "character-actions";
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn subtle";
+            editBtn.textContent = "Düzenle";
+            editBtn.addEventListener("click", () => {
+                openCharacterModal(ch);
+            });
+            actions.appendChild(editBtn);
 
             const deleteBtn = document.createElement("button");
             deleteBtn.className = "btn subtle";
             deleteBtn.textContent = "Sil";
-
             deleteBtn.addEventListener("click", () => {
                 if (!confirm("Bu karakteri silmek istediğinize emin misiniz?")) return;
                 deleteCharacter(currentProjectId, ch.id);
             });
-
             actions.appendChild(deleteBtn);
-            card.appendChild(actions);
         }
+
+        card.appendChild(actions);
 
         charactersContainer.appendChild(card);
     });
@@ -454,16 +512,38 @@ async function deleteCharacter(projectId, characterId) {
 
 // --- Modal (Karakter Ekle) ---
 
-function openCharacterModal() {
+function openCharacterModal(character = null) {
     if (!currentProjectId) return;
-    characterModalTitle.textContent = "Yeni Karakter";
-    characterForm.reset();
-    clearImagePreview();
+    
+    editingCharacterId = character ? character.id : null;
+    characterModalTitle.textContent = character ? "Karakter Düzenle" : "Yeni Karakter";
+    
+    if (character) {
+        charFirstNameInput.value = character.firstName || "";
+        charLastNameInput.value = character.lastName || "";
+        charTraitsInput.value = character.traits || "";
+        charZodiacInput.value = character.zodiac || "";
+        charAgeInput.value = character.age || "";
+        // Ana görsel önizlemesi (eğer varsa)
+        if (character.imageUrl) {
+            charImagePreview.src = character.imageUrl;
+            charImagePreviewWrapper.style.display = "block";
+        } else {
+            clearImagePreview();
+        }
+    } else {
+        characterForm.reset();
+        clearImagePreview();
+    }
+    
     characterModal.classList.remove("hidden");
 }
 
 function closeCharacterModal() {
     characterModal.classList.add("hidden");
+    editingCharacterId = null;
+    characterForm.reset();
+    clearImagePreview();
 }
 
 function clearImagePreview() {
@@ -554,16 +634,32 @@ function handleCharacterFormSubmit(event) {
 
 async function saveNewCharacter(character) {
     try {
-        const response = await fetch(getCharactersUrl(currentProjectId), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(character)
-        });
+        let response;
+        if (editingCharacterId) {
+            // Güncelle
+            response = await fetch(`${getCharactersUrl(currentProjectId)}/${editingCharacterId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(character)
+            });
+        } else {
+            // Yeni karakter
+            response = await fetch(getCharactersUrl(currentProjectId), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(character)
+            });
+        }
 
         if (!response.ok) throw new Error("Karakter kaydedilemedi");
 
         closeCharacterModal();
         await renderCharacters();
+        
+        // Eğer detay ekranı açıksa, güncelle
+        if (currentCharacterId && currentCharacterId === character.id) {
+            await openCharacterDetail(await response.json());
+        }
     } catch (err) {
         console.error("Karakter kaydedilirken hata:", err);
         alert("Karakter kaydedilemedi: " + err.message);
@@ -616,6 +712,305 @@ function init() {
             console.error("Başlangıç verileri yüklenemedi:", err);
             alert("Veri dosyaları (users.json / projects.json) yüklenemedi. Konsolu kontrol edin.");
         });
+}
+
+// --- Karakter Detay Ekranı ---
+
+async function openCharacterDetail(character) {
+    currentCharacter = character;
+    currentCharacterId = character.id;
+
+    // Ekran geçişi
+    mainScreen.classList.add("hidden");
+    characterDetailScreen.classList.remove("hidden");
+
+    // Karakter bilgilerini doldur
+    characterDetailName.textContent = `${character.firstName} ${character.lastName}`;
+    characterDetailFullName.textContent = `${character.firstName} ${character.lastName}`;
+
+    const metaParts = [];
+    if (character.age) metaParts.push(`${character.age} yaş`);
+    if (character.zodiac) metaParts.push(`Burç: ${character.zodiac}`);
+    characterDetailMeta.textContent = metaParts.join(" • ");
+
+    characterDetailTraits.textContent = character.traits || "";
+
+    // Ana görsel
+    if (character.imageUrl) {
+        characterDetailMainImage.src = character.imageUrl;
+        characterDetailMainImage.style.display = "block";
+    } else {
+        characterDetailMainImage.style.display = "none";
+    }
+
+    // Admin butonları
+    if (currentUser.role === "admin") {
+        editCharacterBtn.style.display = "block";
+        addImageBtn.style.display = "block";
+    } else {
+        editCharacterBtn.style.display = "none";
+        addImageBtn.style.display = "none";
+    }
+
+    // Resim kataloğunu yükle
+    await renderCharacterImages();
+}
+
+async function renderCharacterImages() {
+    if (!currentCharacterId) return;
+
+    characterImagesGrid.innerHTML = "";
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+        if (!response.ok) throw new Error("Görseller yüklenemedi");
+        
+        const images = await response.json();
+
+        if (images.length === 0) {
+            const info = document.createElement("p");
+            info.textContent = "Henüz resim eklenmemiş.";
+            info.style.color = "#a0a0b3";
+            info.style.fontSize = "14px";
+            characterImagesGrid.appendChild(info);
+            return;
+        }
+
+        images.forEach((img) => {
+            const imageCard = document.createElement("div");
+            imageCard.className = "character-image-card";
+            imageCard.style.cursor = "pointer";
+
+            const imgEl = document.createElement("img");
+            imgEl.src = img.url;
+            imgEl.alt = img.title;
+            imgEl.style.width = "100%";
+            imgEl.style.height = "150px";
+            imgEl.style.objectFit = "cover";
+            imgEl.style.borderRadius = "8px";
+
+            imgEl.addEventListener("click", () => {
+                openImageViewModal(img);
+            });
+
+            const titleEl = document.createElement("div");
+            titleEl.className = "character-image-title";
+            titleEl.textContent = img.title;
+            titleEl.style.marginTop = "8px";
+            titleEl.style.fontSize = "13px";
+            titleEl.style.fontWeight = "500";
+
+            imageCard.appendChild(imgEl);
+            imageCard.appendChild(titleEl);
+
+            // Admin aksiyonları
+            if (currentUser.role === "admin") {
+                const actions = document.createElement("div");
+                actions.style.display = "flex";
+                actions.style.gap = "6px";
+                actions.style.marginTop = "6px";
+
+                const editBtn = document.createElement("button");
+                editBtn.className = "btn subtle";
+                editBtn.textContent = "Düzenle";
+                editBtn.style.fontSize = "11px";
+                editBtn.style.padding = "4px 8px";
+                editBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openImageModal(img);
+                });
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.className = "btn subtle";
+                deleteBtn.textContent = "Sil";
+                deleteBtn.style.fontSize = "11px";
+                deleteBtn.style.padding = "4px 8px";
+                deleteBtn.style.color = "var(--danger)";
+                deleteBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    deleteImage(img.id);
+                });
+
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
+                imageCard.appendChild(actions);
+            }
+
+            characterImagesGrid.appendChild(imageCard);
+        });
+    } catch (err) {
+        console.error("Görseller yüklenirken hata:", err);
+        const error = document.createElement("p");
+        error.textContent = "Görseller yüklenemedi.";
+        error.style.color = "#f45b69";
+        characterImagesGrid.appendChild(error);
+    }
+}
+
+// --- Resim Yönetimi ---
+
+function openImageModal(image = null) {
+    editingImageId = image ? image.id : null;
+    imageModalTitle.textContent = image ? "Resim Düzenle" : "Yeni Resim";
+
+    if (image) {
+        imageTitleInput.value = image.title || "";
+        imageDescriptionInput.value = image.description || "";
+        imageTagsInput.value = Array.isArray(image.tags) ? image.tags.join(", ") : (image.tags || "");
+        imageFileInput.required = false;
+        if (image.url) {
+            imagePreview.src = image.url;
+            imagePreviewWrapper.style.display = "block";
+        }
+    } else {
+        imageForm.reset();
+        imageFileInput.required = true;
+        imagePreviewWrapper.style.display = "none";
+    }
+
+    imageModal.classList.remove("hidden");
+}
+
+function closeImageModal() {
+    imageModal.classList.add("hidden");
+    editingImageId = null;
+    imageForm.reset();
+    imagePreviewWrapper.style.display = "none";
+}
+
+function handleImageFileChange() {
+    const file = imageFileInput.files[0];
+    if (!file) {
+        imagePreviewWrapper.style.display = "none";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        imagePreview.src = e.target.result;
+        imagePreviewWrapper.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+}
+
+async function handleImageFormSubmit(event) {
+    event.preventDefault();
+
+    const title = imageTitleInput.value.trim();
+    if (!title) {
+        alert("Resim başlığı gerekli.");
+        return;
+    }
+
+    try {
+        let imageUrl = null;
+        let fileName = "";
+
+        // Yeni resim yükleniyorsa
+        if (imageFileInput.files[0]) {
+            const formData = new FormData();
+            formData.append("file", imageFileInput.files[0]);
+
+            const uploadResponse = await fetch(BACKEND_UPLOAD_URL, {
+                method: "POST",
+                body: formData
+            });
+
+            if (!uploadResponse.ok) throw new Error("Resim yüklenemedi");
+
+            const uploadData = await uploadResponse.json();
+            imageUrl = uploadData.url;
+            fileName = uploadData.name || imageFileInput.files[0].name;
+        }
+
+        const description = imageDescriptionInput.value.trim();
+        const tags = imageTagsInput.value.trim();
+
+        if (editingImageId) {
+            // Güncelle
+            const updateData = {
+                title,
+                description,
+                tags
+            };
+            if (imageUrl) {
+                updateData.url = imageUrl;
+                updateData.fileName = fileName;
+            }
+
+            const response = await fetch(`${BACKEND_BASE_URL}/api/images/${editingImageId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updateData)
+            });
+
+            if (!response.ok) throw new Error("Resim güncellenemedi");
+        } else {
+            // Yeni resim
+            if (!imageUrl) {
+                alert("Yeni resim için dosya seçmelisiniz.");
+                return;
+            }
+
+            const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    url: imageUrl,
+                    fileName: fileName,
+                    title,
+                    description,
+                    tags,
+                    createdByUserId: currentUser.username
+                })
+            });
+
+            if (!response.ok) throw new Error("Resim eklenemedi");
+        }
+
+        closeImageModal();
+        await renderCharacterImages();
+    } catch (err) {
+        console.error("Resim kaydedilirken hata:", err);
+        alert("Resim kaydedilemedi: " + err.message);
+    }
+}
+
+async function deleteImage(imageId) {
+    if (!confirm("Bu resmi silmek istediğinize emin misiniz?")) return;
+
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/images/${imageId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Resim silinemedi");
+
+        await renderCharacterImages();
+    } catch (err) {
+        console.error("Resim silinirken hata:", err);
+        alert("Resim silinemedi: " + err.message);
+    }
+}
+
+function openImageViewModal(image) {
+    imageViewLarge.src = image.url;
+    imageViewTitle.textContent = image.title;
+    imageViewDescription.textContent = image.description || "";
+    
+    if (image.tags && image.tags.length > 0) {
+        const tagsText = Array.isArray(image.tags) ? image.tags.join(", ") : image.tags;
+        imageViewTags.textContent = `Etiketler: ${tagsText}`;
+        imageViewTags.style.display = "block";
+    } else {
+        imageViewTags.style.display = "none";
+    }
+
+    imageViewModal.classList.remove("hidden");
+}
+
+function closeImageViewModal() {
+    imageViewModal.classList.add("hidden");
 }
 
 document.addEventListener("DOMContentLoaded", init);

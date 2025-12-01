@@ -92,6 +92,43 @@
             </div>
         </div>
 
+        <!-- KARAKTER DETAY EKRANI -->
+        <section id="character-detail-screen" class="screen hidden">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="back-to-list-btn" class="btn subtle" style="margin-right: 12px;">← Geri</button>
+                    <h1 id="character-detail-name">Karakter Detayı</h1>
+                </div>
+                <div class="topbar-right">
+                    <button id="edit-character-btn" class="btn primary" style="display: none;">Düzenle</button>
+                    <button id="logout-btn-2" class="btn subtle">Çıkış</button>
+                </div>
+            </header>
+
+            <main class="character-detail-content">
+                <div class="character-detail-header">
+                    <div class="character-detail-main-image-wrapper">
+                        <img id="character-detail-main-image" src="" alt="Ana görsel" />
+                    </div>
+                    <div class="character-detail-info">
+                        <h2 id="character-detail-full-name"></h2>
+                        <div id="character-detail-meta"></div>
+                        <div id="character-detail-traits"></div>
+                    </div>
+                </div>
+
+                <div class="character-images-section">
+                    <div class="section-header">
+                        <h3>Resim Kataloğu</h3>
+                        <button id="add-image-btn" class="btn primary" style="display: none;">+ Resim Ekle</button>
+                    </div>
+                    <div id="character-images-grid" class="character-images-grid">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </div>
+            </main>
+        </section>
+
         <!-- KARAKTER EKLE / DÜZENLE MODALI -->
         <div id="character-modal" class="modal hidden">
             <div class="modal-backdrop" id="character-modal-backdrop"></div>
@@ -143,6 +180,59 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- RESİM EKLE / DÜZENLE MODALI -->
+        <div id="image-modal" class="modal hidden">
+            <div class="modal-backdrop" id="image-modal-backdrop"></div>
+            <div class="modal-content">
+                <h3 id="image-modal-title">Yeni Resim</h3>
+                <form id="image-form">
+                    <label>
+                        Resim Başlığı
+                        <input type="text" id="image-title" required />
+                    </label>
+                    <label>
+                        Açıklama
+                        <textarea id="image-description" rows="2"></textarea>
+                    </label>
+                    <label>
+                        Etiketler (virgülle ayırın)
+                        <input type="text" id="image-tags" placeholder="sprite, cg, battle" />
+                    </label>
+                    <label>
+                        Resim Dosyası
+                        <input type="file" id="image-file" accept="image/*" required />
+                    </label>
+                    <div class="image-preview" id="image-preview-wrapper">
+                        <img id="image-preview" alt="Önizleme" />
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="discard-image-btn" class="btn subtle">
+                            Discard
+                        </button>
+                        <button type="submit" class="btn primary">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- RESİM ÖNİZLEME MODALI -->
+        <div id="image-view-modal" class="modal hidden">
+            <div class="modal-backdrop" id="image-view-modal-backdrop"></div>
+            <div class="modal-content" style="max-width: 90vw; max-height: 90vh;">
+                <div style="text-align: right; margin-bottom: 12px;">
+                    <button id="close-image-view-btn" class="btn subtle">×</button>
+                </div>
+                <img id="image-view-large" src="" alt="Büyük görsel" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px;" />
+                <div id="image-view-info" style="margin-top: 16px;">
+                    <h4 id="image-view-title"></h4>
+                    <p id="image-view-description"></p>
+                    <div id="image-view-tags"></div>
+                </div>
             </div>
         </div>
 
