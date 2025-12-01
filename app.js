@@ -982,6 +982,11 @@ function updateBlurButton(isBlurred) {
 }
 
 function initializeEventListeners() {
+            // Blur toggle
+            if (blurToggleBtn) {
+                blurToggleBtn.addEventListener("click", toggleBlur);
+            }
+            
             // Tema toggle
             if (themeToggleBtn) {
                 themeToggleBtn.addEventListener("click", toggleTheme);
