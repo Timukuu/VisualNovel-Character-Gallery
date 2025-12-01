@@ -502,18 +502,12 @@ async function renderCharacters() {
         const card = document.createElement("div");
         card.className = "character-card";
 
-        // Görsel - önce mainImageId'ye bak, yoksa imageUrl'e bak
+        // Görsel - önce mainImageUrl'e bak, yoksa imageUrl'e bak
         const imageWrapper = document.createElement("div");
         imageWrapper.className = "character-image-wrapper";
 
-        let imageUrl = null;
-        if (ch.mainImageId) {
-            // mainImageId varsa, resim kataloğundan bul
-            // Bu async olduğu için şimdilik imageUrl kullan, sonra güncelle
-            imageUrl = ch.mainImageUrl || ch.imageUrl; // mainImageUrl backend'den gelecek
-        } else {
-            imageUrl = ch.imageUrl;
-        }
+        // mainImageId varsa mainImageUrl kullan, yoksa imageUrl kullan
+        const imageUrl = ch.mainImageUrl || ch.imageUrl;
 
         if (imageUrl) {
             const img = document.createElement("img");
