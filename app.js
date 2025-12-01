@@ -184,6 +184,13 @@ async function handleLoginSubmit(event) {
 
     currentUser = user;
 
+    // Session'ı localStorage'a kaydet
+    localStorage.setItem("currentUser", JSON.stringify({
+        username: user.username,
+        role: user.role,
+        projects: user.projects
+    }));
+
     // Ekran geçişi
     loginScreen.classList.add("hidden");
     mainScreen.classList.remove("hidden");
@@ -210,12 +217,17 @@ function handleLogout() {
     currentUser = null;
     currentProjectId = null;
 
+    // Session'ı temizle
+    localStorage.removeItem("currentUser");
+
     // Formu temizle
     loginForm.reset();
     loginErrorEl.textContent = "";
 
     // Ekran geçişi
     mainScreen.classList.add("hidden");
+    characterDetailScreen.classList.add("hidden");
+    usersManagementScreen.classList.add("hidden");
     loginScreen.classList.remove("hidden");
 }
 
@@ -683,6 +695,19 @@ function handleCharacterFormSubmit(event) {
         return;
     }
 
+    // Aynı isim/soyisim kontrolü (düzenleme hariç)
+    if (!editingCharacterId) {
+        const existingCharacters = await loadCharacters(currentProjectId);
+        const duplicate = existingCharacters.find(
+            ch => ch.firstName.toLowerCase() === firstName.toLowerCase() && 
+                  ch.lastName.toLowerCase() === lastName.toLowerCase()
+        );
+        if (duplicate) {
+            alert("Bu isim ve soyisimde bir karakter zaten mevcut.");
+            return;
+        }
+    }
+
     // Karakter objesi (imageUrl daha sonra dolacak)
     const baseCharacter = {
         id: editingCharacterId || generateId(),
@@ -798,11 +823,58 @@ function handleImageChange() {
 // --- Başlatma ---
 
 function init() {
+    // Önce localStorage'dan session kontrolü yap
+    const savedUser = localStorage.getItem("currentUser");
+    if (savedUser) {
+        try {
+            const userData = JSON.parse(savedUser);
+            // users.json'dan tam kullanıcı bilgisini al
+            loadJSON("data/users.json")
+                .then(usersData => {
+                    users = usersData;
+                    const user = users.find(u => u.username === userData.username);
+                    if (user) {
+                        currentUser = user;
+                        // Otomatik giriş yap
+                        loginScreen.classList.add("hidden");
+                        mainScreen.classList.remove("hidden");
+                        currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+                        if (currentUser.role === "admin" && usersManagementBtn) {
+                            usersManagementBtn.style.display = "block";
+                        }
+                        loadProjectsFromBackend();
+                        initializeEventListeners();
+                    } else {
+                        initializeApp();
+                    }
+                })
+                .catch(() => {
+                    initializeApp();
+                });
+            return;
+        } catch (err) {
+            console.error("Session yüklenirken hata:", err);
+        }
+    }
+    initializeApp();
+}
+
+function initializeApp() {
     // users JSON'unu yükle, projects backend'den gelecek
     Promise.all([loadJSON("data/users.json"), fetch(BACKEND_PROJECTS_URL).then(res => res.json())])
         .then(([usersData, projectsData]) => {
             users = usersData;
             projects = projectsData;
+            
+            initializeEventListeners();
+        })
+        .catch((err) => {
+            console.error("Başlangıç verileri yüklenemedi:", err);
+            alert("Veri dosyaları (users.json / projects.json) yüklenemedi. Konsolu kontrol edin.");
+        });
+}
+
+function initializeEventListeners() {
 
             // Event listeners
             loginForm.addEventListener("submit", handleLoginSubmit);
@@ -889,6 +961,26 @@ function init() {
             if (imageViewModalBackdrop) {
                 imageViewModalBackdrop.addEventListener("click", closeImageViewModal);
             }
+            const prevImageBtn = document.getElementById("prev-image-btn");
+            const nextImageBtn = document.getElementById("next-image-btn");
+            if (prevImageBtn) {
+                prevImageBtn.addEventListener("click", prevImage);
+            }
+            if (nextImageBtn) {
+                nextImageBtn.addEventListener("click", nextImage);
+            }
+            
+            // Klavye ile navigasyon
+            document.addEventListener("keydown", (e) => {
+                if (!imageViewModal || imageViewModal.classList.contains("hidden")) return;
+                if (e.key === "ArrowLeft") {
+                    prevImage();
+                } else if (e.key === "ArrowRight") {
+                    nextImage();
+                } else if (e.key === "Escape") {
+                    closeImageViewModal();
+                }
+            });
         })
         .catch((err) => {
             console.error("Başlangıç verileri yüklenemedi:", err);
@@ -1274,8 +1366,112 @@ async function deleteImage(imageId) {
     }
 }
 
-function openImageViewModal(image) {
-    imageViewLarge.src = image.url;
+let currentImageIndex = 0;
+let allImagesForCarousel = [];
+
+async function openImageViewModal(image) {
+    // Tüm resimleri yükle
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+        if (response.ok) {
+            allImagesForCarousel = await response.json();
+            currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
+            if (currentImageIndex === -1) currentImageIndex = 0;
+        } else {
+            allImagesForCarousel = [image];
+            currentImageIndex = 0;
+        }
+    } catch (err) {
+        console.error("Resimler yüklenirken hata:", err);
+        allImagesForCarousel = [image];
+        currentImageIndex = 0;
+    }
+
+    renderImageCarousel();
+    imageViewModal.classList.remove("hidden");
+}
+
+function renderImageCarousel() {
+    const track = document.getElementById("image-carousel-track");
+    const indicator = document.getElementById("image-carousel-indicator");
+    const prevBtn = document.getElementById("prev-image-btn");
+    const nextBtn = document.getElementById("next-image-btn");
+    
+    if (!track) return;
+
+    track.innerHTML = "";
+    
+    const imageCount = allImagesForCarousel.length;
+    
+    // Track class'ını ayarla
+    track.className = "image-carousel-track";
+    if (imageCount === 1) {
+        track.classList.add("single-item");
+    } else if (imageCount === 2) {
+        track.classList.add("double-item");
+    }
+
+    // Butonları göster/gizle
+    if (imageCount > 1) {
+        prevBtn.style.display = "block";
+        nextBtn.style.display = "block";
+    } else {
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+    }
+
+    // Resimleri oluştur
+    allImagesForCarousel.forEach((img, index) => {
+        const item = document.createElement("div");
+        item.className = "image-carousel-item";
+        if (index === currentImageIndex) {
+            item.classList.add("active");
+        }
+
+        const imgEl = document.createElement("img");
+        imgEl.src = img.url;
+        imgEl.alt = img.title;
+        item.appendChild(imgEl);
+
+        item.addEventListener("click", () => {
+            if (index !== currentImageIndex) {
+                currentImageIndex = index;
+                renderImageCarousel();
+                updateImageInfo();
+            }
+        });
+
+        track.appendChild(item);
+    });
+
+    // Track pozisyonunu ayarla (3 resim için)
+    setTimeout(() => {
+        if (imageCount > 3) {
+            const activeItem = track.querySelector(".image-carousel-item.active");
+            if (activeItem) {
+                const itemWidth = activeItem.offsetWidth;
+                const gap = 20;
+                const containerWidth = track.parentElement.offsetWidth;
+                const offset = -(currentImageIndex * (itemWidth + gap)) + (containerWidth / 2) - (itemWidth / 2);
+                track.style.transform = `translateX(${offset}px)`;
+            }
+        } else {
+            track.style.transform = "translateX(0)";
+        }
+    }, 50);
+
+    // Indicator
+    if (indicator) {
+        indicator.textContent = `${currentImageIndex + 1} / ${imageCount}`;
+    }
+    
+    updateImageInfo();
+}
+
+function updateImageInfo() {
+    if (allImagesForCarousel.length === 0) return;
+    
+    const image = allImagesForCarousel[currentImageIndex];
     imageViewTitle.textContent = image.title;
     imageViewDescription.textContent = image.description || "";
     
@@ -1286,8 +1482,18 @@ function openImageViewModal(image) {
     } else {
         imageViewTags.style.display = "none";
     }
+}
 
-    imageViewModal.classList.remove("hidden");
+function nextImage() {
+    if (allImagesForCarousel.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % allImagesForCarousel.length;
+    renderImageCarousel();
+}
+
+function prevImage() {
+    if (allImagesForCarousel.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + allImagesForCarousel.length) % allImagesForCarousel.length;
+    renderImageCarousel();
 }
 
 function closeImageViewModal() {
