@@ -674,7 +674,7 @@ function clearImagePreview() {
 }
 
 // Save sırasında, dosya varsa backend'e upload edip dönen URL'yi saklıyoruz
-function handleCharacterFormSubmit(event) {
+async function handleCharacterFormSubmit(event) {
     event.preventDefault();
 
     if (!currentProjectId) {
