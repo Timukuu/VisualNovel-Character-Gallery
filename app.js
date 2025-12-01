@@ -639,7 +639,7 @@ function handleCharacterFormSubmit(event) {
 
     // Karakter objesi (imageUrl daha sonra dolacak)
     const baseCharacter = {
-        id: generateId(),
+        id: editingCharacterId || generateId(),
         firstName,
         lastName,
         traits,
@@ -717,12 +717,13 @@ async function saveNewCharacter(character) {
 
         if (!response.ok) throw new Error("Karakter kaydedilemedi");
 
+        const savedCharacter = await response.json();
         closeCharacterModal();
         await renderCharacters();
         
         // Eğer detay ekranı açıksa, güncelle
-        if (currentCharacterId && currentCharacterId === character.id) {
-            await openCharacterDetail(await response.json());
+        if (currentCharacterId && currentCharacterId === savedCharacter.id) {
+            await openCharacterDetail(savedCharacter);
         }
     } catch (err) {
         console.error("Karakter kaydedilirken hata:", err);
