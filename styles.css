@@ -576,6 +576,18 @@ textarea {
     transform: scale(1.02);
 }
 
+/* Blur efekti - karakter kartlarındaki görseller için */
+body.blur-images .character-card img,
+body.blur-images .character-image-wrapper img {
+    filter: blur(8px);
+    transition: filter 0.3s ease;
+}
+
+body.blur-images .character-card:hover img,
+body.blur-images .character-image-wrapper:hover img {
+    filter: blur(0px);
+}
+
 .character-images-grid.drag-active {
     pointer-events: none;
 }

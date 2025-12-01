@@ -65,6 +65,7 @@ const currentUserInfoEl = document.getElementById("current-user-info");
 const logoutBtn = document.getElementById("logout-btn");
 const usersManagementBtn = document.getElementById("users-management-btn");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
+const blurToggleBtn = document.getElementById("blur-toggle-btn");
 
 const projectListEl = document.getElementById("project-list");
 const currentProjectTitleEl = document.getElementById("current-project-title");
@@ -951,6 +952,29 @@ function toggleTheme() {
 function updateThemeButton(theme) {
     if (themeToggleBtn) {
         themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+    }
+}
+
+// Blur yönetimi
+function initBlur() {
+    const savedBlur = localStorage.getItem("blurImages") === "true";
+    document.body.classList.toggle("blur-images", savedBlur);
+    updateBlurButton(savedBlur);
+}
+
+function toggleBlur() {
+    const isBlurred = document.body.classList.contains("blur-images");
+    const newBlurState = !isBlurred;
+    document.body.classList.toggle("blur-images", newBlurState);
+    localStorage.setItem("blurImages", newBlurState.toString());
+    updateBlurButton(newBlurState);
+    showToast(`Görseller ${newBlurState ? "bulanıklaştırıldı" : "netleştirildi"}`, "info", 2000);
+}
+
+function updateBlurButton(isBlurred) {
+    if (blurToggleBtn) {
+        blurToggleBtn.textContent = isBlurred ? "👁️‍🗨️" : "👁️";
+        blurToggleBtn.title = isBlurred ? "Görselleri Netleştir" : "Görselleri Bulanıklaştır";
     }
 }
 
