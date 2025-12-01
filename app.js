@@ -859,7 +859,6 @@ function init() {
             if (editCharacterBtn) {
                 editCharacterBtn.addEventListener("click", () => {
                     if (currentCharacter) {
-                        characterDetailScreen.classList.add("hidden");
                         openCharacterModal(currentCharacter);
                     }
                 });
