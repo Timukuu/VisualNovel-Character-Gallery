@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+    <!-- Toast Bildirimleri -->
+    <div id="toast-container" class="toast-container"></div>
+    
     <div id="app">
 
         <!-- GİRİŞ EKRANI -->
@@ -38,6 +41,7 @@
                     <span id="current-user-info" class="pill"></span>
                 </div>
                 <div class="topbar-right" style="display: flex; gap: 8px; align-items: center;">
+                    <button id="theme-toggle-btn" class="btn subtle" title="Tema Değiştir">🌓</button>
                     <button id="users-management-btn" class="btn subtle" style="display: none;">Kullanıcı Yönetimi</button>
                     <button id="logout-btn" class="btn subtle">Çıkış</button>
                 </div>

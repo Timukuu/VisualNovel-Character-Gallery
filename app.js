@@ -4,6 +4,38 @@
 let users = [];
 let projects = [];
 
+// Toast bildirimleri
+function showToast(message, type = "info", duration = 3000) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+
+    const icons = {
+        success: "✓",
+        error: "✕",
+        info: "ℹ",
+        warning: "⚠"
+    };
+
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type] || icons.info}</span>
+        <span class="toast-content">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Otomatik kaldır
+    if (duration > 0) {
+        setTimeout(() => {
+            toast.classList.add("slide-out");
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
+}
+
 let currentUser = null;
 let currentProjectId = null;
 let currentCharacterId = null;
@@ -32,6 +64,7 @@ const loginErrorEl = document.getElementById("login-error");
 const currentUserInfoEl = document.getElementById("current-user-info");
 const logoutBtn = document.getElementById("logout-btn");
 const usersManagementBtn = document.getElementById("users-management-btn");
+const themeToggleBtn = document.getElementById("theme-toggle-btn");
 
 const projectListEl = document.getElementById("project-list");
 const currentProjectTitleEl = document.getElementById("current-project-title");
@@ -523,8 +556,30 @@ async function renderCharacters() {
 
         if (imageUrl) {
             const img = document.createElement("img");
-            img.src = imageUrl;
             img.alt = `${ch.firstName} ${ch.lastName}`;
+            img.loading = "lazy"; // Lazy loading
+            img.style.backgroundColor = "var(--bg-soft)";
+            
+            // Lazy loading için Intersection Observer kullan
+            if ("IntersectionObserver" in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const imgEl = entry.target;
+                            imgEl.src = imgEl.dataset.src || imageUrl;
+                            imgEl.classList.add("loaded");
+                            observer.unobserve(imgEl);
+                        }
+                    });
+                }, { rootMargin: "50px" });
+                
+                img.dataset.src = imageUrl;
+                observer.observe(img);
+            } else {
+                // Fallback: Eski tarayıcılar için direkt yükle
+                img.src = imageUrl;
+            }
+            
             imageWrapper.appendChild(img);
         } else {
             const placeholder = document.createElement("div");
@@ -823,6 +878,9 @@ function handleImageChange() {
 // --- Başlatma ---
 
 function init() {
+    // Tema yükle
+    initTheme();
+    
     // Önce localStorage'dan session kontrolü yap
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
@@ -874,7 +932,33 @@ function initializeApp() {
         });
 }
 
+// Tema yönetimi
+function initTheme() {
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+    updateThemeButton(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("theme", newTheme);
+    updateThemeButton(newTheme);
+    showToast(`Tema ${newTheme === "dark" ? "Karanlık" : "Aydınlık"} moduna geçirildi`, "info", 2000);
+}
+
+function updateThemeButton(theme) {
+    if (themeToggleBtn) {
+        themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+    }
+}
+
 function initializeEventListeners() {
+            // Tema toggle
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener("click", toggleTheme);
+            }
 
             // Event listeners
             loginForm.addEventListener("submit", handleLoginSubmit);
@@ -1095,18 +1179,89 @@ async function renderCharacterImages() {
             return;
         }
 
-        images.forEach((img) => {
+        images.forEach((img, index) => {
             const imageCard = document.createElement("div");
             imageCard.className = "character-image-card";
             imageCard.style.cursor = "pointer";
+            imageCard.dataset.imageId = img.id;
+            imageCard.dataset.orderIndex = img.orderIndex !== undefined ? img.orderIndex : index;
+
+            // Admin ise drag & drop ekle
+            if (currentUser.role === "admin") {
+                imageCard.classList.add("draggable");
+                imageCard.draggable = true;
+                
+                // Drag event handlers
+                imageCard.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", img.id);
+                    imageCard.classList.add("dragging");
+                    characterImagesGrid.classList.add("drag-active");
+                });
+
+                imageCard.addEventListener("dragend", (e) => {
+                    imageCard.classList.remove("dragging");
+                    characterImagesGrid.classList.remove("drag-active");
+                    // Tüm drag-over class'larını temizle
+                    document.querySelectorAll(".character-image-card.drag-over").forEach(card => {
+                        card.classList.remove("drag-over");
+                    });
+                });
+
+                imageCard.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    
+                    const draggingCard = document.querySelector(".character-image-card.dragging");
+                    if (draggingCard && draggingCard !== imageCard) {
+                        imageCard.classList.add("drag-over");
+                    }
+                });
+
+                imageCard.addEventListener("dragleave", (e) => {
+                    imageCard.classList.remove("drag-over");
+                });
+
+                imageCard.addEventListener("drop", async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    imageCard.classList.remove("drag-over");
+                    
+                    const draggedImageId = e.dataTransfer.getData("text/plain");
+                    if (draggedImageId && draggedImageId !== img.id) {
+                        await handleImageReorder(draggedImageId, img.id);
+                    }
+                });
+            }
 
             const imgEl = document.createElement("img");
-            imgEl.src = img.url;
             imgEl.alt = img.title;
             imgEl.style.width = "100%";
             imgEl.style.aspectRatio = "2 / 3"; // 768x1152 oranı
             imgEl.style.objectFit = "cover";
             imgEl.style.borderRadius = "var(--radius-md)";
+            imgEl.style.backgroundColor = "var(--bg-soft)";
+            imgEl.loading = "lazy"; // Lazy loading
+            
+            // Lazy loading için Intersection Observer kullan
+            if ("IntersectionObserver" in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src || img.url;
+                            img.classList.add("loaded");
+                            observer.unobserve(img);
+                        }
+                    });
+                }, { rootMargin: "50px" });
+                
+                imgEl.dataset.src = img.url;
+                observer.observe(imgEl);
+            } else {
+                // Fallback: Eski tarayıcılar için direkt yükle
+                imgEl.src = img.url;
+            }
 
             imgEl.addEventListener("click", () => {
                 openImageViewModal(img);
@@ -1355,6 +1510,47 @@ async function handleImageFormSubmit(event) {
             submitBtn.classList.remove("loading");
             submitBtn.textContent = "Save";
         }
+    }
+}
+
+// Resim sıralamasını güncelle (drag & drop için)
+async function handleImageReorder(draggedImageId, targetImageId) {
+    if (!currentCharacterId) return;
+
+    try {
+        // Mevcut resimleri yükle
+        const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
+        if (!response.ok) throw new Error("Resimler yüklenemedi");
+        
+        const images = await response.json();
+        
+        // Yeni sıralamayı hesapla
+        const draggedIndex = images.findIndex(img => img.id === draggedImageId);
+        const targetIndex = images.findIndex(img => img.id === targetImageId);
+        
+        if (draggedIndex === -1 || targetIndex === -1) return;
+        
+        // Array'den çıkar ve yeni pozisyona ekle
+        const [draggedImage] = images.splice(draggedIndex, 1);
+        images.splice(targetIndex, 0, draggedImage);
+        
+        // Yeni sıralamadaki ID'leri al
+        const imageIds = images.map(img => img.id);
+        
+        // Backend'e gönder
+        const reorderResponse = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images/reorder`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageIds })
+        });
+        
+        if (!reorderResponse.ok) throw new Error("Sıralama güncellenemedi");
+        
+        // UI'ı yenile
+        await renderCharacterImages();
+    } catch (err) {
+        console.error("Resim sıralaması güncellenirken hata:", err);
+        alert("Resim sıralaması güncellenemedi: " + err.message);
     }
 }
 
