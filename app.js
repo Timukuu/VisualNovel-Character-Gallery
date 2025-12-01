@@ -350,7 +350,7 @@ function handleCharacterFormSubmit(event) {
     })
         .then((res) => {
             if (!res.ok) {
-                throw new Error("Upload başarısız: " + res.status);
+                throw new Error(`Upload başarısız: ${res.status} ${res.statusText}`);
             }
             return res.json();
         })
@@ -363,7 +363,8 @@ function handleCharacterFormSubmit(event) {
         })
         .catch((err) => {
             console.error("Upload hatası:", err);
-            alert("Görsel yüklenirken hata oluştu. Karakter görselsiz kaydedilecek.");
+            console.error("Backend URL:", BACKEND_UPLOAD_URL);
+            alert(`Görsel yüklenirken hata oluştu: ${err.message}\n\nBackend URL: ${BACKEND_UPLOAD_URL}\n\nKarakter görselsiz kaydedilecek.`);
             saveNewCharacter(baseCharacter);
         })
         .finally(() => {
