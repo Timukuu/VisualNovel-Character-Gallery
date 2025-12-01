@@ -736,6 +736,8 @@ async function renderCharactersSidebar() {
 
 // Sağ panelde karakter detayı göster
 async function showCharacterDetail(character) {
+    console.log("showCharacterDetail çağrıldı:", character);
+    
     // DOM referanslarını kontrol et ve al
     if (!characterDetailContent) characterDetailContent = document.getElementById("character-detail-content");
     if (!emptyState) emptyState = document.getElementById("empty-state");
@@ -748,10 +750,13 @@ async function showCharacterDetail(character) {
     if (!addImageBtnPanel) addImageBtnPanel = document.getElementById("add-image-btn-panel");
     
     if (!characterDetailContent || !emptyState) {
-        console.error("character-detail-content veya empty-state element bulunamadı!");
+        console.error("❌ character-detail-content veya empty-state element bulunamadı!");
+        console.log("characterDetailContent:", characterDetailContent);
+        console.log("emptyState:", emptyState);
         return;
     }
 
+    console.log("✅ DOM referansları bulundu, içerik gösteriliyor...");
     emptyState.classList.add("hidden");
     characterDetailContent.classList.remove("hidden");
 
@@ -822,7 +827,14 @@ function openCharacterEditMode(character) {
 
 // Boş durum göster
 function showEmptyState() {
-    if (!emptyState || !characterDetailContent) return;
+    // DOM referanslarını kontrol et
+    if (!emptyState) emptyState = document.getElementById("empty-state");
+    if (!characterDetailContent) characterDetailContent = document.getElementById("character-detail-content");
+    
+    if (!emptyState || !characterDetailContent) {
+        console.warn("showEmptyState: emptyState veya characterDetailContent bulunamadı!");
+        return;
+    }
     emptyState.classList.remove("hidden");
     characterDetailContent.classList.add("hidden");
     currentCharacterId = null;
