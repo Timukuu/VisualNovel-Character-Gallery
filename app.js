@@ -556,8 +556,8 @@ async function renderCharacters() {
         card.appendChild(traitsEl);
 
         // Aksiyonlar
-        const actions = document.createElement("div");
-        actions.className = "character-actions";
+            const actions = document.createElement("div");
+            actions.className = "character-actions";
 
         // Detay butonu (herkes için)
         const detailBtn = document.createElement("button");
@@ -642,8 +642,8 @@ function openCharacterModal(character = null) {
             clearImagePreview();
         }
     } else {
-        characterForm.reset();
-        clearImagePreview();
+    characterForm.reset();
+    clearImagePreview();
     }
     
     characterModal.classList.remove("hidden");
@@ -752,13 +752,13 @@ async function handleCharacterFormSubmit(event) {
                 throw new Error("Backend yanıtında url yok");
             }
             baseCharacter.imageUrl = data.url;
-            saveNewCharacter(baseCharacter);
+        saveNewCharacter(baseCharacter);
         })
         .catch((err) => {
             console.error("Upload hatası:", err);
             console.error("Backend URL:", BACKEND_UPLOAD_URL);
             alert(`Görsel yüklenirken hata oluştu: ${err.message}\n\nBackend URL: ${BACKEND_UPLOAD_URL}\n\nKarakter görselsiz kaydedilecek.`);
-            saveNewCharacter(baseCharacter);
+        saveNewCharacter(baseCharacter);
         })
         .finally(() => {
             if (submitBtn) {
@@ -791,7 +791,7 @@ async function saveNewCharacter(character) {
         if (!response.ok) throw new Error("Karakter kaydedilemedi");
 
         const savedCharacter = await response.json();
-        closeCharacterModal();
+    closeCharacterModal();
         await renderCharacters();
         
         // Eğer detay ekranı açıksa, güncelle
@@ -983,11 +983,6 @@ function initializeEventListeners() {
                     closeImageViewModal();
                 }
             });
-}
-        .catch((err) => {
-            console.error("Başlangıç verileri yüklenemedi:", err);
-            alert("Veri dosyaları (users.json / projects.json) yüklenemedi. Konsolu kontrol edin.");
-        });
 }
 
 // --- Karakter Detay Ekranı ---
