@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Karakter Katalogu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div id="app">
+
+        <!-- GİRİŞ EKRANI -->
+        <section id="login-screen" class="screen">
+            <div class="card card-login">
+                <h1>Proje Katalog Girişi</h1>
+                <form id="login-form">
+                    <label>
+                        Kullanıcı Adı
+                        <input type="text" id="username" autocomplete="username" required />
+                    </label>
+                    <label>
+                        Şifre
+                        <input type="password" id="password" autocomplete="current-password" required />
+                    </label>
+                    <button type="submit" class="btn primary">Giriş Yap</button>
+                    <p id="login-error" class="error-message"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ANA EKRAN -->
+        <section id="main-screen" class="screen hidden">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h1>Karakter Katalogu</h1>
+                    <span id="current-user-info" class="pill"></span>
+                </div>
+                <div class="topbar-right">
+                    <button id="logout-btn" class="btn subtle">Çıkış</button>
+                </div>
+            </header>
+
+            <main class="layout">
+                <!-- PROJE LİSTESİ -->
+                <aside class="sidebar">
+                    <h2>Projeler</h2>
+                    <ul id="project-list" class="project-list">
+                        <!-- JS ile doldurulacak -->
+                    </ul>
+                </aside>
+
+                <!-- KATALOG / KARAKTERLER -->
+                <section class="content">
+                    <div class="content-header">
+                        <h2 id="current-project-title">Proje Seçilmedi</h2>
+                        <button id="add-character-btn" class="btn primary" disabled>
+                            + Karakter Ekle
+                        </button>
+                    </div>
+
+                    <div id="characters-container" class="characters-grid">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                </section>
+            </main>
+        </section>
+
+        <!-- KARAKTER EKLE / DÜZENLE MODALI -->
+        <div id="character-modal" class="modal hidden">
+            <div class="modal-backdrop" id="character-modal-backdrop"></div>
+            <div class="modal-content">
+                <h3 id="character-modal-title">Yeni Karakter</h3>
+                <form id="character-form">
+                    <div class="form-row">
+                        <label>
+                            İsim
+                            <input type="text" id="char-first-name" required />
+                        </label>
+                        <label>
+                            Soyisim
+                            <input type="text" id="char-last-name" required />
+                        </label>
+                    </div>
+
+                    <label>
+                        Karakteristik Özellikler
+                        <textarea id="char-traits" rows="3" placeholder="Kısa açıklama..."></textarea>
+                    </label>
+
+                    <div class="form-row">
+                        <label>
+                            Burcu
+                            <input type="text" id="char-zodiac" />
+                        </label>
+                        <label>
+                            Yaş
+                            <input type="number" id="char-age" min="0" />
+                        </label>
+                    </div>
+
+                    <label>
+                        Karakter Resmi
+                        <input type="file" id="char-image" accept="image/*" />
+                    </label>
+
+                    <div class="image-preview" id="char-image-preview-wrapper">
+                        <img id="char-image-preview" alt="Önizleme" />
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="discard-character-btn" class="btn subtle">
+                            Discard
+                        </button>
+                        <button type="submit" class="btn primary">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
