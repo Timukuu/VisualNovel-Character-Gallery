@@ -1307,18 +1307,35 @@ function initializeEventListeners() {
             logoutBtn.addEventListener("click", handleLogout);
     }
 
+            if (addCharacterBtn) {
             addCharacterBtn.addEventListener("click", openCharacterModal);
+            }
+            if (discardCharacterBtn) {
             discardCharacterBtn.addEventListener("click", closeCharacterModal);
+            }
+            if (characterModalBackdrop) {
             characterModalBackdrop.addEventListener("click", closeCharacterModal);
-
+            }
+            if (characterForm) {
             characterForm.addEventListener("submit", handleCharacterFormSubmit);
+            }
+            if (charImageInput) {
             charImageInput.addEventListener("change", handleImageChange);
+            }
 
             // Proje yönetimi
-            addProjectBtn.addEventListener("click", () => openProjectModal());
-            discardProjectBtn.addEventListener("click", closeProjectModal);
-            projectModalBackdrop.addEventListener("click", closeProjectModal);
-            projectForm.addEventListener("submit", handleProjectFormSubmit);
+            if (addProjectBtn) {
+                addProjectBtn.addEventListener("click", () => openProjectModal());
+            }
+            if (discardProjectBtn) {
+                discardProjectBtn.addEventListener("click", closeProjectModal);
+            }
+            if (projectModalBackdrop) {
+                projectModalBackdrop.addEventListener("click", closeProjectModal);
+            }
+            if (projectForm) {
+                projectForm.addEventListener("submit", handleProjectFormSubmit);
+            }
 
             // Kullanıcı yönetimi
             if (usersManagementBtn) {
