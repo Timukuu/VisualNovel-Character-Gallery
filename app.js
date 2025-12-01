@@ -1363,7 +1363,7 @@ async function renderCharacterImages() {
                 actions.style.flexWrap = "wrap";
 
                 // Ana görsel yap butonu
-                if (!currentCharacter || currentCharacter.mainImageId !== img.id) {
+                if (!currentCharacter || currentCharacter.mainImageId !== defaultImage.id) {
                     const setMainBtn = document.createElement("button");
                     setMainBtn.className = "btn subtle";
                     setMainBtn.textContent = "Ana Görsel";
@@ -1374,9 +1374,25 @@ async function renderCharacterImages() {
                     setMainBtn.addEventListener("click", (e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        setMainImage(img.id, img.url);
+                        setMainImage(defaultImage.id, defaultImage.url);
                     });
                     actions.appendChild(setMainBtn);
+                }
+
+                // Gruplu resimler için default görsel seç butonu
+                if (isGrouped) {
+                    const selectDefaultBtn = document.createElement("button");
+                    selectDefaultBtn.className = "btn subtle";
+                    selectDefaultBtn.textContent = "Görsel Seç";
+                    selectDefaultBtn.style.fontSize = "11px";
+                    selectDefaultBtn.style.padding = "4px 8px";
+                    selectDefaultBtn.style.pointerEvents = "auto";
+                    selectDefaultBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        openImageGroupModal(title, groupImages, defaultImage.id);
+                    });
+                    actions.appendChild(selectDefaultBtn);
                 }
 
                 const editBtn = document.createElement("button");
@@ -1388,7 +1404,7 @@ async function renderCharacterImages() {
                 editBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    openImageModal(img);
+                    openImageModal(defaultImage);
                 });
 
                 const deleteBtn = document.createElement("button");
@@ -1401,7 +1417,13 @@ async function renderCharacterImages() {
                 deleteBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    deleteImage(img.id);
+                    if (isGrouped) {
+                        if (confirm(`"${title}" başlığındaki tüm ${groupImages.length} resmi silmek istediğinize emin misiniz?`)) {
+                            groupImages.forEach(img => deleteImage(img.id));
+                        }
+                    } else {
+                        deleteImage(defaultImage.id);
+                    }
                 });
 
                 actions.appendChild(editBtn);
