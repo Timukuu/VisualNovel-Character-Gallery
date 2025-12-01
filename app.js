@@ -211,22 +211,29 @@ function renderProjects() {
             const editBtn = document.createElement("button");
             editBtn.className = "btn subtle";
             editBtn.textContent = "✎";
-            editBtn.style.fontSize = "12px";
-            editBtn.style.padding = "4px 6px";
+            editBtn.style.fontSize = "14px";
+            editBtn.style.padding = "4px 8px";
+            editBtn.style.minWidth = "28px";
+            editBtn.style.cursor = "pointer";
             editBtn.title = "Düzenle";
             editBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 openProjectModal(project);
             });
 
             const deleteBtn = document.createElement("button");
             deleteBtn.className = "btn subtle";
             deleteBtn.textContent = "×";
-            deleteBtn.style.fontSize = "16px";
-            deleteBtn.style.padding = "2px 6px";
+            deleteBtn.style.fontSize = "18px";
+            deleteBtn.style.padding = "2px 8px";
+            deleteBtn.style.minWidth = "28px";
+            deleteBtn.style.cursor = "pointer";
+            deleteBtn.style.color = "var(--danger)";
             deleteBtn.title = "Sil";
             deleteBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 deleteProject(project.id);
             });
 
