@@ -1161,14 +1161,14 @@ async function renderCharacterImages() {
         
         const images = await response.json();
         
-        // Karakterin mainImageId'sine göre resimleri sırala (ana görsel en üstte)
-        if (currentCharacter && currentCharacter.mainImageId) {
-            images.sort((a, b) => {
-                if (a.id === currentCharacter.mainImageId) return -1;
-                if (b.id === currentCharacter.mainImageId) return 1;
-                return 0;
-            });
-        }
+        // orderIndex'e göre sırala (backend'den zaten sıralı geliyor ama emin olmak için)
+        images.sort((a, b) => {
+            const aOrder = a.orderIndex !== undefined ? a.orderIndex : 999999;
+            const bOrder = b.orderIndex !== undefined ? b.orderIndex : 999999;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            // orderIndex yoksa createdAt'e göre sırala
+            return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        });
 
         if (images.length === 0) {
             const info = document.createElement("p");
@@ -1191,15 +1191,21 @@ async function renderCharacterImages() {
                 imageCard.classList.add("draggable");
                 imageCard.draggable = true;
                 
+                let isDragging = false;
+                
                 // Drag event handlers
                 imageCard.addEventListener("dragstart", (e) => {
+                    isDragging = true;
                     e.dataTransfer.effectAllowed = "move";
                     e.dataTransfer.setData("text/plain", img.id);
                     imageCard.classList.add("dragging");
                     characterImagesGrid.classList.add("drag-active");
+                    // Resim tıklamasını engelle
+                    e.stopPropagation();
                 });
 
                 imageCard.addEventListener("dragend", (e) => {
+                    isDragging = false;
                     imageCard.classList.remove("dragging");
                     characterImagesGrid.classList.remove("drag-active");
                     // Tüm drag-over class'larını temizle
@@ -1210,6 +1216,7 @@ async function renderCharacterImages() {
 
                 imageCard.addEventListener("dragover", (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     e.dataTransfer.dropEffect = "move";
                     
                     const draggingCard = document.querySelector(".character-image-card.dragging");
@@ -1219,7 +1226,10 @@ async function renderCharacterImages() {
                 });
 
                 imageCard.addEventListener("dragleave", (e) => {
-                    imageCard.classList.remove("drag-over");
+                    // Sadece kart dışına çıkıldığında temizle
+                    if (!imageCard.contains(e.relatedTarget)) {
+                        imageCard.classList.remove("drag-over");
+                    }
                 });
 
                 imageCard.addEventListener("drop", async (e) => {
@@ -1248,10 +1258,10 @@ async function renderCharacterImages() {
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.dataset.src || img.url;
-                            img.classList.add("loaded");
-                            observer.unobserve(img);
+                            const imgElement = entry.target;
+                            imgElement.src = imgElement.dataset.src || img.url;
+                            imgElement.classList.add("loaded");
+                            observer.unobserve(imgElement);
                         }
                     });
                 }, { rootMargin: "50px" });
@@ -1263,9 +1273,34 @@ async function renderCharacterImages() {
                 imgEl.src = img.url;
             }
 
-            imgEl.addEventListener("click", () => {
-                openImageViewModal(img);
-            });
+            // Admin ise drag sırasında tıklamayı engelle, değilse normal tıklama
+            if (currentUser.role === "admin") {
+                let isDragging = false;
+                
+                // Drag başladığında flag'i set et
+                imageCard.addEventListener("dragstart", () => {
+                    isDragging = true;
+                });
+                
+                imageCard.addEventListener("dragend", () => {
+                    isDragging = false;
+                });
+                
+                imgEl.addEventListener("click", (e) => {
+                    // Drag işlemi sırasında tıklamayı engelle
+                    if (isDragging) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                    openImageViewModal(img);
+                });
+            } else {
+                // Admin değilse normal tıklama
+                imgEl.addEventListener("click", () => {
+                    openImageViewModal(img);
+                });
+            }
 
             const titleEl = document.createElement("div");
             titleEl.className = "character-image-title";
