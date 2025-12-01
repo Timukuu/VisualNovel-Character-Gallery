@@ -1395,10 +1395,10 @@ async function renderCharacterImages() {
 
             // Resim tıklaması - kart üzerinden yönet
             imageCard.addEventListener("click", (e) => {
-                // Drag işlemi sırasında tıklamayı engelle
-                if (imageCard.classList.contains("dragging")) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                // Drag handle'a tıklanmadıysa ve drag işlemi sırasında değilse
+                if (e.target.classList.contains("drag-handle") || 
+                    e.target.closest(".drag-handle") ||
+                    imageCard.classList.contains("dragging")) {
                     return;
                 }
                 // Eğer butonlara tıklanmadıysa resim modal'ını aç
