@@ -7,9 +7,8 @@ let projects = [];
 let currentUser = null;
 let currentProjectId = null;
 
-// Backend upload endpoint (lokalde test için):
-// Yayına aldığında kendi Render / hosting URL'ini buraya yazacaksın.
-const BACKEND_UPLOAD_URL = "http://localhost:4000/upload";
+// Backend upload endpoint (Render'da host edilmiş)
+const BACKEND_UPLOAD_URL = "https://character-backend-buw3.onrender.com/upload";
 
 // DOM referansları
 const loginScreen = document.getElementById("login-screen");
