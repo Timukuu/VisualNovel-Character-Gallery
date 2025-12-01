@@ -12,6 +12,10 @@ const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
 const BACKEND_UPLOAD_URL = `${BACKEND_BASE_URL}/upload`;
 const BACKEND_PROJECTS_URL = `${BACKEND_BASE_URL}/api/projects`;
 
+function getCharactersUrl(projectId) {
+    return `${BACKEND_BASE_URL}/api/projects/${projectId}/characters`;
+}
+
 // DOM referansları
 const loginScreen = document.getElementById("login-screen");
 const mainScreen = document.getElementById("main-screen");
@@ -67,20 +71,29 @@ function loadJSON(path) {
     });
 }
 
-function saveCharacters(projectId, characters) {
-    const key = "characters_" + projectId;
-    localStorage.setItem(key, JSON.stringify(characters));
+// Karakterleri backend'den yükle
+async function loadCharacters(projectId) {
+    if (!projectId) return [];
+    try {
+        const response = await fetch(getCharactersUrl(projectId));
+        if (!response.ok) throw new Error("Karakterler yüklenemedi");
+        return await response.json();
+    } catch (err) {
+        console.error("Karakterler yüklenirken hata:", err);
+        return [];
+    }
 }
 
-function loadCharacters(projectId) {
-    const key = "characters_" + projectId;
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
+// Karakterleri backend'e kaydet
+async function saveCharacters(projectId, characters) {
+    if (!projectId) return;
     try {
-        return JSON.parse(raw);
-    } catch (e) {
-        console.error("Karakter verisi parse edilemedi:", e);
-        return [];
+        // Tüm karakterleri backend'e gönder (her karakter için ayrı POST yerine, tüm listeyi güncelle)
+        // Önce mevcut karakterleri al, sonra yeni eklenenleri POST et
+        // Basit yaklaşım: Her karakter için ayrı POST (yeni karakterler için)
+        // Güncelleme için PUT kullanılacak
+    } catch (err) {
+        console.error("Karakterler kaydedilirken hata:", err);
     }
 }
 
@@ -246,13 +259,13 @@ function renderProjects() {
     });
 }
 
-function onProjectSelected(project) {
+async function onProjectSelected(project) {
     currentProjectTitleEl.textContent = project.name;
 
     // Admin ise "Karakter Ekle" aktif, değilse pasif (sadece görüntüleme)
     addCharacterBtn.disabled = currentUser.role !== "admin";
 
-    renderCharacters();
+    await renderCharacters();
 }
 
 // --- Proje Yönetimi (Admin) ---
@@ -337,7 +350,7 @@ async function deleteProject(projectId) {
 
 // --- Karakterler ---
 
-function renderCharacters() {
+async function renderCharacters() {
     charactersContainer.innerHTML = "";
 
     if (!currentProjectId) {
@@ -349,7 +362,7 @@ function renderCharacters() {
         return;
     }
 
-    const characters = loadCharacters(currentProjectId);
+    const characters = await loadCharacters(currentProjectId);
 
     if (!characters.length) {
         const info = document.createElement("p");
@@ -424,11 +437,19 @@ function renderCharacters() {
     });
 }
 
-function deleteCharacter(projectId, characterId) {
-    const characters = loadCharacters(projectId);
-    const filtered = characters.filter((ch) => ch.id !== characterId);
-    saveCharacters(projectId, filtered);
-    renderCharacters();
+async function deleteCharacter(projectId, characterId) {
+    try {
+        const response = await fetch(`${getCharactersUrl(projectId)}/${characterId}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Karakter silinemedi");
+
+        await renderCharacters();
+    } catch (err) {
+        console.error("Karakter silinirken hata:", err);
+        alert("Karakter silinemedi: " + err.message);
+    }
 }
 
 // --- Modal (Karakter Ekle) ---
@@ -531,12 +552,22 @@ function handleCharacterFormSubmit(event) {
         });
 }
 
-function saveNewCharacter(character) {
-    const characters = loadCharacters(currentProjectId);
-    characters.push(character);
-    saveCharacters(currentProjectId, characters);
-    closeCharacterModal();
-    renderCharacters();
+async function saveNewCharacter(character) {
+    try {
+        const response = await fetch(getCharactersUrl(currentProjectId), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(character)
+        });
+
+        if (!response.ok) throw new Error("Karakter kaydedilemedi");
+
+        closeCharacterModal();
+        await renderCharacters();
+    } catch (err) {
+        console.error("Karakter kaydedilirken hata:", err);
+        alert("Karakter kaydedilemedi: " + err.message);
+    }
 }
 
 // Resim seçilince önizleme (lokalde)
