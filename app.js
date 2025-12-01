@@ -1273,34 +1273,16 @@ async function renderCharacterImages() {
                 imgEl.src = img.url;
             }
 
-            // Admin ise drag sırasında tıklamayı engelle, değilse normal tıklama
-            if (currentUser.role === "admin") {
-                let isDragging = false;
-                
-                // Drag başladığında flag'i set et
-                imageCard.addEventListener("dragstart", () => {
-                    isDragging = true;
-                });
-                
-                imageCard.addEventListener("dragend", () => {
-                    isDragging = false;
-                });
-                
-                imgEl.addEventListener("click", (e) => {
-                    // Drag işlemi sırasında tıklamayı engelle
-                    if (isDragging) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return;
-                    }
-                    openImageViewModal(img);
-                });
-            } else {
-                // Admin değilse normal tıklama
-                imgEl.addEventListener("click", () => {
-                    openImageViewModal(img);
-                });
-            }
+            // Resim tıklaması - drag sırasında engelle
+            imgEl.addEventListener("click", (e) => {
+                // Drag işlemi sırasında tıklamayı engelle
+                if (currentUser.role === "admin" && imageCard.classList.contains("dragging")) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                openImageViewModal(img);
+            });
 
             const titleEl = document.createElement("div");
             titleEl.className = "character-image-title";
