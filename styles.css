@@ -998,38 +998,49 @@ textarea:valid:not(:placeholder-shown) {
 .image-carousel-container {
     position: relative;
     width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     overflow: hidden;
     border-radius: var(--radius-md);
     background: #0a0a0f;
+    padding: 0;
 }
 
 .image-carousel-track {
     display: flex;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    gap: 20px;
-    padding: 20px;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 16px;
+    padding: 0;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    will-change: transform;
 }
 
 .image-carousel-item {
     flex: 0 0 auto;
-    width: calc(33.333% - 14px);
-    min-width: 200px;
+    width: 280px;
     aspect-ratio: 2 / 3;
     border-radius: var(--radius-md);
     overflow: hidden;
     background: #222233;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s;
-    opacity: 0.6;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s, filter 0.5s;
+    opacity: 0.5;
     cursor: pointer;
+    filter: brightness(0.7);
+    transform: scale(0.9);
 }
 
 .image-carousel-item.active {
-    transform: scale(1.1);
+    transform: scale(1.15);
     opacity: 1;
-    z-index: 1;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    z-index: 2;
+    filter: brightness(1);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+}
+
+.image-carousel-item:not(.active):hover {
+    opacity: 0.7;
+    transform: scale(0.95);
 }
 
 .image-carousel-item img {
@@ -1040,24 +1051,30 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 /* Tek veya iki resim için ortala */
-.image-carousel-track.single-item .image-carousel-item,
-.image-carousel-track.double-item .image-carousel-item {
-    width: auto;
-    max-width: 400px;
-}
-
 .image-carousel-track.single-item {
     justify-content: center;
+    padding: 0;
+}
+
+.image-carousel-track.single-item .image-carousel-item {
+    width: 400px;
+    max-width: 90vw;
 }
 
 .image-carousel-track.double-item {
     justify-content: center;
-    gap: 30px;
+    gap: 24px;
+    padding: 0;
 }
 
 .image-carousel-track.double-item .image-carousel-item {
-    width: calc(50% - 15px);
-    max-width: 350px;
+    width: 350px;
+    max-width: calc(50% - 12px);
+}
+
+.image-carousel-track.triple-item {
+    justify-content: flex-start;
+    padding: 0;
 }
 
 @media (max-width: 768px) {

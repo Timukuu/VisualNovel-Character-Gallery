@@ -2222,6 +2222,32 @@ function renderImagesInGrid(images, container) {
                     await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
                 }
             });
+            
+            // Container'a da drop event'i ekle (boş alana bırakma için)
+            if (container && !container.dataset.dropListenerAdded) {
+                container.dataset.dropListenerAdded = "true";
+                container.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                container.addEventListener("drop", async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const draggedImageId = e.dataTransfer.getData("text/plain");
+                    if (draggedImageId) {
+                        // Son pozisyona taşı
+                        const allCards = container.querySelectorAll(".character-image-card");
+                        if (allCards.length > 0) {
+                            const lastCard = allCards[allCards.length - 1];
+                            const lastImageId = lastCard.dataset.imageId;
+                            if (lastImageId && lastImageId !== draggedImageId) {
+                                const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
+                                await handleImageReorder(draggedImageId, lastImageId, draggedGroupTitle, lastCard.dataset.groupTitle);
+                            }
+                        }
+                    }
+                });
+            }
         }
 
         const imgEl = document.createElement("img");
@@ -3175,35 +3201,53 @@ function renderImageCarousel() {
     const indicator = document.getElementById("image-carousel-indicator");
     const prevBtn = document.getElementById("prev-image-btn");
     const nextBtn = document.getElementById("next-image-btn");
+    const container = track ? track.parentElement : null;
     
-    if (!track) return;
+    if (!track || !container) return;
 
     track.innerHTML = "";
     
     const imageCount = allImagesForCarousel.length;
     
+    // Maksimum 3 resim göster (aktif + 1 sol + 1 sağ)
+    let startIndex = Math.max(0, currentImageIndex - 1);
+    let endIndex = Math.min(imageCount, currentImageIndex + 2);
+    
+    // Eğer başta veya sonda isek, 3 resim göstermek için ayarla
+    if (currentImageIndex === 0) {
+        endIndex = Math.min(imageCount, 3);
+    } else if (currentImageIndex === imageCount - 1) {
+        startIndex = Math.max(0, imageCount - 3);
+    }
+    
+    const visibleImages = allImagesForCarousel.slice(startIndex, endIndex);
+    const visibleCount = visibleImages.length;
+    
     // Track class'ını ayarla
     track.className = "image-carousel-track";
-    if (imageCount === 1) {
+    if (visibleCount === 1) {
         track.classList.add("single-item");
-    } else if (imageCount === 2) {
+    } else if (visibleCount === 2) {
         track.classList.add("double-item");
+    } else {
+        track.classList.add("triple-item");
     }
 
     // Butonları göster/gizle
     if (imageCount > 1) {
-        prevBtn.style.display = "block";
-        nextBtn.style.display = "block";
+        if (prevBtn) prevBtn.style.display = "block";
+        if (nextBtn) nextBtn.style.display = "block";
     } else {
-        prevBtn.style.display = "none";
-        nextBtn.style.display = "none";
+        if (prevBtn) prevBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "none";
     }
 
-    // Resimleri oluştur
-    allImagesForCarousel.forEach((img, index) => {
+    // Resimleri oluştur (sadece görünür olanlar)
+    visibleImages.forEach((img, visibleIndex) => {
+        const actualIndex = startIndex + visibleIndex;
         const item = document.createElement("div");
         item.className = "image-carousel-item";
-        if (index === currentImageIndex) {
+        if (actualIndex === currentImageIndex) {
             item.classList.add("active");
         }
 
@@ -3213,8 +3257,8 @@ function renderImageCarousel() {
         item.appendChild(imgEl);
 
         item.addEventListener("click", () => {
-            if (index !== currentImageIndex) {
-                currentImageIndex = index;
+            if (actualIndex !== currentImageIndex) {
+                currentImageIndex = actualIndex;
                 renderImageCarousel();
                 updateImageInfo();
             }
@@ -3223,17 +3267,20 @@ function renderImageCarousel() {
         track.appendChild(item);
     });
 
-    // Track pozisyonunu ayarla (3 resim için)
+    // Track pozisyonunu ayarla - aktif resmi tam ortaya getir
     setTimeout(() => {
-        if (imageCount > 3) {
-            const activeItem = track.querySelector(".image-carousel-item.active");
-            if (activeItem) {
-                const itemWidth = activeItem.offsetWidth;
-                const gap = 20;
-                const containerWidth = track.parentElement.offsetWidth;
-                const offset = -(currentImageIndex * (itemWidth + gap)) + (containerWidth / 2) - (itemWidth / 2);
-                track.style.transform = `translateX(${offset}px)`;
-            }
+        const activeItem = track.querySelector(".image-carousel-item.active");
+        if (activeItem && visibleCount > 1) {
+            const containerWidth = container.offsetWidth;
+            const itemWidth = activeItem.offsetWidth;
+            const gap = parseFloat(getComputedStyle(track).gap) || 20;
+            
+            // Aktif resmin pozisyonunu hesapla
+            const activePosition = activeItem.offsetLeft;
+            const centerOffset = (containerWidth / 2) - (itemWidth / 2);
+            const translateX = centerOffset - activePosition;
+            
+            track.style.transform = `translateX(${translateX}px)`;
         } else {
             track.style.transform = "translateX(0)";
         }
