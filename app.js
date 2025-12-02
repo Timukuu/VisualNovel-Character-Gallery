@@ -4048,20 +4048,6 @@ async function handleUserFormSubmit(event) {
     }
 }
 
-function updateChatButtonVisibility() {
-    if (chatToggleBtn) {
-        if (currentUser && currentUser.role === "admin") {
-            chatToggleBtn.style.display = "block";
-        } else {
-            chatToggleBtn.style.display = "none";
-            // Eğer chat açıksa kapat
-            if (chatPanel && !chatPanel.classList.contains("hidden")) {
-                closeChatPanel();
-            }
-        }
-    }
-}
-
 async function deleteUser(userId) {
     if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
 
