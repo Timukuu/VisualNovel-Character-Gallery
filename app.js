@@ -154,11 +154,23 @@ let editingUserId = null;
 // --- Yardımcılar ---
 
 function loadJSON(path) {
-    // GitHub Pages için base path ekle
-    const basePath = window.location.pathname.includes('/VisualNovel-Character-Gallery') 
-        ? '/VisualNovel-Character-Gallery' 
-        : '';
-    const fullPath = basePath + '/' + path;
+    // GitHub Pages için base path'i otomatik tespit et
+    // window.location.pathname örneği: "/VisualNovel-Character-Gallery/" veya "/"
+    const pathname = window.location.pathname;
+    let basePath = '';
+    
+    // Eğer pathname root değilse (örn: "/VisualNovel-Character-Gallery/"), base path'i çıkar
+    if (pathname !== '/' && pathname.length > 1) {
+        // Son "/" karakterini kaldır ve base path'i al
+        const parts = pathname.split('/').filter(p => p);
+        if (parts.length > 0) {
+            basePath = '/' + parts[0];
+        }
+    }
+    
+    // Path'i normalize et (başında "/" varsa kaldır)
+    const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    const fullPath = basePath + '/' + normalizedPath;
     
     return fetch(fullPath).then((res) => {
         if (!res.ok) {
@@ -167,6 +179,16 @@ function loadJSON(path) {
         return res.json();
     }).catch((err) => {
         console.error("loadJSON hatası:", err, "Path:", fullPath);
+        // Fallback: base path olmadan dene
+        if (basePath) {
+            console.log("Fallback: base path olmadan deneniyor:", normalizedPath);
+            return fetch(normalizedPath).then((res) => {
+                if (!res.ok) {
+                    throw new Error("HTTP " + res.status);
+                }
+                return res.json();
+            });
+        }
         throw err;
     });
 }
