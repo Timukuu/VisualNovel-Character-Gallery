@@ -1804,6 +1804,14 @@ function initializeEventListeners() {
                     }
                 });
             }
+            if (characterSearchInput) {
+                characterSearchInput.addEventListener("input", () => {
+                    // Arama yapıldığında karakter listesini yeniden render et
+                    if (currentProjectId) {
+                        renderCharactersSidebar();
+                    }
+                });
+            }
             if (editTraitsBtn) {
                 editTraitsBtn.addEventListener("click", handleTraitsEdit);
             }
