@@ -1207,13 +1207,8 @@ function handleImageChange() {
 // --- Başlatma ---
 
 function init() {
-    // Tema yükle
-    initTheme();
-    
-    // Blur yükle
-    initBlur();
-    
     // Önce localStorage'dan session kontrolü yap
+    // Not: initTheme ve initBlur artık initializeEventListeners içinde çağrılıyor
     const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
         try {
@@ -1318,6 +1313,13 @@ function initializeEventListeners() {
     usernameInput = document.getElementById("username");
     passwordInput = document.getElementById("password");
     loginErrorEl = document.getElementById("login-error");
+    
+    // Topbar referansları
+    currentUserInfoEl = document.getElementById("current-user-info");
+    logoutBtn = document.getElementById("logout-btn");
+    usersManagementBtn = document.getElementById("users-management-btn");
+    themeToggleBtn = document.getElementById("theme-toggle-btn");
+    blurToggleBtn = document.getElementById("blur-toggle-btn");
     
     // Yeni layout DOM referansları
     projectListEl = document.getElementById("project-list");
