@@ -2171,29 +2171,35 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 /* Sıralama modu için stiller */
+/* Sıralama modunda tüm görseller sabit boyutta - öncelikli */
 .image-carousel-item.reorder-mode {
     border: 2px dashed var(--accent);
-    opacity: 0.9;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    filter: brightness(1) !important;
+    box-shadow: none !important;
 }
 
-/* Sıralama modunda aktif görsel büyümesin */
+/* Sıralama modunda aktif görsel de büyümesin */
 .image-carousel-item.reorder-mode.active {
     transform: scale(1) !important;
-    opacity: 1;
-    filter: brightness(1);
+    opacity: 1 !important;
+    filter: brightness(1) !important;
+    box-shadow: none !important;
+    z-index: 1 !important;
 }
 
-/* Sıralama modunda tüm görseller sabit boyutta */
-.image-carousel-item.reorder-mode {
+/* Sıralama modunda hover efekti de olmasın */
+.image-carousel-item.reorder-mode:hover {
     transform: scale(1) !important;
-    opacity: 1;
-    filter: brightness(1);
+    opacity: 1 !important;
 }
 
+/* Sıralama modunda aktif olmayan görseller */
 .image-carousel-item.reorder-mode:not(.active) {
     transform: scale(1) !important;
-    opacity: 0.8;
-    filter: brightness(0.9);
+    opacity: 0.85 !important;
+    filter: brightness(0.95) !important;
 }
 
 .reorder-controls {

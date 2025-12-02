@@ -3766,6 +3766,9 @@ function renderImageCarousel() {
         if (isReorderMode) {
             item.classList.add("reorder-mode");
             item.style.cursor = "move";
+            // Sıralama modunda scale'i zorla 1 yap
+            item.style.transform = "scale(1)";
+            item.style.opacity = actualIndex === currentImageIndex ? "1" : "0.85";
         }
 
         const imgEl = document.createElement("img");
