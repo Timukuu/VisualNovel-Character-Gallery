@@ -3016,10 +3016,10 @@ async function renderCharacterImages() {
                     dragHandle.style.opacity = "0.7";
                 });
                 
-                // Mousedown event'i ekle (drag başlamadan önce)
+                // Mousedown event'i ekle (sadece click event'ini engelle, drag'i engelleme)
                 dragHandle.addEventListener("mousedown", (e) => {
                     e.stopPropagation();
-                    e.preventDefault();
+                    // preventDefault() çağırma - drag'i engeller
                 });
                 
                 // Drag handle'a drag event'lerini ekle
