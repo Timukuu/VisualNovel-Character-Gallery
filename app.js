@@ -136,6 +136,8 @@ const imageViewDescription = document.getElementById("image-view-description");
 const imageViewTags = document.getElementById("image-view-tags");
 const imageViewPrompts = document.getElementById("image-view-prompts");
 const deleteImageFromViewBtn = document.getElementById("delete-image-from-view-btn");
+const reorderImagesInViewBtn = document.getElementById("reorder-images-in-view-btn");
+let isReorderMode = false; // Slide view'da sıralama modu
 
 let editingImageId = null;
 let editingCharacterId = null;
@@ -2232,6 +2234,9 @@ function initializeEventListeners() {
             if (deleteImageFromViewBtn) {
                 deleteImageFromViewBtn.addEventListener("click", handleDeleteImageFromView);
             }
+            if (reorderImagesInViewBtn) {
+                reorderImagesInViewBtn.addEventListener("click", toggleReorderMode);
+            }
             
             // Klavye ile navigasyon
             document.addEventListener("keydown", (e) => {
@@ -2670,12 +2675,9 @@ function renderImagesInGrid(images, container) {
                 return;
             }
             if (!e.target.closest("button")) {
-                // Gruplu resimler için sadece o gruba ait resimleri göster
-                if (isGrouped) {
-                    openImageViewModal(defaultImage, title, groupImages);
-                } else {
-                    openImageViewModal(defaultImage);
-                }
+                // Her zaman grup bilgisiyle aç (katalog bazlı izolasyon için)
+                // Tek resimli katalog için de grup olarak aç
+                openImageViewModal(defaultImage, title, groupImages);
             }
         });
 
@@ -3018,12 +3020,8 @@ async function renderCharacterImages() {
                 }
                 // Eğer butonlara tıklanmadıysa resim modal'ını aç
                 if (!e.target.closest("button")) {
-                    // Gruplu resimler için sadece o gruba ait resimleri göster
-                    if (isGrouped) {
-                        openImageViewModal(defaultImage, title, groupImages);
-                    } else {
-                        openImageViewModal(defaultImage);
-                    }
+                    // Her zaman grup bilgisiyle aç (katalog bazlı izolasyon için)
+                    openImageViewModal(defaultImage, title, groupImages);
                 }
             });
 
@@ -3558,30 +3556,23 @@ async function deleteImage(imageId) {
 let currentImageIndex = 0;
 let allImagesForCarousel = [];
 
+let currentGroupTitle = null; // Aktif katalog başlığı (sıralama için)
+
 async function openImageViewModal(image, groupTitle = null, groupImages = null) {
-    // Eğer grup bilgisi verilmişse, sadece o gruba ait resimleri kullan
-    if (groupTitle && groupImages && groupImages.length > 0) {
-        allImagesForCarousel = groupImages;
+    // Her zaman grup bilgisiyle çalış (katalog bazlı izolasyon)
+    if (groupImages && groupImages.length > 0) {
+        // Grup bilgisi var, sadece o gruba ait resimleri kullan
+        allImagesForCarousel = [...groupImages]; // Copy array
         currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
         if (currentImageIndex === -1) currentImageIndex = 0;
     } else {
-        // Grup bilgisi yoksa, tüm resimleri yükle (eski davranış - geriye dönük uyumluluk)
-        try {
-            const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
-            if (response.ok) {
-                allImagesForCarousel = await response.json();
-                currentImageIndex = allImagesForCarousel.findIndex(img => img.id === image.id);
-                if (currentImageIndex === -1) currentImageIndex = 0;
-            } else {
-                allImagesForCarousel = [image];
-                currentImageIndex = 0;
-            }
-        } catch (err) {
-            console.error("Resimler yüklenirken hata:", err);
-            allImagesForCarousel = [image];
-            currentImageIndex = 0;
-        }
+        // Fallback: Sadece tıklanan resmi göster
+        allImagesForCarousel = [image];
+        currentImageIndex = 0;
     }
+    
+    // Katalog başlığını sakla (sıralama için)
+    currentGroupTitle = groupTitle;
 
     renderImageCarousel();
     imageViewModal.classList.remove("hidden");
@@ -3755,12 +3746,20 @@ function updateImageInfo() {
         }
     }
     
-    // Silme butonunu göster/gizle (sadece admin için)
+    // Silme ve sıralama butonlarını göster/gizle (sadece admin için)
     if (deleteImageFromViewBtn) {
         if (currentUser && currentUser.role === "admin" && allImagesForCarousel.length > 0) {
             deleteImageFromViewBtn.style.display = "block";
         } else {
             deleteImageFromViewBtn.style.display = "none";
+        }
+    }
+    if (reorderImagesInViewBtn) {
+        if (currentUser && currentUser.role === "admin" && allImagesForCarousel.length > 1) {
+            reorderImagesInViewBtn.style.display = "block";
+            reorderImagesInViewBtn.textContent = isReorderMode ? "✓ Sıralamayı Kaydet" : "↕️ Sıralamayı Değiştir";
+        } else {
+            reorderImagesInViewBtn.style.display = "none";
         }
     }
 }
