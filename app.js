@@ -1275,6 +1275,12 @@ async function navigateToRoute(routeData) {
     isNavigating = true;
     
     try {
+        // DOM referanslarını kontrol et
+        if (!loginScreen) loginScreen = document.getElementById("login-screen");
+        if (!mainScreen) mainScreen = document.getElementById("main-screen");
+        if (!currentUserInfoEl) currentUserInfoEl = document.getElementById("current-user-info");
+        if (!usersManagementBtn) usersManagementBtn = document.getElementById("users-management-btn");
+        
         if (routeData.route === "login") {
             // Login ekranına dön
             if (loginScreen) loginScreen.classList.remove("hidden");
@@ -1293,6 +1299,12 @@ async function navigateToRoute(routeData) {
             }
             if (loginScreen) loginScreen.classList.add("hidden");
             if (mainScreen) mainScreen.classList.remove("hidden");
+            if (currentUserInfoEl) {
+                currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+            }
+            if (currentUser.role === "admin" && usersManagementBtn) {
+                usersManagementBtn.style.display = "block";
+            }
             currentProjectId = null;
             currentCharacterId = null;
             showEmptyState();
@@ -1306,6 +1318,12 @@ async function navigateToRoute(routeData) {
             }
             if (loginScreen) loginScreen.classList.add("hidden");
             if (mainScreen) mainScreen.classList.remove("hidden");
+            if (currentUserInfoEl) {
+                currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+            }
+            if (currentUser.role === "admin" && usersManagementBtn) {
+                usersManagementBtn.style.display = "block";
+            }
             currentProjectId = routeData.projectId;
             currentCharacterId = null;
             await loadProjectsFromBackend();
@@ -1323,6 +1341,12 @@ async function navigateToRoute(routeData) {
             }
             if (loginScreen) loginScreen.classList.add("hidden");
             if (mainScreen) mainScreen.classList.remove("hidden");
+            if (currentUserInfoEl) {
+                currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
+            }
+            if (currentUser.role === "admin" && usersManagementBtn) {
+                usersManagementBtn.style.display = "block";
+            }
             currentProjectId = routeData.projectId;
             currentCharacterId = routeData.characterId;
             await loadProjectsFromBackend();
