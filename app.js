@@ -116,6 +116,8 @@ const imageForm = document.getElementById("image-form");
 const imageModalTitle = document.getElementById("image-modal-title");
 const imageTitleInput = document.getElementById("image-title");
 const imageDescriptionInput = document.getElementById("image-description");
+const imagePositivePromptInput = document.getElementById("image-positive-prompt");
+const imageNegativePromptInput = document.getElementById("image-negative-prompt");
 const imageTagsInput = document.getElementById("image-tags");
 const imageFileInput = document.getElementById("image-file");
 const imagePreviewWrapper = document.getElementById("image-preview-wrapper");
@@ -130,6 +132,7 @@ const imageViewLarge = document.getElementById("image-view-large");
 const imageViewTitle = document.getElementById("image-view-title");
 const imageViewDescription = document.getElementById("image-view-description");
 const imageViewTags = document.getElementById("image-view-tags");
+const imageViewPrompts = document.getElementById("image-view-prompts");
 
 let editingImageId = null;
 let editingCharacterId = null;
@@ -3037,6 +3040,8 @@ function openImageModal(image = null) {
     if (image) {
         imageTitleInput.value = image.title || "";
         imageDescriptionInput.value = image.description || "";
+        imagePositivePromptInput.value = image.positivePrompt || "";
+        imageNegativePromptInput.value = image.negativePrompt || "";
         imageTagsInput.value = Array.isArray(image.tags) ? image.tags.join(", ") : (image.tags || "");
         imageFileInput.required = false;
         if (image.url) {
@@ -3135,6 +3140,8 @@ async function handleImageFormSubmit(event) {
         }
 
         const description = imageDescriptionInput.value.trim();
+        const positivePrompt = imagePositivePromptInput.value.trim();
+        const negativePrompt = imageNegativePromptInput.value.trim();
         const tags = imageTagsInput.value.trim();
 
         if (editingImageId) {
@@ -3142,6 +3149,8 @@ async function handleImageFormSubmit(event) {
             const updateData = {
                 title,
                 description,
+                positivePrompt: positivePrompt || null,
+                negativePrompt: negativePrompt || null,
                 tags
             };
             if (imageUrl) {
@@ -3171,6 +3180,8 @@ async function handleImageFormSubmit(event) {
                     fileName: fileName,
                     title,
                     description,
+                    positivePrompt: positivePrompt || null,
+                    negativePrompt: negativePrompt || null,
                     tags,
                     createdByUserId: currentUser.username
                 })
@@ -3435,6 +3446,61 @@ function updateImageInfo() {
         imageViewTags.style.display = "block";
     } else {
         imageViewTags.style.display = "none";
+    }
+    
+    // Positive ve Negative Prompt'ları göster
+    if (imageViewPrompts) {
+        if (image.positivePrompt || image.negativePrompt) {
+            imageViewPrompts.innerHTML = "";
+            
+            if (image.positivePrompt) {
+                const positiveDiv = document.createElement("div");
+                positiveDiv.style.marginTop = "12px";
+                positiveDiv.style.padding = "8px";
+                positiveDiv.style.backgroundColor = "var(--bg-soft)";
+                positiveDiv.style.borderRadius = "4px";
+                positiveDiv.style.fontSize = "13px";
+                const positiveLabel = document.createElement("div");
+                positiveLabel.textContent = "Positive Prompt:";
+                positiveLabel.style.fontWeight = "bold";
+                positiveLabel.style.marginBottom = "4px";
+                positiveLabel.style.color = "var(--accent)";
+                const positiveText = document.createElement("div");
+                positiveText.textContent = image.positivePrompt;
+                positiveText.style.color = "var(--text-secondary)";
+                positiveText.style.whiteSpace = "pre-wrap";
+                positiveText.style.wordBreak = "break-word";
+                positiveDiv.appendChild(positiveLabel);
+                positiveDiv.appendChild(positiveText);
+                imageViewPrompts.appendChild(positiveDiv);
+            }
+            
+            if (image.negativePrompt) {
+                const negativeDiv = document.createElement("div");
+                negativeDiv.style.marginTop = "12px";
+                negativeDiv.style.padding = "8px";
+                negativeDiv.style.backgroundColor = "var(--bg-soft)";
+                negativeDiv.style.borderRadius = "4px";
+                negativeDiv.style.fontSize = "13px";
+                const negativeLabel = document.createElement("div");
+                negativeLabel.textContent = "Negative Prompt:";
+                negativeLabel.style.fontWeight = "bold";
+                negativeLabel.style.marginBottom = "4px";
+                negativeLabel.style.color = "var(--danger)";
+                const negativeText = document.createElement("div");
+                negativeText.textContent = image.negativePrompt;
+                negativeText.style.color = "var(--text-secondary)";
+                negativeText.style.whiteSpace = "pre-wrap";
+                negativeText.style.wordBreak = "break-word";
+                negativeDiv.appendChild(negativeLabel);
+                negativeDiv.appendChild(negativeText);
+                imageViewPrompts.appendChild(negativeDiv);
+            }
+            
+            imageViewPrompts.style.display = "block";
+        } else {
+            imageViewPrompts.style.display = "none";
+        }
     }
 }
 
