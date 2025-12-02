@@ -154,11 +154,20 @@ let editingUserId = null;
 // --- Yardımcılar ---
 
 function loadJSON(path) {
-    return fetch(path).then((res) => {
+    // GitHub Pages için base path ekle
+    const basePath = window.location.pathname.includes('/VisualNovel-Character-Gallery') 
+        ? '/VisualNovel-Character-Gallery' 
+        : '';
+    const fullPath = basePath + '/' + path;
+    
+    return fetch(fullPath).then((res) => {
         if (!res.ok) {
-            throw new Error("HTTP " + res.status);
+            throw new Error("HTTP " + res.status + " - " + fullPath);
         }
         return res.json();
+    }).catch((err) => {
+        console.error("loadJSON hatası:", err, "Path:", fullPath);
+        throw err;
     });
 }
 
