@@ -3411,7 +3411,11 @@ async function renderUsers() {
             deleteBtn.className = "btn subtle";
             deleteBtn.textContent = "Sil";
             deleteBtn.style.color = "var(--danger)";
-            deleteBtn.addEventListener("click", () => deleteUser(user.id));
+            deleteBtn.addEventListener("click", () => {
+                // ID yoksa username kullan
+                const userId = user.id || user.username;
+                deleteUser(userId);
+            });
 
             actions.appendChild(editBtn);
             actions.appendChild(deleteBtn);
@@ -3419,17 +3423,11 @@ async function renderUsers() {
 
             usersList.appendChild(userCard);
         });
-    } catch (err) {
-        console.error("Kullanıcılar yüklenirken hata:", err);
-        const error = document.createElement("p");
-        error.textContent = "Kullanıcılar yüklenemedi.";
-        error.style.color = "#f45b69";
-        usersList.appendChild(error);
-    }
 }
 
 function openUserModal(user = null) {
-    editingUserId = user ? user.id : null;
+    // ID yoksa username kullan
+    editingUserId = user ? (user.id || user.username) : null;
     userModalTitle.textContent = user ? "Kullanıcı Düzenle" : "Yeni Kullanıcı";
     
     if (user) {
