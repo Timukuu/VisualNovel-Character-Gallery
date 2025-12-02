@@ -2079,6 +2079,39 @@ function filterImagesByTag(tag) {
 function renderImagesInGrid(images, container) {
     if (!container) return;
     
+    // Container'a drag & drop event listener'ları ekle (bir kez)
+    if (!container.dataset.dropListenerAdded && currentUser && currentUser.role === "admin") {
+        container.dataset.dropListenerAdded = "true";
+        container.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "move";
+        });
+        container.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const draggedImageId = e.dataTransfer.getData("text/plain");
+            if (draggedImageId) {
+                // Son pozisyona taşı
+                const allCards = container.querySelectorAll(".character-image-card");
+                if (allCards.length > 0) {
+                    const lastCard = allCards[allCards.length - 1];
+                    const lastImageId = lastCard.dataset.imageId;
+                    const lastGroupTitle = lastCard.dataset.groupTitle;
+                    if (lastImageId && lastImageId !== draggedImageId) {
+                        const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
+                        await handleImageReorder(draggedImageId, lastImageId, draggedGroupTitle, lastGroupTitle);
+                    }
+                }
+            }
+            // Tüm drag-over class'larını temizle
+            document.querySelectorAll(".character-image-card.drag-over").forEach(card => {
+                card.classList.remove("drag-over");
+            });
+            container.classList.remove("drag-active");
+        });
+    }
+    
     // orderIndex'e göre sırala
     images.sort((a, b) => {
         const aOrder = a.orderIndex !== undefined ? a.orderIndex : 999999;
