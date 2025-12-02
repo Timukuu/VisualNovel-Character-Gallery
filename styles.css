@@ -116,8 +116,13 @@ body {
 }
 
 @media (max-width: 480px) {
+    #login-screen {
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
     .card-login {
-        margin: 40px auto 0 auto;
+        margin: 0 auto;
         padding: 24px;
         width: 95%;
     }
