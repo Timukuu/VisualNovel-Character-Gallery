@@ -2254,8 +2254,16 @@ function renderImagesInGrid(images, container) {
                 const draggedImageId = e.dataTransfer.getData("text/plain");
                 const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
                 
+                console.log("Drop event:", draggedImageId, "to", defaultImage.id);
+                
                 if (draggedImageId && draggedImageId !== defaultImage.id) {
-                    await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
+                    try {
+                        await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
+                        showToast("Resim sırası güncellendi", "success");
+                    } catch (err) {
+                        console.error("Resim sıralama hatası:", err);
+                        showToast("Resim sırası güncellenemedi", "error");
+                    }
                 }
             });
             
