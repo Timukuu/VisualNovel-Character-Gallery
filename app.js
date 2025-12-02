@@ -1655,12 +1655,16 @@ function renderTagFilters(images) {
 
 // Tag'e göre filtrele
 function filterImagesByTag(tag) {
-    // Bu fonksiyon renderCharacterImagesPanel içinde çağrılacak
-    // Şimdilik basit bir implementasyon
+    if (!characterImagesGrid) return;
+    
     const imageCards = characterImagesGrid.querySelectorAll(".character-image-card");
     imageCards.forEach(card => {
-        const cardTags = card.dataset.tags ? card.dataset.tags.split(",") : [];
-        if (tag === "all" || cardTags.includes(tag)) {
+        const cardTagsStr = card.dataset.tags || "";
+        const cardTags = cardTagsStr ? cardTagsStr.split(",").map(t => t.trim()).filter(t => t) : [];
+        
+        if (tag === "all") {
+            card.style.display = "";
+        } else if (cardTags.length > 0 && cardTags.includes(tag)) {
             card.style.display = "";
         } else {
             card.style.display = "none";
@@ -1715,7 +1719,19 @@ function renderImagesInGrid(images, container) {
         imageCard.dataset.imageId = defaultImage.id;
         imageCard.dataset.groupTitle = title;
         imageCard.dataset.orderIndex = defaultImage.orderIndex !== undefined ? defaultImage.orderIndex : groupIndex;
-        imageCard.dataset.tags = (defaultImage.tags || []).join(",");
+        
+        // Gruplu resimler için tüm resimlerin tag'lerini birleştir
+        if (isGrouped) {
+            const allGroupTags = new Set();
+            groupImages.forEach(img => {
+                if (img.tags && Array.isArray(img.tags)) {
+                    img.tags.forEach(tag => allGroupTags.add(tag));
+                }
+            });
+            imageCard.dataset.tags = Array.from(allGroupTags).join(",");
+        } else {
+            imageCard.dataset.tags = (defaultImage.tags || []).join(",");
+        }
 
         // Admin ise drag & drop ekle
         if (currentUser && currentUser.role === "admin") {
