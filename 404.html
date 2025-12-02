@@ -2,27 +2,35 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Character Gallery</title>
+    <meta http-equiv="refresh" content="0; url=./index.html">
+    <title>Character Gallery - Yönlendiriliyor...</title>
     <script>
         // GitHub Pages için SPA routing desteği
         // Tüm route'ları index.html'e yönlendir
-        const path = window.location.pathname;
-        const search = window.location.search;
-        const hash = window.location.hash;
-        
-        // Base path'i tespit et
-        let basePath = '';
-        if (path.includes('/VisualNovel-Character-Gallery')) {
-            basePath = '/VisualNovel-Character-Gallery';
-        }
-        
-        // index.html'e yönlendir, path'i query string olarak ekle
-        const redirectPath = basePath + '/index.html' + search + hash;
-        window.location.replace(redirectPath);
+        (function() {
+            const path = window.location.pathname;
+            const search = window.location.search;
+            const hash = window.location.hash;
+            
+            // Base path'i tespit et
+            let basePath = '';
+            const pathParts = path.split('/').filter(p => p);
+            if (pathParts.length > 0 && pathParts[0] === 'VisualNovel-Character-Gallery') {
+                basePath = '/VisualNovel-Character-Gallery';
+            }
+            
+            // index.html'e yönlendir
+            const redirectPath = basePath + '/index.html' + search + hash;
+            
+            // Hemen yönlendir
+            if (window.location.pathname !== redirectPath) {
+                window.location.replace(redirectPath);
+            }
+        })();
     </script>
 </head>
 <body>
-    <p>Yönlendiriliyor...</p>
+    <p>Yönlendiriliyor... <a href="./index.html">Buraya tıklayın</a> eğer otomatik yönlendirme çalışmazsa.</p>
 </body>
 </html>
 
