@@ -619,13 +619,24 @@ textarea {
 
 /* Blur efekti - karakter kartlarındaki görseller için */
 body.blur-images .character-card img,
-body.blur-images .character-image-wrapper img {
+body.blur-images .character-image-wrapper img,
+body.blur-images .character-sidebar-avatar img,
+body.blur-images .character-sidebar-avatar,
+body.blur-images .detail-main-image img,
+body.blur-images .detail-main-image,
+body.blur-images .character-image-card img,
+body.blur-images .character-image-card img {
     filter: blur(8px);
     transition: filter 0.3s ease;
 }
 
 body.blur-images .character-card:hover img,
-body.blur-images .character-image-wrapper:hover img {
+body.blur-images .character-image-wrapper:hover img,
+body.blur-images .character-sidebar-avatar:hover img,
+body.blur-images .character-sidebar-avatar:hover,
+body.blur-images .detail-main-image:hover img,
+body.blur-images .detail-main-image:hover,
+body.blur-images .character-image-card:hover img {
     filter: blur(0px);
 }
 
