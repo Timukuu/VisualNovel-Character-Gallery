@@ -3812,12 +3812,22 @@ function renderImageCarousel() {
                 upBtn.title = "Yukarı taşı";
                 upBtn.addEventListener("click", async (e) => {
                     e.stopPropagation();
-                    // Resimleri yer değiştir
-                    [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex - 1]] = 
-                        [allImagesForCarousel[actualIndex - 1], allImagesForCarousel[actualIndex]];
-                    currentImageIndex = actualIndex - 1;
-                    renderImageCarousel();
-                    updateImageInfo();
+                    
+                    // Loading state
+                    upBtn.disabled = true;
+                    upBtn.classList.add("loading");
+                    
+                    try {
+                        // Resimleri yer değiştir
+                        [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex - 1]] = 
+                            [allImagesForCarousel[actualIndex - 1], allImagesForCarousel[actualIndex]];
+                        currentImageIndex = actualIndex - 1;
+                        renderImageCarousel();
+                        updateImageInfo();
+                    } finally {
+                        upBtn.disabled = false;
+                        upBtn.classList.remove("loading");
+                    }
                 });
                 controls.appendChild(upBtn);
             }
