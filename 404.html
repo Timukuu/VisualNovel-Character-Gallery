@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Character Gallery</title>
+    <script>
+        // GitHub Pages için SPA routing desteği
+        // Tüm route'ları index.html'e yönlendir
+        const path = window.location.pathname;
+        const search = window.location.search;
+        const hash = window.location.hash;
+        
+        // Base path'i tespit et
+        let basePath = '';
+        if (path.includes('/VisualNovel-Character-Gallery')) {
+            basePath = '/VisualNovel-Character-Gallery';
+        }
+        
+        // index.html'e yönlendir, path'i query string olarak ekle
+        const redirectPath = basePath + '/index.html' + search + hash;
+        window.location.replace(redirectPath);
+    </script>
+</head>
+<body>
+    <p>Yönlendiriliyor...</p>
+</body>
+</html>
+

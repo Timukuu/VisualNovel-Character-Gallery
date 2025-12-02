@@ -183,12 +183,12 @@ function loadJSON(path) {
         if (basePath) {
             console.log("Fallback: base path olmadan deneniyor:", normalizedPath);
             return fetch(normalizedPath).then((res) => {
-                if (!res.ok) {
-                    throw new Error("HTTP " + res.status);
-                }
-                return res.json();
-            });
+        if (!res.ok) {
+            throw new Error("HTTP " + res.status);
         }
+        return res.json();
+    });
+}
         throw err;
     });
 }
@@ -1261,6 +1261,16 @@ function handleImageChange() {
 function updateURL(path = null, replace = false) {
     if (isNavigating) return;
     
+    // GitHub Pages base path'i tespit et
+    const pathname = window.location.pathname;
+    let basePath = '';
+    if (pathname !== '/' && pathname.length > 1) {
+        const parts = pathname.split('/').filter(p => p);
+        if (parts.length > 0 && parts[0] !== 'index.html') {
+            basePath = '/' + parts[0];
+        }
+    }
+    
     if (!path) {
         // Mevcut state'e göre URL oluştur
         if (!currentUser) {
@@ -1274,16 +1284,24 @@ function updateURL(path = null, replace = false) {
         }
     }
     
+    // Base path'i ekle
+    const fullPath = basePath + path;
+    
     if (replace) {
-        history.replaceState({ path }, "", path);
+        history.replaceState({ path: fullPath }, "", fullPath);
     } else {
-        history.pushState({ path }, "", path);
+        history.pushState({ path: fullPath }, "", fullPath);
     }
 }
 
 function parseRoute() {
     const path = window.location.pathname;
-    const parts = path.split("/").filter(p => p);
+    const parts = path.split("/").filter(p => p && p !== "index.html");
+    
+    // Base path'i atla (eğer varsa)
+    if (parts.length > 0 && parts[0] === "VisualNovel-Character-Gallery") {
+        parts.shift();
+    }
     
     if (parts.length === 0 || parts[0] === "login") {
         return { route: "login" };
