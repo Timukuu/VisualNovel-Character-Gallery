@@ -2209,18 +2209,21 @@ function renderImagesInGrid(images, container) {
                 e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData("text/plain", defaultImage.id);
                 e.dataTransfer.setData("text/group-title", title);
+                e.dataTransfer.setData("application/json", JSON.stringify({ imageId: defaultImage.id, groupTitle: title }));
                 imageCard.classList.add("dragging");
-                container.classList.add("drag-active");
+                if (container) container.classList.add("drag-active");
                 dragHandle.style.cursor = "grabbing";
+                console.log("Drag başladı:", defaultImage.id, title);
             });
             
             dragHandle.addEventListener("dragend", (e) => {
                 imageCard.classList.remove("dragging");
-                container.classList.remove("drag-active");
+                if (container) container.classList.remove("drag-active");
                 dragHandle.style.cursor = "grab";
                 document.querySelectorAll(".character-image-card.drag-over").forEach(card => {
                     card.classList.remove("drag-over");
                 });
+                console.log("Drag bitti");
             });
             
             imageCard.appendChild(dragHandle);
