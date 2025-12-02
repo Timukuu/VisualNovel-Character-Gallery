@@ -155,17 +155,27 @@ let editingUserId = null;
 
 function loadJSON(path) {
     // GitHub Pages için base path'i otomatik tespit et
-    // window.location.pathname örneği: "/VisualNovel-Character-Gallery/" veya "/"
+    // Sadece repo adını base path olarak kullan (route'ları değil)
     const pathname = window.location.pathname;
     let basePath = '';
     
-    // Eğer pathname root değilse (örn: "/VisualNovel-Character-Gallery/"), base path'i çıkar
-    if (pathname !== '/' && pathname.length > 1) {
-        // Son "/" karakterini kaldır ve base path'i al
-        const parts = pathname.split('/').filter(p => p);
-        if (parts.length > 0) {
-            basePath = '/' + parts[0];
-        }
+    // Pathname'i parse et
+    const parts = pathname.split('/').filter(p => p && p !== 'index.html');
+    
+    // İlk segment repo adı olabilir (VisualNovel-Character-Gallery)
+    // Ama route'lar (login, projects, vb.) değil
+    const knownRoutes = ['login', 'projects', 'data'];
+    if (parts.length > 0 && !knownRoutes.includes(parts[0])) {
+        // İlk segment muhtemelen repo adı
+        basePath = '/' + parts[0];
+    }
+    
+    // Alternatif: window.location.href'den base path'i tespit et
+    // Eğer URL'de repo adı varsa onu kullan
+    const href = window.location.href;
+    const repoMatch = href.match(/github\.io\/([^\/]+)/);
+    if (repoMatch && repoMatch[1] && !knownRoutes.includes(repoMatch[1])) {
+        basePath = '/' + repoMatch[1];
     }
     
     // Path'i normalize et (başında "/" varsa kaldır)
@@ -179,16 +189,29 @@ function loadJSON(path) {
         return res.json();
     }).catch((err) => {
         console.error("loadJSON hatası:", err, "Path:", fullPath);
-        // Fallback: base path olmadan dene
+        // Fallback 1: base path olmadan dene
         if (basePath) {
-            console.log("Fallback: base path olmadan deneniyor:", normalizedPath);
+            console.log("Fallback 1: base path olmadan deneniyor:", normalizedPath);
             return fetch(normalizedPath).then((res) => {
-        if (!res.ok) {
-            throw new Error("HTTP " + res.status);
+                if (!res.ok) {
+                    throw new Error("HTTP " + res.status);
+                }
+                return res.json();
+            }).catch(() => {
+                // Fallback 2: Sadece repo adı ile dene (eğer base path yanlışsa)
+                if (basePath.startsWith('/VisualNovel-Character-Gallery')) {
+                    const altPath = '/VisualNovel-Character-Gallery/' + normalizedPath;
+                    console.log("Fallback 2: alternatif path deneniyor:", altPath);
+                    return fetch(altPath).then((res) => {
+                        if (!res.ok) {
+                            throw new Error("HTTP " + res.status);
+                        }
+                        return res.json();
+                    });
+                }
+                throw err;
+            });
         }
-        return res.json();
-    });
-}
         throw err;
     });
 }
