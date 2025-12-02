@@ -927,6 +927,59 @@ function openCharacterEditMode(character) {
     openCharacterModal(character);
 }
 
+// Traits düzenleme handler
+let isEditingTraits = false;
+async function handleTraitsEdit() {
+    if (!currentCharacter || !currentProjectId) return;
+    
+    if (!isEditingTraits) {
+        // Düzenleme moduna geç
+        if (traitsDisplay && traitsEdit) {
+            traitsDisplay.classList.add("hidden");
+            traitsEdit.classList.remove("hidden");
+            if (traitsTextarea) {
+                traitsTextarea.value = currentCharacter.traits || "";
+            }
+            if (editTraitsBtn) {
+                editTraitsBtn.textContent = "Kaydet";
+            }
+            isEditingTraits = true;
+        }
+    } else {
+        // Kaydet
+        if (traitsTextarea && currentCharacter && currentProjectId) {
+            try {
+                const updatedCharacter = { ...currentCharacter, traits: traitsTextarea.value };
+                const response = await fetch(`${getCharactersUrl(currentProjectId)}/${currentCharacter.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedCharacter)
+                });
+                if (response.ok) {
+                    currentCharacter = updatedCharacter;
+                    if (traitsDisplay) {
+                        traitsDisplay.textContent = updatedCharacter.traits || "";
+                    }
+                    if (traitsDisplay && traitsEdit) {
+                        traitsDisplay.classList.remove("hidden");
+                        traitsEdit.classList.add("hidden");
+                    }
+                    if (editTraitsBtn) {
+                        editTraitsBtn.textContent = "Düzenle";
+                    }
+                    isEditingTraits = false;
+                    showToast("Karakteristik özellikler güncellendi", "success");
+                } else {
+                    throw new Error("Güncelleme başarısız");
+                }
+            } catch (err) {
+                console.error("Traits güncellenirken hata:", err);
+                showToast("Güncelleme başarısız: " + err.message, "error");
+            }
+        }
+    }
+}
+
 // Boş durum göster
 function showEmptyState() {
     // DOM referanslarını kontrol et
@@ -1738,49 +1791,7 @@ function initializeEventListeners() {
                 });
             }
             if (editTraitsBtn) {
-                editTraitsBtn.addEventListener("click", () => {
-                    if (traitsDisplay && traitsEdit) {
-                        traitsDisplay.classList.add("hidden");
-                        traitsEdit.classList.remove("hidden");
-                        if (traitsTextarea && currentCharacter) {
-                            traitsTextarea.value = currentCharacter.traits || "";
-                        }
-                        // Butonu "Kaydet" olarak değiştir
-                        if (editTraitsBtn) {
-                            editTraitsBtn.textContent = "Kaydet";
-                            editTraitsBtn.onclick = async () => {
-                                if (traitsTextarea && currentCharacter && currentProjectId) {
-                                    try {
-                                        const updatedCharacter = { ...currentCharacter, traits: traitsTextarea.value };
-                                        const response = await fetch(`${getCharactersUrl(currentProjectId)}/${currentCharacter.id}`, {
-                                            method: "PUT",
-                                            headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify(updatedCharacter)
-                                        });
-                                        if (response.ok) {
-                                            currentCharacter = updatedCharacter;
-                                            traitsDisplay.textContent = updatedCharacter.traits || "";
-                                            traitsDisplay.classList.remove("hidden");
-                                            traitsEdit.classList.add("hidden");
-                                            editTraitsBtn.textContent = "Düzenle";
-                                            editTraitsBtn.onclick = arguments.callee.caller || (() => {
-                                                traitsDisplay.classList.add("hidden");
-                                                traitsEdit.classList.remove("hidden");
-                                                if (traitsTextarea) {
-                                                    traitsTextarea.value = currentCharacter.traits || "";
-                                                }
-                                            });
-                                            showToast("Karakteristik özellikler güncellendi", "success");
-                                        }
-                                    } catch (err) {
-                                        console.error("Traits güncellenirken hata:", err);
-                                        showToast("Güncelleme başarısız", "error");
-                                    }
-                                }
-                            };
-                        }
-                    }
-                });
+                editTraitsBtn.addEventListener("click", handleTraitsEdit);
             }
             if (addImageBtnPanel) {
                 addImageBtnPanel.addEventListener("click", () => {
