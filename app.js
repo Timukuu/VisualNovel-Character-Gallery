@@ -2750,15 +2750,19 @@ function closeImageViewModal() {
 }
 
 // Ana görseli ayarla
-async function setMainImage(imageId, imageUrl) {
-    if (!currentCharacterId || !currentCharacter) return;
+async function setMainImage(imageId, imageUrl, character = null) {
+    const char = character || currentCharacter;
+    if (!currentCharacterId || !char) {
+        console.error("setMainImage: currentCharacterId veya character bulunamadı");
+        return;
+    }
 
     try {
         const response = await fetch(`${getCharactersUrl(currentProjectId)}/${currentCharacterId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                ...currentCharacter,
+                ...char,
                 mainImageId: imageId,
                 mainImageUrl: imageUrl
             })
@@ -2769,17 +2773,31 @@ async function setMainImage(imageId, imageUrl) {
         const updatedCharacter = await response.json();
         currentCharacter = updatedCharacter;
 
-        // Ana görseli güncelle
-        characterDetailMainImage.src = imageUrl;
-        characterDetailMainImage.style.display = "block";
+        // Ana görseli güncelle (detay panelinde)
+        if (detailMainImage) {
+            detailMainImage.src = imageUrl;
+            detailMainImage.style.display = "block";
+        }
+        if (characterDetailMainImage) {
+            characterDetailMainImage.src = imageUrl;
+            characterDetailMainImage.style.display = "block";
+        }
 
         // Resim kataloğunu yenile
+        if (currentCharacterId) {
+            await renderCharacterImagesPanel(currentCharacterId);
+        }
         await renderCharacterImages();
         
-        // Karakter listesini de güncelle (eğer main screen'deyse)
+        // Karakter listesini de güncelle
+        if (charactersSidebarList) {
+            await renderCharactersSidebar();
+        }
         if (mainScreen && !mainScreen.classList.contains("hidden")) {
             await renderCharacters();
         }
+        
+        showToast("Ana görsel güncellendi", "success");
     } catch (err) {
         console.error("Ana görsel ayarlanırken hata:", err);
         alert("Ana görsel ayarlanamadı: " + err.message);
