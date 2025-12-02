@@ -400,9 +400,12 @@ async function loadProjectsFromBackend() {
     try {
         // Önce backend'in çalışıp çalışmadığını kontrol et
         try {
+            const healthController = new AbortController();
+            const healthTimeout = setTimeout(() => healthController.abort(), 5000);
             const healthCheck = await fetch(`${BACKEND_BASE_URL}/health`, {
-                signal: AbortSignal.timeout(5000)
+                signal: healthController.signal
             });
+            clearTimeout(healthTimeout);
             if (!healthCheck.ok) {
                 throw new Error("Backend sağlık kontrolü başarısız");
             }
