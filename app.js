@@ -704,15 +704,25 @@ async function deleteProject(projectId) {
 // --- Karakterler ---
 
 // Sol sütunda karakter listesi
+let isRenderingCharacters = false;
 async function renderCharactersSidebar() {
-    // DOM referanslarını kontrol et
-    if (!charactersSidebarList) charactersSidebarList = document.getElementById("characters-sidebar-list");
-    if (!charactersSidebarList) {
-        console.error("characters-sidebar-list element bulunamadı!");
+    // Eğer zaten render işlemi devam ediyorsa, bekle
+    if (isRenderingCharacters) {
         return;
     }
     
-    charactersSidebarList.innerHTML = "";
+    isRenderingCharacters = true;
+    
+    try {
+        // DOM referanslarını kontrol et
+        if (!charactersSidebarList) charactersSidebarList = document.getElementById("characters-sidebar-list");
+        if (!charactersSidebarList) {
+            console.error("characters-sidebar-list element bulunamadı!");
+            return;
+        }
+        
+        // Önce tüm içeriği temizle
+        charactersSidebarList.innerHTML = "";
 
     if (!currentProjectId) {
         return;
@@ -832,6 +842,9 @@ async function renderCharactersSidebar() {
 
         charactersSidebarList.appendChild(item);
     });
+    } finally {
+        isRenderingCharacters = false;
+    }
 }
 
 // Sağ panelde karakter detayı göster
@@ -1805,11 +1818,18 @@ function initializeEventListeners() {
                 });
             }
             if (characterSearchInput) {
+                let searchTimeout = null;
                 characterSearchInput.addEventListener("input", () => {
-                    // Arama yapıldığında karakter listesini yeniden render et
-                    if (currentProjectId) {
-                        renderCharactersSidebar();
+                    // Debounce: 300ms bekle, sonra render et
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
                     }
+                    searchTimeout = setTimeout(() => {
+                        // Arama yapıldığında karakter listesini yeniden render et
+                        if (currentProjectId) {
+                            renderCharactersSidebar();
+                        }
+                    }, 300);
                 });
             }
             if (editTraitsBtn) {
