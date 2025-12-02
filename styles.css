@@ -1436,15 +1436,18 @@ textarea:valid:not(:placeholder-shown) {
 /* Hero Alanı */
 .character-detail-hero {
     display: flex;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border-soft);
 }
 
 .character-detail-avatar-wrapper {
     position: relative;
-    width: 120px;
-    height: 180px;
+    width: 200px;
+    aspect-ratio: 2 / 3; /* 768x1152 oranı */
     flex-shrink: 0;
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -1458,7 +1461,11 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .character-detail-hero-info {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
 }
 
 .character-name-display {
@@ -1470,10 +1477,12 @@ textarea:valid:not(:placeholder-shown) {
 
 .character-meta-display {
     display: flex;
+    justify-content: center;
     gap: 16px;
     margin-bottom: 12px;
     font-size: 14px;
     color: var(--text-muted);
+    flex-wrap: wrap;
 }
 
 .character-meta-item {
