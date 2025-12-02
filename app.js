@@ -2635,6 +2635,12 @@ function renderImagesInGrid(images, container) {
                 dragHandle.style.opacity = "0.7";
             });
             
+            // Mousedown event'i ekle (drag başlamadan önce)
+            dragHandle.addEventListener("mousedown", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+            });
+            
             dragHandle.draggable = true;
             dragHandle.addEventListener("dragstart", (e) => {
                 e.stopPropagation();
@@ -2656,6 +2662,13 @@ function renderImagesInGrid(images, container) {
                     card.classList.remove("drag-over");
                 });
                 console.log("Drag bitti");
+            });
+            
+            // Drag handle'a tıklanınca click event'inin tetiklenmesini engelle
+            dragHandle.addEventListener("click", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                return false;
             });
             
             imageCard.appendChild(dragHandle);
@@ -2989,6 +3002,12 @@ async function renderCharacterImages() {
                     dragHandle.style.opacity = "0.7";
                 });
                 
+                // Mousedown event'i ekle (drag başlamadan önce)
+                dragHandle.addEventListener("mousedown", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+                
                 // Drag handle'a drag event'lerini ekle
                 dragHandle.draggable = true;
                 dragHandle.addEventListener("dragstart", (e) => {
@@ -2999,6 +3018,7 @@ async function renderCharacterImages() {
                     imageCard.classList.add("dragging");
                     characterImagesGrid.classList.add("drag-active");
                     dragHandle.style.cursor = "grabbing";
+                    console.log("Drag başladı (renderCharacterImages):", defaultImage.id, title);
                 });
                 
                 dragHandle.addEventListener("dragend", (e) => {
@@ -3009,6 +3029,13 @@ async function renderCharacterImages() {
                     document.querySelectorAll(".character-image-card.drag-over").forEach(card => {
                         card.classList.remove("drag-over");
                     });
+                });
+                
+                // Drag handle'a tıklanınca click event'inin tetiklenmesini engelle
+                dragHandle.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return false;
                 });
                 
                 imageCard.appendChild(dragHandle);
