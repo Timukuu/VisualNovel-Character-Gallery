@@ -3560,6 +3560,59 @@ function prevImage() {
     renderImageCarousel();
 }
 
+async function handleDeleteImageFromView() {
+    if (allImagesForCarousel.length === 0) return;
+    
+    const image = allImagesForCarousel[currentImageIndex];
+    if (!image || !image.id) return;
+    
+    if (!confirm(`"${image.title || 'Bu resim'}" adlı resmi silmek istediğinize emin misiniz?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/images/${image.id}`, {
+            method: "DELETE"
+        });
+
+        if (!response.ok) throw new Error("Resim silinemedi");
+
+        // Carousel'dan resmi çıkar
+        allImagesForCarousel.splice(currentImageIndex, 1);
+        
+        // Eğer resim kalmadıysa modal'ı kapat
+        if (allImagesForCarousel.length === 0) {
+            closeImageViewModal();
+            // Resim kataloğunu yenile
+            if (currentCharacterId) {
+                await renderCharacterImagesPanel(currentCharacterId);
+            }
+            await renderCharacterImages();
+            showToast("Resim silindi", "success");
+            return;
+        }
+        
+        // Index'i ayarla (silinen resim son resimse bir öncekine geç)
+        if (currentImageIndex >= allImagesForCarousel.length) {
+            currentImageIndex = allImagesForCarousel.length - 1;
+        }
+        
+        // Carousel'ı yeniden render et
+        renderImageCarousel();
+        
+        // Resim kataloğunu yenile
+        if (currentCharacterId) {
+            await renderCharacterImagesPanel(currentCharacterId);
+        }
+        await renderCharacterImages();
+        
+        showToast("Resim silindi", "success");
+    } catch (err) {
+        console.error("Resim silinirken hata:", err);
+        showToast("Resim silinemedi: " + err.message, "error");
+    }
+}
+
 function closeImageViewModal() {
     imageViewModal.classList.add("hidden");
 }
