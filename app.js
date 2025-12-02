@@ -502,6 +502,12 @@ async function renderProjects() {
             currentProjectId = project.id;
                 sidebarProjectTitle.textContent = project.name;
                 charactersSidebarSection.classList.remove("hidden");
+                
+                // "Karakter Ekle" butonunu göster (admin ise)
+                if (addCharacterSidebarBtn && currentUser) {
+                    addCharacterSidebarBtn.style.display = currentUser.role === "admin" ? "block" : "none";
+                }
+                
                 renderCharactersSidebar();
             } else {
                 currentProjectId = null;
@@ -911,9 +917,17 @@ async function showCharacterDetail(character) {
     // Admin butonları
     if (editTraitsBtn) {
         editTraitsBtn.style.display = currentUser.role === "admin" ? "block" : "none";
+        editTraitsBtn.textContent = "Düzenle";
     }
     if (addImageBtnPanel) {
         addImageBtnPanel.style.display = currentUser.role === "admin" ? "block" : "none";
+    }
+    
+    // Traits düzenleme modunu sıfırla
+    isEditingTraits = false;
+    if (traitsDisplay && traitsEdit) {
+        traitsDisplay.classList.remove("hidden");
+        traitsEdit.classList.add("hidden");
     }
 
     // Resim kataloğunu yükle
