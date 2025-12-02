@@ -518,7 +518,7 @@ async function renderProjects() {
         // Admin tüm projeleri görebilir
         userProjects = projects;
     } else {
-        const userProjectIds = currentUser.projects || [];
+    const userProjectIds = currentUser.projects || [];
         userProjects = projects.filter((p) => userProjectIds.includes(p.id));
     }
 
@@ -534,19 +534,25 @@ async function renderProjects() {
         return;
     }
 
-    // Karakter sayılarını yükle
+    // Karakter sayılarını yükle (paralel olarak)
     const projectCharacterCounts = {};
-    for (const project of userProjects) {
+    const characterCountPromises = userProjects.map(async (project) => {
         try {
             const response = await fetch(getCharactersUrl(project.id));
             if (response.ok) {
                 const characters = await response.json();
                 projectCharacterCounts[project.id] = characters.length;
+            } else {
+                projectCharacterCounts[project.id] = 0;
             }
         } catch (err) {
+            console.warn(`Proje ${project.id} karakter sayısı yüklenemedi:`, err);
             projectCharacterCounts[project.id] = 0;
         }
-    }
+    });
+    
+    // Tüm karakter sayıları yüklenene kadar bekle
+    await Promise.all(characterCountPromises);
 
     userProjects.forEach((project) => {
         const accordionItem = document.createElement("div");
@@ -770,10 +776,14 @@ async function handleProjectFormSubmit(event) {
         }
 
         closeProjectModal();
+        
+        // Projeleri yeniden yükle ve render et
         await loadProjectsFromBackend();
+        
+        showToast("Proje kaydedildi", "success");
     } catch (err) {
         console.error("Proje kaydedilirken hata:", err);
-        alert("Proje kaydedilemedi: " + err.message);
+        showToast("Proje kaydedilemedi: " + err.message, "error");
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
