@@ -2123,6 +2123,53 @@ textarea:valid:not(:placeholder-shown) {
     color: white;
 }
 
+/* Chat bildirimi */
+#chat-toggle-btn {
+    position: relative;
+}
+
+#chat-toggle-btn.has-notification::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: var(--danger);
+    border-radius: 50%;
+    border: 2px solid var(--bg-elevated);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Sıralama modu için stiller */
+.image-carousel-item.reorder-mode {
+    border: 2px dashed var(--accent);
+    opacity: 0.9;
+}
+
+.reorder-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reorder-controls button {
+    min-width: 32px;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
 .chat-input-container {
     display: flex;
     gap: 8px;

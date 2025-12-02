@@ -1852,6 +1852,21 @@ function openChatPanel() {
     if (chatMessageInput) {
         setTimeout(() => chatMessageInput.focus(), 100);
     }
+    
+    // Chat açıldığında bildirimi kaldır
+    setTimeout(() => {
+        if (chatMessages) {
+            const messages = Array.from(chatMessages.querySelectorAll(".chat-message"));
+            if (messages.length > 0) {
+                const lastMsg = messages[messages.length - 1];
+                const lastMessageId = lastMsg.dataset.messageId;
+                if (lastMessageId) {
+                    localStorage.setItem("lastReadChatMessageId", lastMessageId);
+                }
+            }
+        }
+        updateChatNotification();
+    }, 500);
 }
 
 function closeChatPanel() {
@@ -1890,14 +1905,30 @@ function renderChatMessages(messages) {
         emptyMsg.className = "chat-empty";
         emptyMsg.textContent = "Henüz mesaj yok. İlk mesajı siz gönderin!";
         chatMessages.appendChild(emptyMsg);
+        localStorage.setItem("lastReadChatMessageId", "");
+        updateChatNotification();
         return;
     }
     
-    messages.forEach((msg) => {
+    // Son okunan mesaj ID'sini al
+    const lastReadId = localStorage.getItem("lastReadChatMessageId") || "";
+    let lastReadIndex = -1;
+    
+    // Son okunan mesajın index'ini bul
+    if (lastReadId) {
+        lastReadIndex = messages.findIndex(msg => msg.id === lastReadId);
+    }
+    
+    messages.forEach((msg, index) => {
         const messageEl = document.createElement("div");
         messageEl.className = "chat-message";
         if (msg.userId === currentUser.username || msg.userId === currentUser.id) {
             messageEl.classList.add("own-message");
+        }
+        
+        // Mesaj ID'sini sakla
+        if (msg.id) {
+            messageEl.dataset.messageId = msg.id;
         }
         
         const time = new Date(msg.createdAt);
@@ -1916,6 +1947,53 @@ function renderChatMessages(messages) {
     
     // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Chat paneli açıksa, son mesajı okunmuş olarak işaretle
+    if (chatPanel && !chatPanel.classList.contains("hidden")) {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && lastMessage.id) {
+            localStorage.setItem("lastReadChatMessageId", lastMessage.id);
+        }
+        updateChatNotification();
+    } else {
+        // Chat paneli kapalıysa, okunmamış mesaj var mı kontrol et
+        updateChatNotification(messages, lastReadId);
+    }
+}
+
+function updateChatNotification(messages = null, lastReadId = null) {
+    if (!chatToggleBtn || !currentUser || currentUser.role !== "admin") return;
+    
+    // Eğer mesajlar verilmemişse, yükle
+    if (!messages) {
+        lastReadId = localStorage.getItem("lastReadChatMessageId") || "";
+        fetch(`${BACKEND_BASE_URL}/api/chat/messages`)
+            .then(res => res.json())
+            .then(msgs => {
+                checkUnreadMessages(msgs, lastReadId);
+            })
+            .catch(err => console.error("Chat mesajları kontrol edilemedi:", err));
+        return;
+    }
+    
+    checkUnreadMessages(messages, lastReadId || localStorage.getItem("lastReadChatMessageId") || "");
+}
+
+function checkUnreadMessages(messages, lastReadId) {
+    if (!chatToggleBtn || messages.length === 0) {
+        chatToggleBtn.classList.remove("has-notification");
+        return;
+    }
+    
+    // Son mesajın ID'sini kontrol et
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.id && lastMessage.id !== lastReadId) {
+        // Okunmamış mesaj var
+        chatToggleBtn.classList.add("has-notification");
+    } else {
+        // Tüm mesajlar okunmuş
+        chatToggleBtn.classList.remove("has-notification");
+    }
 }
 
 async function sendChatMessage() {
@@ -1948,6 +2026,9 @@ async function sendChatMessage() {
         
         // Mesajları yenile
         await loadChatMessages();
+        
+        // Bildirimi güncelle
+        updateChatNotification();
     } catch (err) {
         console.error("Mesaj gönderilirken hata:", err);
         showToast("Mesaj gönderilemedi: " + err.message, "error");
@@ -2080,6 +2161,13 @@ function initializeEventListeners() {
     
     // Admin ise chat butonunu göster
     updateChatButtonVisibility();
+    
+    // Chat bildirimini kontrol et (her 5 saniyede bir)
+    if (currentUser && currentUser.role === "admin") {
+        setInterval(() => {
+            updateChatNotification();
+        }, 5000);
+    }
 
             // Event listeners
     if (loginForm) {
@@ -3632,14 +3720,79 @@ function renderImageCarousel() {
         if (actualIndex === currentImageIndex) {
             item.classList.add("active");
         }
+        
+        // Sıralama modunda özel stil
+        if (isReorderMode) {
+            item.classList.add("reorder-mode");
+            item.style.cursor = "move";
+        }
 
         const imgEl = document.createElement("img");
         imgEl.src = img.url;
         imgEl.alt = img.title;
         item.appendChild(imgEl);
+        
+        // Sıralama modunda yukarı/aşağı butonları ekle
+        if (isReorderMode && currentUser && currentUser.role === "admin") {
+            const controls = document.createElement("div");
+            controls.className = "reorder-controls";
+            controls.style.position = "absolute";
+            controls.style.top = "8px";
+            controls.style.right = "8px";
+            controls.style.display = "flex";
+            controls.style.flexDirection = "column";
+            controls.style.gap = "4px";
+            controls.style.zIndex = "20";
+            
+            // Yukarı butonu
+            if (actualIndex > 0) {
+                const upBtn = document.createElement("button");
+                upBtn.innerHTML = "↑";
+                upBtn.className = "btn subtle";
+                upBtn.style.padding = "4px 8px";
+                upBtn.style.fontSize = "14px";
+                upBtn.style.minWidth = "auto";
+                upBtn.title = "Yukarı taşı";
+                upBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    // Resimleri yer değiştir
+                    [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex - 1]] = 
+                        [allImagesForCarousel[actualIndex - 1], allImagesForCarousel[actualIndex]];
+                    currentImageIndex = actualIndex - 1;
+                    renderImageCarousel();
+                    updateImageInfo();
+                });
+                controls.appendChild(upBtn);
+            }
+            
+            // Aşağı butonu
+            if (actualIndex < allImagesForCarousel.length - 1) {
+                const downBtn = document.createElement("button");
+                downBtn.innerHTML = "↓";
+                downBtn.className = "btn subtle";
+                downBtn.style.padding = "4px 8px";
+                downBtn.style.fontSize = "14px";
+                downBtn.style.minWidth = "auto";
+                downBtn.title = "Aşağı taşı";
+                downBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    // Resimleri yer değiştir
+                    [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex + 1]] = 
+                        [allImagesForCarousel[actualIndex + 1], allImagesForCarousel[actualIndex]];
+                    currentImageIndex = actualIndex + 1;
+                    renderImageCarousel();
+                    updateImageInfo();
+                });
+                controls.appendChild(downBtn);
+            }
+            
+            if (controls.children.length > 0) {
+                item.appendChild(controls);
+            }
+        }
 
         item.addEventListener("click", () => {
-            if (actualIndex !== currentImageIndex) {
+            if (!isReorderMode && actualIndex !== currentImageIndex) {
                 currentImageIndex = actualIndex;
                 renderImageCarousel();
                 updateImageInfo();
@@ -3774,6 +3927,52 @@ function prevImage() {
     if (allImagesForCarousel.length === 0) return;
     currentImageIndex = (currentImageIndex - 1 + allImagesForCarousel.length) % allImagesForCarousel.length;
     renderImageCarousel();
+}
+
+async function toggleReorderMode() {
+    if (!currentUser || currentUser.role !== "admin" || allImagesForCarousel.length < 2) return;
+    
+    if (isReorderMode) {
+        // Kaydet modu
+        try {
+            // Sıralamayı backend'e kaydet
+            const updates = allImagesForCarousel.map((img, index) => ({
+                id: img.id,
+                orderIndex: index
+            }));
+            
+            // Her resmi güncelle
+            for (const update of updates) {
+                const response = await fetch(`${BACKEND_BASE_URL}/api/images/${update.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderIndex: update.orderIndex })
+                });
+                if (!response.ok) throw new Error(`Resim ${update.id} güncellenemedi`);
+            }
+            
+            isReorderMode = false;
+            showToast("Sıralama kaydedildi", "success");
+            
+            // Resim kataloğunu yenile
+            if (currentCharacterId) {
+                await renderCharacterImagesPanel(currentCharacterId);
+            }
+            await renderCharacterImages();
+            
+            // Slide view'ı yeniden render et
+            renderImageCarousel();
+            updateImageInfo();
+        } catch (err) {
+            console.error("Sıralama kaydedilirken hata:", err);
+            showToast("Sıralama kaydedilemedi: " + err.message, "error");
+        }
+    } else {
+        // Sıralama moduna geç
+        isReorderMode = true;
+        renderImageCarousel();
+        updateImageInfo();
+    }
 }
 
 async function handleDeleteImageFromView() {
