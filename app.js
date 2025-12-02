@@ -3537,6 +3537,15 @@ function updateImageInfo() {
             imageViewPrompts.style.display = "none";
         }
     }
+    
+    // Silme butonunu göster/gizle (sadece admin için)
+    if (deleteImageFromViewBtn) {
+        if (currentUser && currentUser.role === "admin" && allImagesForCarousel.length > 0) {
+            deleteImageFromViewBtn.style.display = "block";
+        } else {
+            deleteImageFromViewBtn.style.display = "none";
+        }
+    }
 }
 
 function nextImage() {
