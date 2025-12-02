@@ -205,7 +205,7 @@ function loadJSON(path) {
     // Path'i normalize et (başında "/" varsa kaldır)
     const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
     
-    // Önce base path ile dene
+    // Denenecek path'leri oluştur
     const pathsToTry = [];
     
     if (basePath) {
@@ -218,30 +218,30 @@ function loadJSON(path) {
         pathsToTry.push('/VisualNovel-Character-Gallery/' + normalizedPath);
     }
     
-    // Her path'i sırayla dene
-    let lastError = null;
-    for (const tryPath of pathsToTry) {
+    // Her path'i sırayla dene (recursive approach)
+    function tryPath(index) {
+        if (index >= pathsToTry.length) {
+            // Tüm path'ler denendi, hata fırlat
+            const error = new Error("HTTP 404 - Tüm path'ler denendi: " + pathsToTry.join(', '));
+            console.error("loadJSON hatası:", error, "Denenen path'ler:", pathsToTry);
+            return Promise.reject(error);
+        }
+        
+        const tryPath = pathsToTry[index];
         return fetch(tryPath).then((res) => {
         if (!res.ok) {
             throw new Error("HTTP " + res.status);
         }
         return res.json();
         }).catch((err) => {
-            lastError = err;
-            // Son path değilse, bir sonrakini dene
-            const currentIndex = pathsToTry.indexOf(tryPath);
-            if (currentIndex < pathsToTry.length - 1) {
-                // Promise chain'i devam ettir
-                return Promise.reject(err);
-            }
-            // Son path, hata fırlat
-            console.error("loadJSON hatası - tüm path'ler denendi:", pathsToTry, err);
-            throw err;
+            // Bu path başarısız, bir sonrakini dene
+            console.log(`Path başarısız: ${tryPath}, bir sonrakini deniyor...`);
+            return tryPath(index + 1);
         });
     }
     
-    // Eğer hiç path yoksa (olmayacak ama güvenlik için)
-    return Promise.reject(new Error("No paths to try"));
+    // İlk path'den başla
+    return tryPath(0);
 }
 
 // Karakterleri backend'den yükle
