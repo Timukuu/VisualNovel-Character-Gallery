@@ -11,6 +11,21 @@
     <!-- Toast Bildirimleri -->
     <div id="toast-container" class="toast-container"></div>
     
+    <!-- Admin Chat Panel -->
+    <div id="chat-panel" class="chat-panel hidden">
+        <div class="chat-panel-header">
+            <h3>Admin Chat</h3>
+            <button id="chat-close-btn" class="btn subtle" style="padding: 4px 8px; font-size: 18px;">×</button>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <!-- Mesajlar buraya eklenecek -->
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chat-message-input" placeholder="Mesajınızı yazın..." maxlength="500" />
+            <button id="chat-send-btn" class="btn primary">Gönder</button>
+        </div>
+    </div>
+    
     <div id="app">
 
         <!-- GİRİŞ EKRANI -->
@@ -44,6 +59,7 @@
                 <div class="topbar-right" style="display: flex; gap: 8px; align-items: center;">
                     <button id="blur-toggle-btn" class="btn subtle" title="Görselleri Bulanıklaştır">👁️</button>
                     <button id="theme-toggle-btn" class="btn subtle" title="Tema Değiştir">🌓</button>
+                    <button id="chat-toggle-btn" class="btn subtle" title="Admin Chat" style="display: none;">💬</button>
                     <button id="users-management-btn" class="btn subtle" style="display: none;">Kullanıcı Yönetimi</button>
                     <button id="logout-btn" class="btn subtle">Çıkış</button>
                 </div>

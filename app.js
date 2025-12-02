@@ -57,7 +57,9 @@ let loginScreen, mainScreen, characterDetailScreen;
 let loginForm, usernameInput, passwordInput, loginErrorEl;
 
 // Bu referanslar initializeEventListeners içinde alınacak
-let currentUserInfoEl, logoutBtn, usersManagementBtn, themeToggleBtn, blurToggleBtn;
+let currentUserInfoEl, logoutBtn, usersManagementBtn, themeToggleBtn, blurToggleBtn, chatToggleBtn;
+let chatPanel, chatMessages, chatMessageInput, chatSendBtn, chatCloseBtn;
+let chatPollInterval = null;
 
 // Yeni layout DOM referansları (initializeEventListeners içinde alınacak)
 let projectListEl, addProjectBtn, charactersSidebarSection, sidebarProjectTitle;
@@ -312,6 +314,9 @@ async function handleLoginSubmit(event) {
     }
 
     currentUser = user;
+    
+    // Chat butonunu güncelle
+    updateChatButtonVisibility();
 
     // Session'ı localStorage'a kaydet
     localStorage.setItem("currentUser", JSON.stringify({
@@ -1806,6 +1811,14 @@ function initializeEventListeners() {
     usersManagementBtn = document.getElementById("users-management-btn");
     themeToggleBtn = document.getElementById("theme-toggle-btn");
     blurToggleBtn = document.getElementById("blur-toggle-btn");
+    chatToggleBtn = document.getElementById("chat-toggle-btn");
+    
+    // Chat panel DOM referansları
+    chatPanel = document.getElementById("chat-panel");
+    chatMessages = document.getElementById("chat-messages");
+    chatMessageInput = document.getElementById("chat-message-input");
+    chatSendBtn = document.getElementById("chat-send-btn");
+    chatCloseBtn = document.getElementById("chat-close-btn");
     
     // Yeni layout DOM referansları
     projectListEl = document.getElementById("project-list");
