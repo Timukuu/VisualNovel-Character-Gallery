@@ -512,12 +512,21 @@ async function renderProjects() {
         addProjectBtn.style.display = "none";
     }
 
-    const userProjectIds = currentUser.projects || [];
-    const userProjects = projects.filter((p) => userProjectIds.includes(p.id));
+    // Admin ise tüm projeleri göster, değilse sadece atanmış projeleri göster
+    let userProjects;
+    if (currentUser.role === "admin") {
+        // Admin tüm projeleri görebilir
+        userProjects = projects;
+    } else {
+        const userProjectIds = currentUser.projects || [];
+        userProjects = projects.filter((p) => userProjectIds.includes(p.id));
+    }
 
     if (userProjects.length === 0) {
         const emptyMsg = document.createElement("div");
-        emptyMsg.textContent = "Bu kullanıcıya atanmış proje yok.";
+        emptyMsg.textContent = currentUser.role === "admin" 
+            ? "Henüz proje yok. Yeni proje ekleyin." 
+            : "Bu kullanıcıya atanmış proje yok.";
         emptyMsg.style.fontSize = "13px";
         emptyMsg.style.color = "var(--text-muted)";
         emptyMsg.style.padding = "12px";
