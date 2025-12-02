@@ -111,6 +111,16 @@ body {
 .card-login {
     max-width: 420px;
     margin: 80px auto 0 auto;
+    width: 90%;
+    max-width: 420px;
+}
+
+@media (max-width: 480px) {
+    .card-login {
+        margin: 40px auto 0 auto;
+        padding: 24px;
+        width: 95%;
+    }
 }
 
 .card h1 {
