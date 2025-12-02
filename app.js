@@ -4025,6 +4025,12 @@ async function toggleReorderMode() {
             // Slide view'ı yeniden render et
             renderImageCarousel();
             updateImageInfo();
+            
+            // Karakter resim kartlarını yeniden render et (drag handle'ların görünür olması için)
+            if (currentCharacterId) {
+                await renderCharacterImagesPanel(currentCharacterId);
+            }
+            await renderCharacterImages();
         } catch (err) {
             console.error("Sıralama kaydedilirken hata:", err);
             showToast("Sıralama kaydedilemedi: " + err.message, "error");
@@ -4036,6 +4042,12 @@ async function toggleReorderMode() {
         renderImageCarousel();
         updateImageInfo();
         showToast("Sıralama modu aktif - yukarı/aşağı butonlarını kullanın", "info");
+        
+        // Karakter resim kartlarını yeniden render et (drag handle'ların görünür olması için)
+        if (currentCharacterId) {
+            await renderCharacterImagesPanel(currentCharacterId);
+        }
+        await renderCharacterImages();
     }
 }
 
