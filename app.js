@@ -3662,9 +3662,10 @@ async function handleImageReorder(draggedImageId, targetImageId, draggedGroupTit
         
         // UI'ı yenile
         await renderCharacterImages();
+        showToast("Sıralama güncellendi", "success");
     } catch (err) {
         console.error("Resim sıralaması güncellenirken hata:", err);
-        alert("Resim sıralaması güncellenemedi: " + err.message);
+        showToast("Resim sıralaması güncellenemedi: " + err.message, "error");
     }
 }
 
@@ -4422,6 +4423,9 @@ async function handleUserFormSubmit(event) {
 async function deleteUser(userId) {
     if (!confirm("Bu kullanıcıyı silmek istediğinize emin misiniz?")) return;
 
+    // Loading toast göster
+    showToast("Kullanıcı siliniyor...", "info", 0); // 0 = süresiz
+
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/api/users/${userId}`, {
             method: "DELETE"
@@ -4430,9 +4434,10 @@ async function deleteUser(userId) {
         if (!response.ok) throw new Error("Kullanıcı silinemedi");
 
         await renderUsers();
+        showToast("Kullanıcı silindi", "success");
     } catch (err) {
         console.error("Kullanıcı silinirken hata:", err);
-        alert("Kullanıcı silinemedi: " + err.message);
+        showToast("Kullanıcı silinemedi: " + err.message, "error");
     }
 }
 
