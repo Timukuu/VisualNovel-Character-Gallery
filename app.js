@@ -398,9 +398,22 @@ async function loadProjectsFromBackend() {
     }
     
     try {
-        // Timeout ile fetch (10 saniye)
+        // Önce backend'in çalışıp çalışmadığını kontrol et
+        try {
+            const healthCheck = await fetch(`${BACKEND_BASE_URL}/health`, {
+                signal: AbortSignal.timeout(5000)
+            });
+            if (!healthCheck.ok) {
+                throw new Error("Backend sağlık kontrolü başarısız");
+            }
+            console.log("Backend çalışıyor");
+        } catch (healthErr) {
+            console.warn("Backend health check başarısız, yine de devam ediliyor:", healthErr);
+        }
+        
+        // Timeout ile fetch (15 saniye - Render free tier uyku modu için)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         
         console.log("Projeler yükleniyor:", BACKEND_PROJECTS_URL);
         const response = await fetch(BACKEND_PROJECTS_URL, {
@@ -417,26 +430,49 @@ async function loadProjectsFromBackend() {
             throw new Error(`Projeler yüklenemedi: ${response.status} ${response.statusText}`);
         }
         
-        projects = await response.json();
+        const data = await response.json();
+        
+        // Eğer data bir array değilse, hata ver
+        if (!Array.isArray(data)) {
+            console.error("Beklenmeyen veri formatı:", data);
+            throw new Error("Backend'den geçersiz veri formatı alındı");
+        }
+        
+        projects = data;
         console.log("Projeler yüklendi:", projects.length, "proje");
         
         if (projectListEl) {
-            renderProjects();
+            await renderProjects();
         }
     } catch (err) {
         console.error("Projeler yüklenirken hata:", err);
         
-        if (err.name === 'AbortError') {
+        let errorMessage = "Projeler yüklenemedi";
+        
+        if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+            errorMessage = "Backend yanıt vermedi. Render free tier'da uyku modunda olabilir. Lütfen birkaç saniye bekleyip tekrar deneyin.";
             console.error("Timeout: Backend yanıt vermedi");
-            if (projectListEl) {
-                projectListEl.innerHTML = '<li style="color: var(--danger); padding: 12px;">Backend yanıt vermedi. Lütfen daha sonra tekrar deneyin.</li>';
-            }
-            showToast("Backend yanıt vermedi. Lütfen daha sonra tekrar deneyin.", "error");
+        } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            errorMessage = "Ağ hatası. Backend'e bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.";
         } else {
-            if (projectListEl) {
-                projectListEl.innerHTML = '<li style="color: var(--danger); padding: 12px;">Projeler yüklenemedi. Lütfen konsolu kontrol edin.</li>';
-            }
-            showToast("Projeler yüklenemedi: " + err.message, "error");
+            errorMessage = err.message || "Bilinmeyen bir hata oluştu";
+        }
+        
+        if (projectListEl) {
+            projectListEl.innerHTML = `
+                <li style="color: var(--danger); padding: 12px; list-style: none;">
+                    <div style="margin-bottom: 8px;">${errorMessage}</div>
+                    <button onclick="location.reload()" style="padding: 6px 12px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Sayfayı Yenile
+                    </button>
+                </li>
+            `;
+        }
+        
+        if (typeof showToast === 'function') {
+            showToast(errorMessage, "error");
+        } else {
+            alert(errorMessage);
         }
         
         // Fallback: Boş proje listesi
