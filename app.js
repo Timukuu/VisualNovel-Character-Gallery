@@ -3343,23 +3343,47 @@ async function openUsersManagement() {
 }
 
 async function renderUsers() {
+    if (!usersList) {
+        usersList = document.getElementById("users-list");
+    }
+    if (!usersList) {
+        console.error("users-list element bulunamadı!");
+        return;
+    }
+    
     usersList.innerHTML = "";
 
+    let usersToDisplay = [];
+    
     try {
+        // Önce backend'den kullanıcıları yüklemeyi dene
         const response = await fetch(`${BACKEND_BASE_URL}/api/users`);
-        if (!response.ok) throw new Error("Kullanıcılar yüklenemedi");
-        
-        const users = await response.json();
-
-        if (users.length === 0) {
-            const info = document.createElement("p");
-            info.textContent = "Henüz kullanıcı yok.";
-            info.style.color = "#a0a0b3";
-            usersList.appendChild(info);
-            return;
+        if (response.ok) {
+            const backendUsers = await response.json();
+            usersToDisplay = backendUsers;
+        } else {
+            throw new Error("Backend'den kullanıcılar yüklenemedi");
         }
+    } catch (err) {
+        console.warn("Backend'den kullanıcılar yüklenemedi, frontend'deki users array'i kullanılıyor:", err);
+        // Backend'den yüklenemezse, frontend'deki users array'ini kullan
+        usersToDisplay = users || [];
+    }
 
-        users.forEach((user) => {
+    // Eğer hala boşsa ve frontend'deki users array'i varsa, onu kullan
+    if (usersToDisplay.length === 0 && users && users.length > 0) {
+        usersToDisplay = users;
+    }
+
+    if (usersToDisplay.length === 0) {
+        const info = document.createElement("p");
+        info.textContent = "Henüz kullanıcı yok.";
+        info.style.color = "#a0a0b3";
+        usersList.appendChild(info);
+        return;
+    }
+
+    usersToDisplay.forEach((user) => {
             const userCard = document.createElement("div");
             userCard.className = "character-card";
             userCard.style.marginBottom = "12px";
