@@ -1608,6 +1608,7 @@ textarea:valid:not(:placeholder-shown) {
     .two-column-layout {
         grid-template-columns: 280px 1fr;
         gap: 16px;
+        height: calc(100vh - 70px);
     }
     
     .right-column {
@@ -1616,6 +1617,10 @@ textarea:valid:not(:placeholder-shown) {
     
     .character-detail-avatar-wrapper {
         width: 180px;
+    }
+    
+    .left-column {
+        max-height: calc(100vh - 70px);
     }
 }
 
@@ -1637,6 +1642,7 @@ textarea:valid:not(:placeholder-shown) {
     .two-column-layout {
         grid-template-columns: 1fr;
         height: auto;
+        min-height: calc(100vh - 60px);
         gap: 12px;
     }
     
@@ -1670,6 +1676,7 @@ textarea:valid:not(:placeholder-shown) {
     /* Sol sütun */
     .left-column {
         max-height: 50vh;
+        min-height: 200px;
         padding: 12px;
         order: 1;
     }
@@ -1718,6 +1725,7 @@ textarea:valid:not(:placeholder-shown) {
         padding: 16px;
         order: 2;
         min-height: 50vh;
+        max-height: none;
     }
     
     .character-detail-hero {
@@ -1828,17 +1836,24 @@ textarea:valid:not(:placeholder-shown) {
 @media (max-width: 768px) and (orientation: landscape) {
     .two-column-layout {
         grid-template-columns: 280px 1fr;
-        height: calc(100vh - 60px);
+        height: calc(100vh - 50px);
+        gap: 12px;
     }
     
     .left-column {
-        max-height: 100%;
+        max-height: calc(100vh - 50px);
+        min-height: auto;
         order: 1;
     }
     
     .right-column {
         order: 2;
-        min-height: auto;
+        min-height: calc(100vh - 50px);
+        max-height: calc(100vh - 50px);
+    }
+    
+    .topbar {
+        margin-bottom: 8px;
     }
     
     .character-detail-avatar-wrapper {
