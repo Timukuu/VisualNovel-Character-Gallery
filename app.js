@@ -807,6 +807,9 @@ async function deleteProject(projectId) {
         return;
     }
 
+    // Loading toast göster
+    const loadingToast = showToast("Proje siliniyor...", "info", 0); // 0 = süresiz
+
     try {
         const response = await fetch(`${BACKEND_PROJECTS_URL}/${projectId}`, {
             method: "DELETE"
@@ -823,9 +826,10 @@ async function deleteProject(projectId) {
         }
 
         await loadProjectsFromBackend();
+        showToast("Proje silindi", "success");
     } catch (err) {
         console.error("Proje silinirken hata:", err);
-        alert("Proje silinemedi: " + err.message);
+        showToast("Proje silinemedi: " + err.message, "error");
     }
 }
 
@@ -1307,6 +1311,9 @@ async function deleteCharacter(projectId, characterId) {
         alert("Karakter silinemedi: Proje veya karakter ID'si eksik.");
         return;
     }
+    
+    // Loading toast göster
+    const loadingToast = showToast("Karakter siliniyor...", "info", 0); // 0 = süresiz
     
     try {
         const url = `${getCharactersUrl(projectId)}/${characterId}`;
@@ -3587,6 +3594,9 @@ async function handleImageFormSubmit(event) {
 async function handleImageReorder(draggedImageId, targetImageId, draggedGroupTitle = null, targetGroupTitle = null) {
     if (!currentCharacterId) return;
 
+    // Loading toast göster (kısa süreli)
+    showToast("Sıralama güncelleniyor...", "info", 2000);
+
     try {
         // Mevcut resimleri yükle
         const response = await fetch(`${BACKEND_BASE_URL}/api/characters/${currentCharacterId}/images`);
@@ -3660,6 +3670,9 @@ async function handleImageReorder(draggedImageId, targetImageId, draggedGroupTit
 
 async function deleteImage(imageId) {
     if (!confirm("Bu resmi silmek istediğinize emin misiniz?")) return;
+
+    // Loading toast göster
+    const loadingToast = showToast("Resim siliniyor...", "info", 0); // 0 = süresiz
 
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/api/images/${imageId}`, {
@@ -3820,12 +3833,22 @@ function renderImageCarousel() {
                 downBtn.title = "Aşağı taşı";
                 downBtn.addEventListener("click", async (e) => {
                     e.stopPropagation();
-                    // Resimleri yer değiştir
-                    [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex + 1]] = 
-                        [allImagesForCarousel[actualIndex + 1], allImagesForCarousel[actualIndex]];
-                    currentImageIndex = actualIndex + 1;
-                    renderImageCarousel();
-                    updateImageInfo();
+                    
+                    // Loading state
+                    downBtn.disabled = true;
+                    downBtn.classList.add("loading");
+                    
+                    try {
+                        // Resimleri yer değiştir
+                        [allImagesForCarousel[actualIndex], allImagesForCarousel[actualIndex + 1]] = 
+                            [allImagesForCarousel[actualIndex + 1], allImagesForCarousel[actualIndex]];
+                        currentImageIndex = actualIndex + 1;
+                        renderImageCarousel();
+                        updateImageInfo();
+                    } finally {
+                        downBtn.disabled = false;
+                        downBtn.classList.remove("loading");
+                    }
                 });
                 controls.appendChild(downBtn);
             }
@@ -3994,6 +4017,15 @@ async function toggleReorderMode() {
     if (isReorderMode) {
         // Kaydet modu
         console.log("Sıralama kaydediliyor...");
+        
+        // Loading state
+        if (reorderImagesInViewBtn) {
+            reorderImagesInViewBtn.disabled = true;
+            reorderImagesInViewBtn.classList.add("loading");
+            const originalText = reorderImagesInViewBtn.textContent;
+            reorderImagesInViewBtn.textContent = "Kaydediliyor...";
+        }
+        
         try {
             // Sıralamayı backend'e kaydet
             const updates = allImagesForCarousel.map((img, index) => ({
@@ -4037,6 +4069,13 @@ async function toggleReorderMode() {
         } catch (err) {
             console.error("Sıralama kaydedilirken hata:", err);
             showToast("Sıralama kaydedilemedi: " + err.message, "error");
+        } finally {
+            // Loading state'i kaldır
+            if (reorderImagesInViewBtn) {
+                reorderImagesInViewBtn.disabled = false;
+                reorderImagesInViewBtn.classList.remove("loading");
+                reorderImagesInViewBtn.textContent = "↕️ Sıralamayı Değiştir";
+            }
         }
     } else {
         // Sıralama moduna geç
@@ -4062,6 +4101,14 @@ async function handleDeleteImageFromView() {
     
     if (!confirm(`"${image.title || 'Bu resim'}" adlı resmi silmek istediğinize emin misiniz?`)) {
         return;
+    }
+    
+    // Loading state
+    if (deleteImageFromViewBtn) {
+        deleteImageFromViewBtn.disabled = true;
+        deleteImageFromViewBtn.classList.add("loading");
+        const originalText = deleteImageFromViewBtn.textContent;
+        deleteImageFromViewBtn.textContent = "Siliniyor...";
     }
     
     try {
@@ -4302,6 +4349,15 @@ async function handleUserFormSubmit(event) {
 
     const projects = projectsStr ? projectsStr.split(",").map(p => p.trim()).filter(p => p) : [];
 
+    // Loading state
+    const submitBtn = userForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("loading");
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Kaydediliyor...";
+    }
+
     try {
         if (editingUserId) {
             // Güncelle
@@ -4339,10 +4395,12 @@ async function handleUserFormSubmit(event) {
 
         closeUserModal();
         await renderUsers();
+        showToast(editingUserId ? "Kullanıcı güncellendi" : "Kullanıcı oluşturuldu", "success");
     } catch (err) {
         console.error("Kullanıcı kaydedilirken hata:", err);
-        alert("Kullanıcı kaydedilemedi: " + err.message);
+        showToast("Kullanıcı kaydedilemedi: " + err.message, "error");
     } finally {
+        const submitBtn = userForm.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.classList.remove("loading");
