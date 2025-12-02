@@ -1350,14 +1350,22 @@ function initializeEventListeners() {
     addCharacterBtn = document.getElementById("add-character-btn");
     charactersContainer = document.getElementById("characters-container");
     
+    // Tema ve blur'ı başlat (butonlar alındıktan sonra)
+    initTheme();
+    initBlur();
+    
     // Blur toggle
     if (blurToggleBtn) {
         blurToggleBtn.addEventListener("click", toggleBlur);
+    } else {
+        console.warn("blur-toggle-btn bulunamadı!");
     }
     
     // Tema toggle
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener("click", toggleTheme);
+    } else {
+        console.warn("theme-toggle-btn bulunamadı!");
     }
 
             // Event listeners
