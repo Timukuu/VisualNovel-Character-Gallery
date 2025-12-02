@@ -1267,8 +1267,10 @@ function initTheme() {
 }
 
 function toggleTheme() {
+    console.log("toggleTheme çağrıldı");
     const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
     const newTheme = currentTheme === "dark" ? "light" : "dark";
+    console.log(`Tema değişiyor: ${currentTheme} -> ${newTheme}`);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
     updateThemeButton(newTheme);
@@ -1289,8 +1291,10 @@ function initBlur() {
 }
 
 function toggleBlur() {
+    console.log("toggleBlur çağrıldı");
     const isBlurred = document.body.classList.contains("blur-images");
     const newBlurState = !isBlurred;
+    console.log(`Blur durumu değişiyor: ${isBlurred} -> ${newBlurState}`);
     document.body.classList.toggle("blur-images", newBlurState);
     localStorage.setItem("blurImages", newBlurState.toString());
     updateBlurButton(newBlurState);
