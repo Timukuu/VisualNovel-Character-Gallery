@@ -889,7 +889,8 @@ small {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 .loading-overlay {
@@ -962,15 +963,13 @@ textarea:valid:not(:placeholder-shown) {
     left: 50%;
     width: 16px;
     height: 16px;
-    margin-top: -8px; /* height'in yarısı kadar yukarı */
-    margin-left: -8px; /* width'in yarısı kadar sola */
     border: 2px solid var(--accent);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
     z-index: 1; /* Spinner'ın buton içeriğinin üstünde olmasını sağla */
     pointer-events: none; /* Spinner'ın tıklamaları engellemesini önle */
-    transform-origin: center center; /* Dönme merkezini ortala */
+    transform: translate(-50%, -50%); /* Başlangıç pozisyonu - ortala */
 }
 
 /* Responsive Breakpoints */
