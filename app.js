@@ -1523,6 +1523,12 @@ function initializeEventListeners() {
     } else {
         console.warn("theme-toggle-btn bulunamadı!");
     }
+    
+    // Popstate event listener (geri/ileri butonları için)
+    window.addEventListener("popstate", (e) => {
+        const routeData = parseRoute();
+        navigateToRoute(routeData);
+    });
 
             // Event listeners
     if (loginForm) {
