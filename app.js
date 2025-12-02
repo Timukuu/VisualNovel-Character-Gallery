@@ -943,6 +943,8 @@ function showEmptyState() {
 }
 
 async function renderCharacters() {
+    // Eski layout için (charactersContainer varsa)
+    if (charactersContainer) {
     charactersContainer.innerHTML = "";
 
     if (!currentProjectId) {
@@ -951,6 +953,13 @@ async function renderCharacters() {
         info.style.color = "#a0a0b3";
         info.style.fontSize = "14px";
         charactersContainer.appendChild(info);
+            return;
+        }
+    } else {
+        // Yeni layout kullanılıyor, renderCharactersSidebar çağrılmalı
+        if (currentProjectId) {
+            await renderCharactersSidebar();
+        }
         return;
     }
 
@@ -1720,6 +1729,67 @@ function initializeEventListeners() {
                 userForm.addEventListener("submit", handleUserFormSubmit);
             }
 
+            // Yeni layout butonları
+            if (addCharacterSidebarBtn) {
+                addCharacterSidebarBtn.addEventListener("click", () => {
+                    if (currentProjectId) {
+                        openCharacterModal();
+                    }
+                });
+            }
+            if (editTraitsBtn) {
+                editTraitsBtn.addEventListener("click", () => {
+                    if (traitsDisplay && traitsEdit) {
+                        traitsDisplay.classList.add("hidden");
+                        traitsEdit.classList.remove("hidden");
+                        if (traitsTextarea && currentCharacter) {
+                            traitsTextarea.value = currentCharacter.traits || "";
+                        }
+                        // Butonu "Kaydet" olarak değiştir
+                        if (editTraitsBtn) {
+                            editTraitsBtn.textContent = "Kaydet";
+                            editTraitsBtn.onclick = async () => {
+                                if (traitsTextarea && currentCharacter && currentProjectId) {
+                                    try {
+                                        const updatedCharacter = { ...currentCharacter, traits: traitsTextarea.value };
+                                        const response = await fetch(`${getCharactersUrl(currentProjectId)}/${currentCharacter.id}`, {
+                                            method: "PUT",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify(updatedCharacter)
+                                        });
+                                        if (response.ok) {
+                                            currentCharacter = updatedCharacter;
+                                            traitsDisplay.textContent = updatedCharacter.traits || "";
+                                            traitsDisplay.classList.remove("hidden");
+                                            traitsEdit.classList.add("hidden");
+                                            editTraitsBtn.textContent = "Düzenle";
+                                            editTraitsBtn.onclick = arguments.callee.caller || (() => {
+                                                traitsDisplay.classList.add("hidden");
+                                                traitsEdit.classList.remove("hidden");
+                                                if (traitsTextarea) {
+                                                    traitsTextarea.value = currentCharacter.traits || "";
+                                                }
+                                            });
+                                            showToast("Karakteristik özellikler güncellendi", "success");
+                                        }
+                                    } catch (err) {
+                                        console.error("Traits güncellenirken hata:", err);
+                                        showToast("Güncelleme başarısız", "error");
+                                    }
+                                }
+                            };
+                        }
+                    }
+                });
+            }
+            if (addImageBtnPanel) {
+                addImageBtnPanel.addEventListener("click", () => {
+                    if (currentCharacterId) {
+                        openImageModal();
+                    }
+                });
+            }
+            
             // Karakter detay ekranı
             if (backToListBtn) {
                 backToListBtn.addEventListener("click", () => {
