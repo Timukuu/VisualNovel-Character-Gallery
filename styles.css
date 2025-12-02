@@ -53,15 +53,20 @@
     background: linear-gradient(135deg, #ffffff, #f5f5f7) !important;
 }
 
-html,
+html {
+    height: 100%;
+    overflow-x: hidden; /* Yatay scroll'u engelle */
+}
+
 body {
     margin: 0;
     padding: 0;
-    height: 100%;
+    min-height: 100%;
     font-family: var(--font-sans);
     background: radial-gradient(circle at top, #26263a 0, #0b0b10 50%, #050509 100%);
     color: var(--text);
     transition: background 0.3s ease, color 0.3s ease;
+    overflow-x: hidden; /* Yatay scroll'u engelle */
 }
 
 body {
@@ -74,6 +79,8 @@ body {
     width: 100%;
     max-width: 1200px;
     padding: 24px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 /* Ekranlar */
@@ -1391,6 +1398,8 @@ textarea:valid:not(:placeholder-shown) {
     border: 1px solid var(--border-soft);
     padding: 24px;
     overflow-y: auto;
+    overflow-x: hidden; /* Yatay scroll'u engelle */
+    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
 }
 
 .character-detail-panel {
