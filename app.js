@@ -133,6 +133,7 @@ const imageViewTitle = document.getElementById("image-view-title");
 const imageViewDescription = document.getElementById("image-view-description");
 const imageViewTags = document.getElementById("image-view-tags");
 const imageViewPrompts = document.getElementById("image-view-prompts");
+const deleteImageFromViewBtn = document.getElementById("delete-image-from-view-btn");
 
 let editingImageId = null;
 let editingCharacterId = null;
@@ -2010,6 +2011,9 @@ function initializeEventListeners() {
             }
             if (nextImageBtn) {
                 nextImageBtn.addEventListener("click", nextImage);
+            }
+            if (deleteImageFromViewBtn) {
+                deleteImageFromViewBtn.addEventListener("click", handleDeleteImageFromView);
             }
             
             // Klavye ile navigasyon
