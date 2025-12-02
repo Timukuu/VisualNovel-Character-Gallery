@@ -3822,6 +3822,163 @@ function closeUserModal() {
     userForm.reset();
 }
 
+// Chat fonksiyonları
+function toggleChatPanel() {
+    if (!chatPanel) return;
+    
+    if (chatPanel.classList.contains("hidden")) {
+        openChatPanel();
+    } else {
+        closeChatPanel();
+    }
+}
+
+function openChatPanel() {
+    if (!chatPanel) return;
+    
+    chatPanel.classList.remove("hidden");
+    loadChatMessages();
+    
+    // Auto-refresh başlat (her 3 saniyede bir)
+    if (chatPollInterval) {
+        clearInterval(chatPollInterval);
+    }
+    chatPollInterval = setInterval(() => {
+        loadChatMessages();
+    }, 3000);
+    
+    // Input'a focus
+    if (chatMessageInput) {
+        setTimeout(() => chatMessageInput.focus(), 100);
+    }
+}
+
+function closeChatPanel() {
+    if (!chatPanel) return;
+    
+    chatPanel.classList.add("hidden");
+    
+    // Auto-refresh durdur
+    if (chatPollInterval) {
+        clearInterval(chatPollInterval);
+        chatPollInterval = null;
+    }
+}
+
+async function loadChatMessages() {
+    if (!chatMessages || !currentUser || currentUser.role !== "admin") return;
+    
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/chat/messages`);
+        if (!response.ok) throw new Error("Mesajlar yüklenemedi");
+        
+        const messages = await response.json();
+        renderChatMessages(messages);
+    } catch (err) {
+        console.error("Chat mesajları yüklenirken hata:", err);
+    }
+}
+
+function renderChatMessages(messages) {
+    if (!chatMessages) return;
+    
+    chatMessages.innerHTML = "";
+    
+    if (messages.length === 0) {
+        const emptyMsg = document.createElement("div");
+        emptyMsg.className = "chat-empty";
+        emptyMsg.textContent = "Henüz mesaj yok. İlk mesajı siz gönderin!";
+        chatMessages.appendChild(emptyMsg);
+        return;
+    }
+    
+    messages.forEach((msg) => {
+        const messageEl = document.createElement("div");
+        messageEl.className = "chat-message";
+        if (msg.userId === currentUser.username || msg.userId === currentUser.id) {
+            messageEl.classList.add("own-message");
+        }
+        
+        const time = new Date(msg.createdAt);
+        const timeStr = time.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+        
+        messageEl.innerHTML = `
+            <div class="chat-message-header">
+                <span class="chat-message-username">${escapeHtml(msg.username)}</span>
+                <span class="chat-message-time">${timeStr}</span>
+            </div>
+            <div class="chat-message-content">${escapeHtml(msg.message)}</div>
+        `;
+        
+        chatMessages.appendChild(messageEl);
+    });
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendChatMessage() {
+    if (!chatMessageInput || !currentUser || currentUser.role !== "admin") return;
+    
+    const message = chatMessageInput.value.trim();
+    if (!message) return;
+    
+    // Butonu disable et
+    if (chatSendBtn) {
+        chatSendBtn.disabled = true;
+        chatSendBtn.textContent = "Gönderiliyor...";
+    }
+    
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/chat/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: currentUser.id || currentUser.username,
+                username: currentUser.username,
+                message: message
+            })
+        });
+        
+        if (!response.ok) throw new Error("Mesaj gönderilemedi");
+        
+        // Input'u temizle
+        chatMessageInput.value = "";
+        
+        // Mesajları yenile
+        await loadChatMessages();
+    } catch (err) {
+        console.error("Mesaj gönderilirken hata:", err);
+        showToast("Mesaj gönderilemedi: " + err.message, "error");
+    } finally {
+        if (chatSendBtn) {
+            chatSendBtn.disabled = false;
+            chatSendBtn.textContent = "Gönder";
+        }
+    }
+}
+
+// HTML escape helper
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function updateChatButtonVisibility() {
+    if (chatToggleBtn) {
+        if (currentUser && currentUser.role === "admin") {
+            chatToggleBtn.style.display = "block";
+        } else {
+            chatToggleBtn.style.display = "none";
+            // Eğer chat açıksa kapat
+            if (chatPanel && !chatPanel.classList.contains("hidden")) {
+                closeChatPanel();
+            }
+        }
+    }
+}
+
 async function handleUserFormSubmit(event) {
     event.preventDefault();
 
