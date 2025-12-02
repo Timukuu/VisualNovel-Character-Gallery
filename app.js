@@ -1861,6 +1861,94 @@ function renderImagesInGrid(images, container) {
             imageCard.appendChild(groupBadge);
         }
 
+        // Admin aksiyonları
+        if (currentUser && currentUser.role === "admin") {
+            const actions = document.createElement("div");
+            actions.style.display = "flex";
+            actions.style.gap = "6px";
+            actions.style.marginTop = "6px";
+            actions.style.flexWrap = "wrap";
+
+            // Ana görsel yap butonu
+            const characterId = currentCharacterId || (images.length > 0 ? images[0].characterId : null);
+            if (characterId) {
+                const setMainBtn = document.createElement("button");
+                setMainBtn.className = "btn subtle";
+                setMainBtn.textContent = "Ana Görsel";
+                setMainBtn.style.fontSize = "11px";
+                setMainBtn.style.padding = "4px 8px";
+                setMainBtn.style.color = "var(--accent)";
+                setMainBtn.style.pointerEvents = "auto";
+                setMainBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    // Karakter bilgisini backend'den al
+                    try {
+                        const charResponse = await fetch(`${BACKEND_BASE_URL}/api/projects/${currentProjectId}/characters/${characterId}`);
+                        if (charResponse.ok) {
+                            const character = await charResponse.json();
+                            await setMainImage(defaultImage.id, defaultImage.url, character);
+                        }
+                    } catch (err) {
+                        console.error("Karakter bilgisi alınırken hata:", err);
+                        showToast("Ana görsel ayarlanamadı", "error");
+                    }
+                });
+                actions.appendChild(setMainBtn);
+            }
+
+            // Gruplu resimler için default görsel seç butonu
+            if (isGrouped) {
+                const selectDefaultBtn = document.createElement("button");
+                selectDefaultBtn.className = "btn subtle";
+                selectDefaultBtn.textContent = "Görsel Seç";
+                selectDefaultBtn.style.fontSize = "11px";
+                selectDefaultBtn.style.padding = "4px 8px";
+                selectDefaultBtn.style.pointerEvents = "auto";
+                selectDefaultBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    openImageGroupModal(title, groupImages, defaultImage.id);
+                });
+                actions.appendChild(selectDefaultBtn);
+            }
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn subtle";
+            editBtn.textContent = "Düzenle";
+            editBtn.style.fontSize = "11px";
+            editBtn.style.padding = "4px 8px";
+            editBtn.style.pointerEvents = "auto";
+            editBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                openImageModal(defaultImage);
+            });
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn subtle";
+            deleteBtn.textContent = "Sil";
+            deleteBtn.style.fontSize = "11px";
+            deleteBtn.style.padding = "4px 8px";
+            deleteBtn.style.color = "var(--danger)";
+            deleteBtn.style.pointerEvents = "auto";
+            deleteBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (isGrouped) {
+                    if (confirm(`"${title}" başlığındaki tüm ${groupImages.length} resmi silmek istediğinize emin misiniz?`)) {
+                        groupImages.forEach(img => deleteImage(img.id));
+                    }
+                } else {
+                    deleteImage(defaultImage.id);
+                }
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+            imageCard.appendChild(actions);
+        }
+
         container.appendChild(imageCard);
     });
 }
