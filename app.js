@@ -41,6 +41,7 @@ let currentProjectId = null;
 let currentCharacterId = null;
 let currentCharacter = null;
 let previousScreen = null; // Modal açılmadan önce hangi ekrandaydık
+let isNavigating = false; // URL değişikliği sırasında infinite loop'u önlemek için
 
 // Backend endpoints (Render'da host edilmiş)
 const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
@@ -271,6 +272,9 @@ async function handleLoginSubmit(event) {
     
     // Yeni layout için
     showEmptyState();
+    
+    // URL'yi güncelle
+    updateURL("/projects");
 }
 
 function handleLogout() {
@@ -280,6 +284,9 @@ function handleLogout() {
 
     // Session'ı temizle
     localStorage.removeItem("currentUser");
+    
+    // URL'yi güncelle
+    updateURL("/login", true);
 
     // DOM referanslarını al
     if (!loginForm) loginForm = document.getElementById("login-form");
@@ -491,6 +498,11 @@ function openProjectMenu(project, button) {
 }
 
 async function onProjectSelected(project) {
+    currentProjectId = project.id;
+    
+    // URL'yi güncelle
+    updateURL(`/projects/${project.id}`);
+    
     currentProjectTitleEl.textContent = project.name;
     
     // Proje açıklamasını göster (varsa)
@@ -737,6 +749,14 @@ async function renderCharactersSidebar() {
 // Sağ panelde karakter detayı göster
 async function showCharacterDetail(character) {
     console.log("showCharacterDetail çağrıldı:", character);
+    
+    currentCharacterId = character.id;
+    currentCharacter = character;
+    
+    // URL'yi güncelle
+    if (currentProjectId) {
+        updateURL(`/projects/${currentProjectId}/characters/${character.id}`);
+    }
     
     // DOM referanslarını kontrol et ve al
     if (!characterDetailContent) characterDetailContent = document.getElementById("character-detail-content");
@@ -1206,6 +1226,126 @@ function handleImageChange() {
 
 // --- Başlatma ---
 
+// URL Routing sistemi
+function updateURL(path = null, replace = false) {
+    if (isNavigating) return;
+    
+    if (!path) {
+        // Mevcut state'e göre URL oluştur
+        if (!currentUser) {
+            path = "/login";
+        } else if (currentCharacterId && currentProjectId) {
+            path = `/projects/${currentProjectId}/characters/${currentCharacterId}`;
+        } else if (currentProjectId) {
+            path = `/projects/${currentProjectId}`;
+        } else {
+            path = "/projects";
+        }
+    }
+    
+    if (replace) {
+        history.replaceState({ path }, "", path);
+    } else {
+        history.pushState({ path }, "", path);
+    }
+}
+
+function parseRoute() {
+    const path = window.location.pathname;
+    const parts = path.split("/").filter(p => p);
+    
+    if (parts.length === 0 || parts[0] === "login") {
+        return { route: "login" };
+    } else if (parts[0] === "projects") {
+        if (parts.length >= 2) {
+            const projectId = parts[1];
+            if (parts.length >= 4 && parts[2] === "characters") {
+                const characterId = parts[3];
+                return { route: "character", projectId, characterId };
+            }
+            return { route: "project", projectId };
+        }
+        return { route: "projects" };
+    }
+    return { route: "login" };
+}
+
+async function navigateToRoute(routeData) {
+    if (isNavigating) return;
+    isNavigating = true;
+    
+    try {
+        if (routeData.route === "login") {
+            // Login ekranına dön
+            if (loginScreen) loginScreen.classList.remove("hidden");
+            if (mainScreen) mainScreen.classList.add("hidden");
+            currentUser = null;
+            currentProjectId = null;
+            currentCharacterId = null;
+            localStorage.removeItem("currentUser");
+        } else if (routeData.route === "projects") {
+            // Proje listesi
+            if (!currentUser) {
+                // Kullanıcı giriş yapmamış, login'e yönlendir
+                updateURL("/login", true);
+                navigateToRoute({ route: "login" });
+                return;
+            }
+            if (loginScreen) loginScreen.classList.add("hidden");
+            if (mainScreen) mainScreen.classList.remove("hidden");
+            currentProjectId = null;
+            currentCharacterId = null;
+            showEmptyState();
+            await loadProjectsFromBackend();
+        } else if (routeData.route === "project" && routeData.projectId) {
+            // Proje detayı
+            if (!currentUser) {
+                updateURL("/login", true);
+                navigateToRoute({ route: "login" });
+                return;
+            }
+            if (loginScreen) loginScreen.classList.add("hidden");
+            if (mainScreen) mainScreen.classList.remove("hidden");
+            currentProjectId = routeData.projectId;
+            currentCharacterId = null;
+            await loadProjectsFromBackend();
+            const project = projects.find(p => p.id === routeData.projectId);
+            if (project) {
+                await onProjectSelected(project);
+            }
+            showEmptyState();
+        } else if (routeData.route === "character" && routeData.projectId && routeData.characterId) {
+            // Karakter detayı
+            if (!currentUser) {
+                updateURL("/login", true);
+                navigateToRoute({ route: "login" });
+                return;
+            }
+            if (loginScreen) loginScreen.classList.add("hidden");
+            if (mainScreen) mainScreen.classList.remove("hidden");
+            currentProjectId = routeData.projectId;
+            currentCharacterId = routeData.characterId;
+            await loadProjectsFromBackend();
+            const project = projects.find(p => p.id === routeData.projectId);
+            if (project) {
+                await onProjectSelected(project);
+                // Karakteri yükle
+                try {
+                    const response = await fetch(`${BACKEND_BASE_URL}/api/projects/${routeData.projectId}/characters/${routeData.characterId}`);
+                    if (response.ok) {
+                        const character = await response.json();
+                        await showCharacterDetail(character);
+                    }
+                } catch (err) {
+                    console.error("Karakter yüklenirken hata:", err);
+                }
+            }
+        }
+    } finally {
+        isNavigating = false;
+    }
+}
+
 function init() {
     // Önce localStorage'dan session kontrolü yap
     // Not: initTheme ve initBlur artık initializeEventListeners içinde çağrılıyor
@@ -1220,26 +1360,36 @@ function init() {
                     const user = users.find(u => u.username === userData.username);
                     if (user) {
                         currentUser = user;
-                        // Otomatik giriş yap
-                        loginScreen.classList.add("hidden");
-                        mainScreen.classList.remove("hidden");
-                        currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
-                        if (currentUser.role === "admin" && usersManagementBtn) {
-                            usersManagementBtn.style.display = "block";
-                        }
-                        loadProjectsFromBackend();
                         initializeEventListeners();
+                        
+                        // URL'den route'u oku ve restore et
+                        const routeData = parseRoute();
+                        if (routeData.route === "login") {
+                            // URL login ise ama kullanıcı giriş yapmış, projects'e yönlendir
+                            updateURL("/projects", true);
+                            navigateToRoute({ route: "projects" });
+                        } else {
+                            // URL'deki route'a git
+                            navigateToRoute(routeData);
+                        }
                     } else {
+                        // Kullanıcı bulunamadı, login'e yönlendir
+                        updateURL("/login", true);
                         initializeApp();
                     }
                 })
                 .catch(() => {
+                    updateURL("/login", true);
                     initializeApp();
                 });
             return;
         } catch (err) {
             console.error("Session yüklenirken hata:", err);
+            updateURL("/login", true);
         }
+    } else {
+        // Session yok, login ekranına git
+        updateURL("/login", true);
     }
     initializeApp();
 }
