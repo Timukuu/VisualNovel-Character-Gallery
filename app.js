@@ -393,24 +393,69 @@ function handleLogout() {
 
 async function loadProjectsFromBackend() {
     // Loading göster
-    projectListEl.innerHTML = '<li class="loading-overlay" style="list-style: none;"><div class="loading-content"><div class="loading-spinner"></div><span>Projeler yükleniyor...</span></div></li>';
+    if (projectListEl) {
+        projectListEl.innerHTML = '<li class="loading-overlay" style="list-style: none;"><div class="loading-content"><div class="loading-spinner"></div><span>Projeler yükleniyor...</span></div></li>';
+    }
     
     try {
-        const response = await fetch(BACKEND_PROJECTS_URL);
-        if (!response.ok) throw new Error("Projeler yüklenemedi");
+        // Timeout ile fetch (10 saniye)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        console.log("Projeler yükleniyor:", BACKEND_PROJECTS_URL);
+        const response = await fetch(BACKEND_PROJECTS_URL, {
+            signal: controller.signal,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Projeler yüklenemedi - Response:", response.status, errorText);
+            throw new Error(`Projeler yüklenemedi: ${response.status} ${response.statusText}`);
+        }
+        
         projects = await response.json();
-        renderProjects();
+        console.log("Projeler yüklendi:", projects.length, "proje");
+        
+        if (projectListEl) {
+            renderProjects();
+        }
     } catch (err) {
         console.error("Projeler yüklenirken hata:", err);
-        projectListEl.innerHTML = '<li style="color: var(--danger);">Projeler yüklenemedi.</li>';
-        alert("Projeler yüklenemedi. Konsolu kontrol edin.");
+        
+        if (err.name === 'AbortError') {
+            console.error("Timeout: Backend yanıt vermedi");
+            if (projectListEl) {
+                projectListEl.innerHTML = '<li style="color: var(--danger); padding: 12px;">Backend yanıt vermedi. Lütfen daha sonra tekrar deneyin.</li>';
+            }
+            showToast("Backend yanıt vermedi. Lütfen daha sonra tekrar deneyin.", "error");
+        } else {
+            if (projectListEl) {
+                projectListEl.innerHTML = '<li style="color: var(--danger); padding: 12px;">Projeler yüklenemedi. Lütfen konsolu kontrol edin.</li>';
+            }
+            showToast("Projeler yüklenemedi: " + err.message, "error");
+        }
+        
+        // Fallback: Boş proje listesi
+        projects = [];
     }
 }
 
 async function renderProjects() {
+    if (!projectListEl) {
+        console.error("projectListEl bulunamadı");
+        return;
+    }
+    
     projectListEl.innerHTML = "";
 
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.error("currentUser bulunamadı");
+        return;
+    }
 
     // Admin ise "Proje Ekle" butonunu göster
     if (currentUser.role === "admin") {
