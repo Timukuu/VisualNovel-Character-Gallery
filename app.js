@@ -153,67 +153,95 @@ let editingUserId = null;
 
 // --- Yardımcılar ---
 
-function loadJSON(path) {
-    // GitHub Pages için base path'i otomatik tespit et
-    // Sadece repo adını base path olarak kullan (route'ları değil)
-    const pathname = window.location.pathname;
-    let basePath = '';
-    
-    // Pathname'i parse et
-    const parts = pathname.split('/').filter(p => p && p !== 'index.html');
-    
-    // İlk segment repo adı olabilir (VisualNovel-Character-Gallery)
-    // Ama route'lar (login, projects, vb.) değil
-    const knownRoutes = ['login', 'projects', 'data'];
-    if (parts.length > 0 && !knownRoutes.includes(parts[0])) {
-        // İlk segment muhtemelen repo adı
-        basePath = '/' + parts[0];
+// Base path'i bir kez tespit et ve cache'le
+let cachedBasePath = null;
+
+function getBasePath() {
+    if (cachedBasePath !== null) {
+        return cachedBasePath;
     }
     
-    // Alternatif: window.location.href'den base path'i tespit et
-    // Eğer URL'de repo adı varsa onu kullan
+    // GitHub Pages için base path'i tespit et
     const href = window.location.href;
+    const pathname = window.location.pathname;
+    
+    // Bilinen route'lar (bunlar base path değil)
+    const knownRoutes = ['login', 'projects', 'data', 'index.html', '404.html'];
+    
+    // Yöntem 1: href'den repo adını çıkar (github.io/repo-name/...)
     const repoMatch = href.match(/github\.io\/([^\/]+)/);
     if (repoMatch && repoMatch[1] && !knownRoutes.includes(repoMatch[1])) {
-        basePath = '/' + repoMatch[1];
+        cachedBasePath = '/' + repoMatch[1];
+        return cachedBasePath;
     }
+    
+    // Yöntem 2: pathname'den ilk segment'i al (eğer route değilse)
+    const parts = pathname.split('/').filter(p => p && p !== 'index.html' && p !== '404.html');
+    if (parts.length > 0 && !knownRoutes.includes(parts[0])) {
+        // İlk segment'i kontrol et - eğer route değilse repo adı olabilir
+        // Ama önce href'den kontrol et
+        if (href.includes('/' + parts[0] + '/') && parts[0].length > 3) {
+            cachedBasePath = '/' + parts[0];
+            return cachedBasePath;
+        }
+    }
+    
+    // Yöntem 3: Sabit repo adı (fallback)
+    // Eğer yukarıdaki yöntemler çalışmazsa, repo adını buraya yazın
+    const repoName = 'VisualNovel-Character-Gallery';
+    if (href.includes('github.io') && href.includes(repoName)) {
+        cachedBasePath = '/' + repoName;
+        return cachedBasePath;
+    }
+    
+    // Base path yok (root'ta çalışıyor)
+    cachedBasePath = '';
+    return cachedBasePath;
+}
+
+function loadJSON(path) {
+    const basePath = getBasePath();
     
     // Path'i normalize et (başında "/" varsa kaldır)
     const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-    const fullPath = basePath + '/' + normalizedPath;
     
-    return fetch(fullPath).then((res) => {
+    // Önce base path ile dene
+    const pathsToTry = [];
+    
+    if (basePath) {
+        pathsToTry.push(basePath + '/' + normalizedPath);
+    }
+    pathsToTry.push(normalizedPath);
+    
+    // Eğer base path varsa ve farklıysa, alternatif path'leri de dene
+    if (basePath && basePath !== '/VisualNovel-Character-Gallery') {
+        pathsToTry.push('/VisualNovel-Character-Gallery/' + normalizedPath);
+    }
+    
+    // Her path'i sırayla dene
+    let lastError = null;
+    for (const tryPath of pathsToTry) {
+        return fetch(tryPath).then((res) => {
         if (!res.ok) {
-            throw new Error("HTTP " + res.status + " - " + fullPath);
+            throw new Error("HTTP " + res.status);
         }
         return res.json();
-    }).catch((err) => {
-        console.error("loadJSON hatası:", err, "Path:", fullPath);
-        // Fallback 1: base path olmadan dene
-        if (basePath) {
-            console.log("Fallback 1: base path olmadan deneniyor:", normalizedPath);
-            return fetch(normalizedPath).then((res) => {
-                if (!res.ok) {
-                    throw new Error("HTTP " + res.status);
-                }
-                return res.json();
-            }).catch(() => {
-                // Fallback 2: Sadece repo adı ile dene (eğer base path yanlışsa)
-                if (basePath.startsWith('/VisualNovel-Character-Gallery')) {
-                    const altPath = '/VisualNovel-Character-Gallery/' + normalizedPath;
-                    console.log("Fallback 2: alternatif path deneniyor:", altPath);
-                    return fetch(altPath).then((res) => {
-                        if (!res.ok) {
-                            throw new Error("HTTP " + res.status);
-                        }
-                        return res.json();
-                    });
-                }
-                throw err;
-            });
-        }
-        throw err;
-    });
+        }).catch((err) => {
+            lastError = err;
+            // Son path değilse, bir sonrakini dene
+            const currentIndex = pathsToTry.indexOf(tryPath);
+            if (currentIndex < pathsToTry.length - 1) {
+                // Promise chain'i devam ettir
+                return Promise.reject(err);
+            }
+            // Son path, hata fırlat
+            console.error("loadJSON hatası - tüm path'ler denendi:", pathsToTry, err);
+            throw err;
+        });
+    }
+    
+    // Eğer hiç path yoksa (olmayacak ama güvenlik için)
+    return Promise.reject(new Error("No paths to try"));
 }
 
 // Karakterleri backend'den yükle
