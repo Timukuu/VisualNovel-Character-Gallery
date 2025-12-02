@@ -1360,6 +1360,7 @@ function initializeEventListeners() {
     
     // Blur toggle
     if (blurToggleBtn) {
+        console.log("blurToggleBtn bulundu, event listener ekleniyor");
         blurToggleBtn.addEventListener("click", toggleBlur);
     } else {
         console.warn("blur-toggle-btn bulunamadı!");
@@ -1367,6 +1368,7 @@ function initializeEventListeners() {
     
     // Tema toggle
     if (themeToggleBtn) {
+        console.log("themeToggleBtn bulundu, event listener ekleniyor");
         themeToggleBtn.addEventListener("click", toggleTheme);
     } else {
         console.warn("theme-toggle-btn bulunamadı!");
