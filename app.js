@@ -1874,6 +1874,27 @@ function initializeEventListeners() {
         const routeData = parseRoute();
         navigateToRoute(routeData);
     });
+    
+    // Chat butonları
+    if (chatToggleBtn) {
+        chatToggleBtn.addEventListener("click", toggleChatPanel);
+    }
+    if (chatCloseBtn) {
+        chatCloseBtn.addEventListener("click", closeChatPanel);
+    }
+    if (chatSendBtn) {
+        chatSendBtn.addEventListener("click", sendChatMessage);
+    }
+    if (chatMessageInput) {
+        chatMessageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                sendChatMessage();
+            }
+        });
+    }
+    
+    // Admin ise chat butonunu göster
+    updateChatButtonVisibility();
 
             // Event listeners
     if (loginForm) {
