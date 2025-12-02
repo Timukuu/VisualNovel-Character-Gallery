@@ -504,6 +504,8 @@ async function renderProjects() {
         console.error("currentUser bulunamadı");
         return;
     }
+    
+    console.log("renderProjects: Toplam proje sayısı:", projects.length, "Kullanıcı:", currentUser.username, "Rol:", currentUser.role);
 
     // Admin ise "Proje Ekle" butonunu göster
     if (currentUser.role === "admin") {
