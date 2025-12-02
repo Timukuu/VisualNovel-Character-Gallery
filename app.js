@@ -534,25 +534,30 @@ async function renderProjects() {
         return;
     }
 
-    // Karakter sayılarını yükle (paralel olarak)
+    // Karakter sayılarını yükle (paralel olarak, hata durumunda da devam et)
     const projectCharacterCounts = {};
     const characterCountPromises = userProjects.map(async (project) => {
         try {
             const response = await fetch(getCharactersUrl(project.id));
             if (response.ok) {
                 const characters = await response.json();
-                projectCharacterCounts[project.id] = characters.length;
+                projectCharacterCounts[project.id] = Array.isArray(characters) ? characters.length : 0;
             } else {
+                // 404 veya diğer hatalar için 0 olarak işaretle
                 projectCharacterCounts[project.id] = 0;
             }
         } catch (err) {
-            console.warn(`Proje ${project.id} karakter sayısı yüklenemedi:`, err);
+            // Hata durumunda da devam et, sadece 0 olarak işaretle
             projectCharacterCounts[project.id] = 0;
         }
     });
     
-    // Tüm karakter sayıları yüklenene kadar bekle
-    await Promise.all(characterCountPromises);
+    // Tüm karakter sayıları yüklenene kadar bekle (hata olsa bile devam et)
+    try {
+        await Promise.allSettled(characterCountPromises);
+    } catch (err) {
+        console.warn("Karakter sayıları yüklenirken bazı hatalar oluştu:", err);
+    }
 
     userProjects.forEach((project) => {
         const accordionItem = document.createElement("div");
