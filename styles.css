@@ -1166,9 +1166,11 @@ textarea:valid:not(:placeholder-shown) {
     border: 1px solid var(--border-soft);
     padding: 16px;
     overflow-y: auto;
+    overflow-x: hidden; /* Yatay scroll'u engelle */
     display: flex;
     flex-direction: column;
     gap: 20px;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
 }
 
 .projects-section {
@@ -1304,7 +1306,9 @@ textarea:valid:not(:placeholder-shown) {
     padding: 0;
     margin: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
 }
 
 .character-sidebar-item {
