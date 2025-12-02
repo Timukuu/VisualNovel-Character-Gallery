@@ -199,49 +199,49 @@ function getBasePath() {
     return cachedBasePath;
 }
 
-function loadJSON(path) {
+async function loadJSON(path) {
     const basePath = getBasePath();
     
     // Path'i normalize et (başında "/" varsa kaldır)
     const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
     
-    // Denenecek path'leri oluştur
+    // Denenecek path'leri oluştur (öncelik sırasına göre)
     const pathsToTry = [];
     
+    // 1. Base path ile (eğer varsa)
     if (basePath) {
         pathsToTry.push(basePath + '/' + normalizedPath);
     }
+    
+    // 2. Base path olmadan
     pathsToTry.push(normalizedPath);
     
-    // Eğer base path varsa ve farklıysa, alternatif path'leri de dene
-    if (basePath && basePath !== '/VisualNovel-Character-Gallery') {
+    // 3. Sabit repo adı ile (fallback)
+    if (basePath !== '/VisualNovel-Character-Gallery') {
         pathsToTry.push('/VisualNovel-Character-Gallery/' + normalizedPath);
     }
     
-    // Her path'i sırayla dene (recursive approach)
-    function tryPath(index) {
-        if (index >= pathsToTry.length) {
-            // Tüm path'ler denendi, hata fırlat
-            const error = new Error("HTTP 404 - Tüm path'ler denendi: " + pathsToTry.join(', '));
-            console.error("loadJSON hatası:", error, "Denenen path'ler:", pathsToTry);
-            return Promise.reject(error);
+    // Her path'i sırayla dene
+    let lastError = null;
+    for (const tryPath of pathsToTry) {
+        try {
+            const response = await fetch(tryPath);
+            if (response.ok) {
+                return await response.json();
+            } else {
+                lastError = new Error("HTTP " + response.status);
+                console.log(`Path başarısız (${response.status}): ${tryPath}, bir sonrakini deniyor...`);
+            }
+        } catch (err) {
+            lastError = err;
+            console.log(`Path hatası: ${tryPath}, bir sonrakini deniyor...`);
         }
-        
-        const tryPath = pathsToTry[index];
-        return fetch(tryPath).then((res) => {
-        if (!res.ok) {
-            throw new Error("HTTP " + res.status);
-        }
-        return res.json();
-        }).catch((err) => {
-            // Bu path başarısız, bir sonrakini dene
-            console.log(`Path başarısız: ${tryPath}, bir sonrakini deniyor...`);
-            return tryPath(index + 1);
-        });
     }
     
-    // İlk path'den başla
-    return tryPath(0);
+    // Tüm path'ler denendi, hata fırlat
+    const error = new Error("HTTP 404 - Tüm path'ler denendi: " + pathsToTry.join(', '));
+    console.error("loadJSON hatası:", error, "Denenen path'ler:", pathsToTry);
+    throw error;
 }
 
 // Karakterleri backend'den yükle
