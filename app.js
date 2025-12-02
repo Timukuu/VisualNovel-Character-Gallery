@@ -1652,43 +1652,216 @@ function filterImagesByTag(tag) {
     });
 }
 
-// Resimleri grid'e render et
+// Resimleri grid'e render et (gruplama ile)
 function renderImagesInGrid(images, container) {
     if (!container) return;
     
+    // orderIndex'e göre sırala
+    images.sort((a, b) => {
+        const aOrder = a.orderIndex !== undefined ? a.orderIndex : 999999;
+        const bOrder = b.orderIndex !== undefined ? b.orderIndex : 999999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    });
+
+    // Resimleri başlığa göre grupla
+    const groupedImages = {};
     images.forEach((img) => {
-        const card = document.createElement("div");
-        card.className = "character-image-card";
-        card.dataset.imageId = img.id;
-        card.dataset.tags = (img.tags || []).join(",");
+        const title = img.title || "İsimsiz";
+        if (!groupedImages[title]) {
+            groupedImages[title] = [];
+        }
+        groupedImages[title].push(img);
+    });
+
+    // Her grup için kart oluştur
+    Object.keys(groupedImages).forEach((title, groupIndex) => {
+        const groupImages = groupedImages[title];
+        const isGrouped = groupImages.length > 1;
         
+        // Default görsel: defaultImageId varsa o, yoksa ilk eklenen (en eski createdAt)
+        let defaultImage = groupImages[0];
+        if (isGrouped) {
+            const defaultImg = groupImages.find(img => img.defaultImageId === img.id);
+            if (defaultImg) {
+                defaultImage = defaultImg;
+            } else {
+                defaultImage = groupImages.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))[0];
+            }
+        }
+
+        const imageCard = document.createElement("div");
+        imageCard.className = "character-image-card";
+        if (isGrouped) {
+            imageCard.classList.add("grouped-image-card");
+        }
+        imageCard.style.cursor = "pointer";
+        imageCard.dataset.imageId = defaultImage.id;
+        imageCard.dataset.groupTitle = title;
+        imageCard.dataset.orderIndex = defaultImage.orderIndex !== undefined ? defaultImage.orderIndex : groupIndex;
+        imageCard.dataset.tags = (defaultImage.tags || []).join(",");
+
+        // Admin ise drag & drop ekle
+        if (currentUser && currentUser.role === "admin") {
+            imageCard.classList.add("draggable");
+            
+            // Drag handle için özel bir alan ekle
+            const dragHandle = document.createElement("div");
+            dragHandle.className = "drag-handle";
+            dragHandle.style.position = "absolute";
+            dragHandle.style.top = "4px";
+            dragHandle.style.right = "4px";
+            dragHandle.style.width = "24px";
+            dragHandle.style.height = "24px";
+            dragHandle.style.backgroundColor = "var(--bg-elevated)";
+            dragHandle.style.border = "1px solid var(--border-soft)";
+            dragHandle.style.borderRadius = "4px";
+            dragHandle.style.cursor = "grab";
+            dragHandle.style.display = "flex";
+            dragHandle.style.alignItems = "center";
+            dragHandle.style.justifyContent = "center";
+            dragHandle.style.zIndex = "10";
+            dragHandle.style.opacity = "0.7";
+            dragHandle.style.transition = "opacity 0.2s";
+            dragHandle.innerHTML = "⋮⋮";
+            dragHandle.style.fontSize = "12px";
+            dragHandle.style.color = "var(--text-muted)";
+            dragHandle.title = "Sürükle";
+            
+            dragHandle.addEventListener("mouseenter", () => {
+                dragHandle.style.opacity = "1";
+            });
+            dragHandle.addEventListener("mouseleave", () => {
+                dragHandle.style.opacity = "0.7";
+            });
+            
+            dragHandle.draggable = true;
+            dragHandle.addEventListener("dragstart", (e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", defaultImage.id);
+                e.dataTransfer.setData("text/group-title", title);
+                imageCard.classList.add("dragging");
+                container.classList.add("drag-active");
+                dragHandle.style.cursor = "grabbing";
+            });
+            
+            dragHandle.addEventListener("dragend", (e) => {
+                imageCard.classList.remove("dragging");
+                container.classList.remove("drag-active");
+                dragHandle.style.cursor = "grab";
+                document.querySelectorAll(".character-image-card.drag-over").forEach(card => {
+                    card.classList.remove("drag-over");
+                });
+            });
+            
+            imageCard.appendChild(dragHandle);
+            
+            // Drop event'leri
+            imageCard.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "move";
+                
+                const draggingCard = document.querySelector(".character-image-card.dragging");
+                if (draggingCard && draggingCard !== imageCard) {
+                    imageCard.classList.add("drag-over");
+                }
+            });
+
+            imageCard.addEventListener("dragleave", (e) => {
+                if (!imageCard.contains(e.relatedTarget)) {
+                    imageCard.classList.remove("drag-over");
+                }
+            });
+
+            imageCard.addEventListener("drop", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                imageCard.classList.remove("drag-over");
+                
+                const draggedImageId = e.dataTransfer.getData("text/plain");
+                const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
+                
+                if (draggedImageId && draggedImageId !== defaultImage.id) {
+                    await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
+                }
+            });
+        }
+
         const imgEl = document.createElement("img");
-        imgEl.src = img.url;
-        imgEl.alt = img.title || "Görsel";
+        imgEl.alt = defaultImage.title;
         imgEl.style.width = "100%";
         imgEl.style.aspectRatio = "2 / 3";
         imgEl.style.objectFit = "cover";
         imgEl.style.borderRadius = "var(--radius-md)";
+        imgEl.style.backgroundColor = "var(--bg-soft)";
+        imgEl.loading = "lazy";
+        imgEl.draggable = false;
+        imgEl.style.pointerEvents = "none";
         
+        // Lazy loading
+        if ("IntersectionObserver" in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const imgElement = entry.target;
+                        imgElement.src = imgElement.dataset.src || defaultImage.url;
+                        imgElement.classList.add("loaded");
+                        observer.unobserve(imgElement);
+                    }
+                });
+            }, { rootMargin: "50px" });
+            
+            imgEl.dataset.src = defaultImage.url;
+            observer.observe(imgEl);
+        } else {
+            imgEl.src = defaultImage.url;
+        }
+
+        imageCard.addEventListener("click", (e) => {
+            if (e.target.classList.contains("drag-handle") || 
+                e.target.closest(".drag-handle") ||
+                imageCard.classList.contains("dragging")) {
+                return;
+            }
+            if (!e.target.closest("button")) {
+                // Gruplu resimler için sadece o gruba ait resimleri göster
+                if (isGrouped) {
+                    openImageViewModal(defaultImage, title, groupImages);
+                } else {
+                    openImageViewModal(defaultImage);
+                }
+            }
+        });
+
         const titleEl = document.createElement("div");
-        titleEl.textContent = img.title || "İsimsiz";
+        titleEl.className = "character-image-title";
+        titleEl.textContent = title + (isGrouped ? ` (${groupImages.length})` : "");
         titleEl.style.marginTop = "8px";
         titleEl.style.fontSize = "13px";
         titleEl.style.fontWeight = "500";
-        
-        card.appendChild(imgEl);
-        card.appendChild(titleEl);
-        
-        card.addEventListener("click", () => {
-            // openImageViewModal fonksiyonu zaten var, parametreleri kontrol et
-            if (images && images.length > 0) {
-                openImageViewModal(img, null, images);
-            } else {
-                openImageViewModal(img);
-            }
-        });
-        
-        container.appendChild(card);
+
+        imageCard.appendChild(imgEl);
+        imageCard.appendChild(titleEl);
+
+        // Gruplu resimler için badge
+        if (isGrouped) {
+            const groupBadge = document.createElement("div");
+            groupBadge.textContent = `📁 ${groupImages.length} resim`;
+            groupBadge.style.fontSize = "10px";
+            groupBadge.style.color = "var(--accent)";
+            groupBadge.style.fontWeight = "600";
+            groupBadge.style.marginTop = "4px";
+            groupBadge.style.cursor = "pointer";
+            groupBadge.addEventListener("click", (e) => {
+                e.stopPropagation();
+                openImageGroupModal(title, groupImages, defaultImage.id);
+            });
+            imageCard.appendChild(groupBadge);
+        }
+
+        container.appendChild(imageCard);
     });
 }
 

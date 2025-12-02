@@ -1326,8 +1326,8 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .character-sidebar-avatar {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    aspect-ratio: 2 / 3; /* 768x1152 oranı */
     border-radius: var(--radius-md);
     object-fit: cover;
     background: var(--bg-soft);
