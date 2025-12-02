@@ -2689,10 +2689,17 @@ async function deleteImage(imageId) {
 
         if (!response.ok) throw new Error("Resim silinemedi");
 
+        // Yeni layout için resim kataloğunu yenile
+        if (currentCharacterId) {
+            await renderCharacterImagesPanel(currentCharacterId);
+        }
+        // Eski layout için de yenile (geriye dönük uyumluluk)
         await renderCharacterImages();
+        
+        showToast("Resim silindi", "success");
     } catch (err) {
         console.error("Resim silinirken hata:", err);
-        alert("Resim silinemedi: " + err.message);
+        showToast("Resim silinemedi: " + err.message, "error");
     }
 }
 
