@@ -1598,10 +1598,12 @@ textarea:valid:not(:placeholder-shown) {
     
     .character-detail-hero {
         flex-direction: column;
+        align-items: center;
     }
     
     .character-detail-avatar-wrapper {
-        width: 100%;
-        height: 200px;
+        width: 200px;
+        aspect-ratio: 2 / 3;
+        max-width: 100%;
     }
 }
