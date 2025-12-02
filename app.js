@@ -726,6 +726,13 @@ async function handleProjectFormSubmit(event) {
         return;
     }
 
+    const submitBtn = projectForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("loading");
+        submitBtn.textContent = "Kaydediliyor...";
+    }
+
     try {
         if (editingProjectId) {
             // Güncelle
