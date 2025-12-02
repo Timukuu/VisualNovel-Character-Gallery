@@ -905,7 +905,11 @@ async function renderCharactersSidebar() {
             deleteBtn.addEventListener("click", async (e) => {
                 e.stopPropagation();
                 if (confirm(`"${char.firstName} ${char.lastName}" karakterini silmek istediğinize emin misiniz?`)) {
-                    await deleteCharacter(char.id);
+                    if (!currentProjectId) {
+                        alert("Proje seçilmedi. Karakter silinemez.");
+                        return;
+                    }
+                    await deleteCharacter(currentProjectId, char.id);
                 }
             });
 
@@ -1257,17 +1261,37 @@ async function renderCharacters() {
 }
 
 async function deleteCharacter(projectId, characterId) {
+    if (!projectId || !characterId) {
+        console.error("deleteCharacter: projectId veya characterId eksik", { projectId, characterId });
+        alert("Karakter silinemedi: Proje veya karakter ID'si eksik.");
+        return;
+    }
+    
     try {
-        const response = await fetch(`${getCharactersUrl(projectId)}/${characterId}`, {
+        const url = `${getCharactersUrl(projectId)}/${characterId}`;
+        console.log("Karakter siliniyor:", url);
+        
+        const response = await fetch(url, {
             method: "DELETE"
         });
 
-        if (!response.ok) throw new Error("Karakter silinemedi");
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Karakter silme hatası:", response.status, errorText);
+            throw new Error(`Karakter silinemedi: ${response.status} ${response.statusText}`);
+        }
 
+        showToast("Karakter silindi", "success");
+        
+        // Yeni layout için karakter listesini yenile
+        if (currentProjectId) {
+            await renderCharactersSidebar();
+        }
+        // Eski layout için de yenile (geriye dönük uyumluluk)
         await renderCharacters();
     } catch (err) {
         console.error("Karakter silinirken hata:", err);
-        alert("Karakter silinemedi: " + err.message);
+        showToast("Karakter silinemedi: " + err.message, "error");
     }
 }
 
