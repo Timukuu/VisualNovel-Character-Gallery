@@ -2700,16 +2700,29 @@ function renderImagesInGrid(images, container) {
                 const draggedImageId = e.dataTransfer.getData("text/plain");
                 const draggedGroupTitle = e.dataTransfer.getData("text/group-title");
                 
-                console.log("Drop event:", draggedImageId, "to", defaultImage.id);
+                console.log("Drop event tetiklendi:", draggedImageId, "to", defaultImage.id);
+                console.log("Drop event details:", {
+                    draggedImageId,
+                    targetImageId: defaultImage.id,
+                    draggedGroupTitle,
+                    targetGroupTitle: title
+                });
                 
                 if (draggedImageId && draggedImageId !== defaultImage.id) {
                     try {
                         await handleImageReorder(draggedImageId, defaultImage.id, draggedGroupTitle, title);
                         showToast("Resim sırası güncellendi", "success");
+                        // Resimleri yeniden render et
+                        if (currentCharacterId) {
+                            await renderCharacterImagesPanel(currentCharacterId);
+                        }
+                        await renderCharacterImages();
                     } catch (err) {
                         console.error("Resim sıralama hatası:", err);
                         showToast("Resim sırası güncellenemedi", "error");
                     }
+                } else {
+                    console.log("Drop iptal edildi - aynı resim veya geçersiz ID");
                 }
             });
             
@@ -3958,16 +3971,34 @@ function prevImage() {
 }
 
 async function toggleReorderMode() {
-    if (!currentUser || currentUser.role !== "admin" || allImagesForCarousel.length < 2) return;
+    console.log("toggleReorderMode çağrıldı", {
+        currentUser: currentUser?.role,
+        imageCount: allImagesForCarousel.length,
+        isReorderMode
+    });
+    
+    if (!currentUser || currentUser.role !== "admin") {
+        console.warn("Kullanıcı admin değil");
+        return;
+    }
+    
+    if (allImagesForCarousel.length < 2) {
+        console.warn("Yeterli resim yok:", allImagesForCarousel.length);
+        showToast("Sıralama için en az 2 resim gerekli", "info");
+        return;
+    }
     
     if (isReorderMode) {
         // Kaydet modu
+        console.log("Sıralama kaydediliyor...");
         try {
             // Sıralamayı backend'e kaydet
             const updates = allImagesForCarousel.map((img, index) => ({
                 id: img.id,
                 orderIndex: index
             }));
+            
+            console.log("Güncellenecek resimler:", updates);
             
             // Her resmi güncelle
             for (const update of updates) {
@@ -3976,7 +4007,10 @@ async function toggleReorderMode() {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ orderIndex: update.orderIndex })
                 });
-                if (!response.ok) throw new Error(`Resim ${update.id} güncellenemedi`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Resim ${update.id} güncellenemedi: ${errorText}`);
+                }
             }
             
             isReorderMode = false;
@@ -3997,9 +4031,11 @@ async function toggleReorderMode() {
         }
     } else {
         // Sıralama moduna geç
+        console.log("Sıralama modu aktif ediliyor");
         isReorderMode = true;
         renderImageCarousel();
         updateImageInfo();
+        showToast("Sıralama modu aktif - yukarı/aşağı butonlarını kullanın", "info");
     }
 }
 
