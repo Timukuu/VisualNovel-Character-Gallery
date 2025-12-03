@@ -84,7 +84,10 @@
                     <!-- KARAKTER LİSTESİ (Seçili proje altında) -->
                     <div id="characters-sidebar-section" class="characters-sidebar-section hidden">
                         <div class="characters-sidebar-header">
-                            <h3 id="sidebar-project-title" style="margin: 0; font-size: 14px; font-weight: 600;"></h3>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <h3 id="sidebar-project-title" style="margin: 0; font-size: 14px; font-weight: 600;"></h3>
+                                <button id="scenario-btn" class="btn subtle" style="font-size: 11px; padding: 3px 8px; display: none;">Senaryo</button>
+                            </div>
                             <div class="characters-sidebar-actions">
                                 <input type="text" id="character-search-input" placeholder="Ara..." class="search-input" />
                                 <button id="add-character-sidebar-btn" class="btn primary" style="font-size: 12px; padding: 4px 8px; display: none;">
@@ -358,6 +361,50 @@
                 </div>
             </div>
         </div>
+
+        <!-- SENARYO EDITOR EKRANI -->
+        <section id="scenario-screen" class="screen hidden">
+            <div class="scenario-editor">
+                <div class="scenario-header">
+                    <h2 id="scenario-project-title">Senaryo</h2>
+                    <button id="scenario-back-btn" class="btn subtle">← Geri</button>
+                </div>
+                
+                <div class="scenario-layout">
+                    <!-- SOL PANEL: Toolbox + Outline -->
+                    <aside class="scenario-left-panel">
+                        <div class="scenario-toolbox">
+                            <button id="add-chapter-btn" class="btn primary" style="width: 100%; margin-bottom: 8px;">+ Bölüm Ekle</button>
+                            <button id="add-part-btn" class="btn primary" style="width: 100%;">+ Kısım Ekle</button>
+                        </div>
+                        
+                        <div class="scenario-outline">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Yapı</h3>
+                            <div id="scenario-outline-list" class="scenario-outline-list">
+                                <!-- JS ile doldurulacak -->
+                            </div>
+                        </div>
+                    </aside>
+                    
+                    <!-- ORTA PANEL: Graph Canvas -->
+                    <main class="scenario-canvas-container">
+                        <div id="scenario-canvas" class="scenario-canvas">
+                            <!-- Graph node'ları buraya eklenecek -->
+                        </div>
+                    </main>
+                    
+                    <!-- SAĞ PANEL: Properties -->
+                    <aside class="scenario-right-panel">
+                        <div class="scenario-properties">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Özellikler</h3>
+                            <div id="scenario-properties-content" class="scenario-properties-content">
+                                <p style="color: var(--text-muted); font-size: 13px;">Bir node seçin</p>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
 
         <!-- KULLANICI YÖNETİMİ EKRANI -->
         <section id="users-management-screen" class="screen hidden">

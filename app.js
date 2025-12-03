@@ -69,6 +69,10 @@ let detailMainImage, detailFullName, detailMeta, detailProjectBadge;
 let traitsDisplay, traitsEdit, traitsTextarea, editTraitsBtn;
 let addImageBtnPanel, tagFiltersEl, characterImagesGrid;
 
+// Senaryo Editor referansları
+let scenarioBtn, scenarioScreen, scenarioBackBtn, scenarioProjectTitle;
+let addChapterBtn, addPartBtn, scenarioOutlineList, scenarioCanvas, scenarioPropertiesContent;
+
 // Eski referanslar (geriye dönük uyumluluk için)
 let currentProjectTitleEl, addCharacterBtn, charactersContainer;
 
@@ -2117,6 +2121,17 @@ function initializeEventListeners() {
     tagFiltersEl = document.getElementById("tag-filters");
     characterImagesGrid = document.getElementById("character-images-grid");
     
+    // Senaryo Editor referansları
+    scenarioBtn = document.getElementById("scenario-btn");
+    scenarioScreen = document.getElementById("scenario-screen");
+    scenarioBackBtn = document.getElementById("scenario-back-btn");
+    scenarioProjectTitle = document.getElementById("scenario-project-title");
+    addChapterBtn = document.getElementById("add-chapter-btn");
+    addPartBtn = document.getElementById("add-part-btn");
+    scenarioOutlineList = document.getElementById("scenario-outline-list");
+    scenarioCanvas = document.getElementById("scenario-canvas");
+    scenarioPropertiesContent = document.getElementById("scenario-properties-content");
+    
     // Eski referanslar (geriye dönük uyumluluk için)
     currentProjectTitleEl = document.getElementById("current-project-title");
     addCharacterBtn = document.getElementById("add-character-btn");
@@ -2242,6 +2257,20 @@ function initializeEventListeners() {
                 userForm.addEventListener("submit", handleUserFormSubmit);
             }
 
+            // Senaryo butonu
+            if (scenarioBtn) {
+                scenarioBtn.addEventListener("click", openScenarioScreen);
+            }
+            if (scenarioBackBtn) {
+                scenarioBackBtn.addEventListener("click", closeScenarioScreen);
+            }
+            if (addChapterBtn) {
+                addChapterBtn.addEventListener("click", addChapter);
+            }
+            if (addPartBtn) {
+                addPartBtn.addEventListener("click", addPart);
+            }
+            
             // Yeni layout butonları
             if (addCharacterSidebarBtn) {
                 addCharacterSidebarBtn.addEventListener("click", () => {
