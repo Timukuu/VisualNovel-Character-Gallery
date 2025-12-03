@@ -240,7 +240,15 @@ textarea {
         box-shadow var(--transition-fast);
     white-space: nowrap;
     position: relative; /* Loading spinner için gerekli */
-    overflow: hidden; /* İçerik taşmasını engelle */
+    overflow: visible; /* Text'in görünmesi için visible */
+    min-width: fit-content; /* İçeriğe göre minimum genişlik */
+}
+
+/* Küçük font-size için padding ayarı */
+.btn[style*="font-size: 12px"],
+.btn[style*="font-size:11px"] {
+    padding: 6px 12px;
+    font-size: 12px;
 }
 
 .btn.primary {

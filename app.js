@@ -2497,16 +2497,21 @@ function renderTagFilters(images) {
 
 // Tag'e göre filtrele
 function filterImagesByTag(tag) {
-    if (!characterImagesGrid) return;
+    if (!characterImagesGrid) {
+        console.warn("filterImagesByTag: characterImagesGrid bulunamadı");
+        return;
+    }
     
     const imageCards = characterImagesGrid.querySelectorAll(".character-image-card");
+    
     imageCards.forEach(card => {
         const cardTagsStr = card.dataset.tags || "";
-        const cardTags = cardTagsStr ? cardTagsStr.split(",").map(t => t.trim()).filter(t => t) : [];
+        const cardTags = cardTagsStr ? cardTagsStr.split(",").map(t => t.trim().toLowerCase()).filter(t => t) : [];
+        const searchTag = tag ? tag.trim().toLowerCase() : "";
         
-        if (tag === "all") {
+        if (tag === "all" || !tag) {
             card.style.display = "";
-        } else if (cardTags.length > 0 && cardTags.includes(tag)) {
+        } else if (cardTags.length > 0 && cardTags.includes(searchTag)) {
             card.style.display = "";
         } else {
             card.style.display = "none";
