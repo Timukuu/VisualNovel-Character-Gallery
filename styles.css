@@ -261,6 +261,8 @@ textarea {
     width: auto;
     max-width: none;
     box-sizing: border-box;
+    flex-shrink: 0; /* Flex container içinde küçülmesini engelle */
+    flex-grow: 0; /* Gereksiz büyümesini engelle */
 }
 
 .btn.primary {
