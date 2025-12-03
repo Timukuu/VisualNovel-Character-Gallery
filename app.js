@@ -3955,6 +3955,13 @@ function renderImageCarousel() {
                 currentImageIndex = actualIndex;
                 renderImageCarousel();
                 updateImageInfo();
+                // Container'ı yeni aktif görsel boyutuna göre resize et
+                setTimeout(() => {
+                    const activeItem = track.querySelector(".image-carousel-item.active");
+                    if (activeItem) {
+                        resizeContainerToImage(activeItem.offsetWidth, activeItem.offsetHeight);
+                    }
+                }, 100);
             }
         });
 
