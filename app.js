@@ -4147,6 +4147,17 @@ function nextImage() {
     if (allImagesForCarousel.length === 0) return;
     currentImageIndex = (currentImageIndex + 1) % allImagesForCarousel.length;
     renderImageCarousel();
+    // Container'ı yeni aktif görsel boyutuna göre resize et
+    setTimeout(() => {
+        const track = document.getElementById("image-carousel-track");
+        const container = track ? track.parentElement : null;
+        if (container) {
+            const activeItem = track.querySelector(".image-carousel-item.active");
+            if (activeItem) {
+                resizeContainerToImage(activeItem.offsetWidth, activeItem.offsetHeight);
+            }
+        }
+    }, 150);
 }
 
 function prevImage() {
