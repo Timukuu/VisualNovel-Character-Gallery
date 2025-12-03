@@ -72,6 +72,7 @@ let addImageBtnPanel, tagFiltersEl, characterImagesGrid;
 // Senaryo Editor referansları
 let scenarioBtn, scenarioScreen, scenarioBackBtn, scenarioProjectTitle;
 let addChapterBtn, addPartBtn, scenarioOutlineList, scenarioCanvas, scenarioPropertiesContent;
+let resetViewBtn;
 
 // Eski referanslar (geriye dönük uyumluluk için)
 let currentProjectTitleEl, addCharacterBtn, charactersContainer;
@@ -2138,6 +2139,7 @@ function initializeEventListeners() {
     scenarioOutlineList = document.getElementById("scenario-outline-list");
     scenarioCanvas = document.getElementById("scenario-canvas");
     scenarioPropertiesContent = document.getElementById("scenario-properties-content");
+    resetViewBtn = document.getElementById("reset-view-btn");
     
     // Eski referanslar (geriye dönük uyumluluk için)
     currentProjectTitleEl = document.getElementById("current-project-title");
@@ -2276,6 +2278,9 @@ function initializeEventListeners() {
             }
             if (addPartBtn) {
                 addPartBtn.addEventListener("click", addPart);
+            }
+            if (resetViewBtn) {
+                resetViewBtn.addEventListener("click", resetCanvasView);
             }
             
             // Yeni layout butonları
@@ -4719,25 +4724,85 @@ function renderScenarioOutline() {
     }
     
     scenarioData.chapters.forEach((chapter, chapterIndex) => {
+        // Chapter item container
+        const chapterItemContainer = document.createElement("div");
+        chapterItemContainer.className = "scenario-outline-item-container";
+        
         // Chapter item
         const chapterItem = document.createElement("div");
         chapterItem.className = `scenario-outline-item chapter ${selectedNodeId === chapter.id && selectedNodeType === "chapter" ? "selected" : ""}`;
-        chapterItem.textContent = `${chapterIndex + 1}. ${chapter.title}`;
+        chapterItem.innerHTML = `<span>${chapterIndex + 1}. ${chapter.title || "Yeni Bölüm"}</span>`;
         chapterItem.dataset.nodeId = chapter.id;
         chapterItem.dataset.nodeType = "chapter";
-        chapterItem.addEventListener("click", () => selectNode(chapter.id, "chapter"));
-        scenarioOutlineList.appendChild(chapterItem);
+        chapterItem.addEventListener("click", (e) => {
+            if (!e.target.closest(".scenario-outline-action-btn")) {
+                selectNode(chapter.id, "chapter");
+            }
+        });
+        
+        // Chapter action buttons
+        const chapterActions = document.createElement("div");
+        chapterActions.className = "scenario-outline-actions";
+        
+        const addPartToChapterBtn = document.createElement("button");
+        addPartToChapterBtn.className = "scenario-outline-action-btn add-btn";
+        addPartToChapterBtn.innerHTML = "+";
+        addPartToChapterBtn.title = "Kısım Ekle";
+        addPartToChapterBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            addPartToChapter(chapter.id);
+        });
+        
+        const deleteChapterBtn = document.createElement("button");
+        deleteChapterBtn.className = "scenario-outline-action-btn delete-btn";
+        deleteChapterBtn.innerHTML = "×";
+        deleteChapterBtn.title = "Sil";
+        deleteChapterBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteChapter(chapter.id);
+        });
+        
+        chapterActions.appendChild(addPartToChapterBtn);
+        chapterActions.appendChild(deleteChapterBtn);
+        chapterItem.appendChild(chapterActions);
+        chapterItemContainer.appendChild(chapterItem);
         
         // Part items
         chapter.parts.forEach((part, partIndex) => {
+            const partItemContainer = document.createElement("div");
+            partItemContainer.className = "scenario-outline-item-container";
+            
             const partItem = document.createElement("div");
             partItem.className = `scenario-outline-item part ${selectedNodeId === part.id && selectedNodeType === "part" ? "selected" : ""}`;
-            partItem.textContent = `  ${chapterIndex + 1}.${partIndex + 1} ${part.title}`;
+            partItem.innerHTML = `<span>  ${chapterIndex + 1}.${partIndex + 1} ${part.title || "Yeni Kısım"}</span>`;
             partItem.dataset.nodeId = part.id;
             partItem.dataset.nodeType = "part";
-            partItem.addEventListener("click", () => selectNode(part.id, "part"));
-            scenarioOutlineList.appendChild(partItem);
+            partItem.addEventListener("click", (e) => {
+                if (!e.target.closest(".scenario-outline-action-btn")) {
+                    selectNode(part.id, "part");
+                }
+            });
+            
+            // Part action buttons
+            const partActions = document.createElement("div");
+            partActions.className = "scenario-outline-actions";
+            
+            const deletePartBtn = document.createElement("button");
+            deletePartBtn.className = "scenario-outline-action-btn delete-btn";
+            deletePartBtn.innerHTML = "×";
+            deletePartBtn.title = "Sil";
+            deletePartBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deletePart(chapter.id, part.id);
+            });
+            
+            partActions.appendChild(deletePartBtn);
+            partItem.appendChild(partActions);
+            partItemContainer.appendChild(partItem);
+            chapterItemContainer.appendChild(partItemContainer);
         });
+        
+        scenarioOutlineList.appendChild(chapterItemContainer);
     });
 }
 
@@ -5175,7 +5240,15 @@ function addPart() {
         }
     }
     
-    const chapterIndex = scenarioData.chapters.findIndex(c => c.id === targetChapter.id);
+    addPartToChapter(targetChapter.id);
+}
+
+// Belirli bir chapter'a part ekle
+function addPartToChapter(chapterId) {
+    const targetChapter = scenarioData.chapters.find(c => c.id === chapterId);
+    if (!targetChapter) return;
+    
+    const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
     const chapterX = targetChapter.x || (100 + chapterIndex * 200);
     const chapterY = targetChapter.y || 100;
     const newPart = {
@@ -5196,6 +5269,60 @@ function addPart() {
     if (currentProjectId) {
         localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
     }
+}
+
+// Canvas view'ı resetle - tüm node'ları görünür yap
+function resetCanvasView() {
+    if (!scenarioCanvas) return;
+    
+    if (scenarioData.chapters.length === 0) {
+        scenarioCanvas.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+        return;
+    }
+    
+    // Tüm node'ların pozisyonlarını topla
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    
+    scenarioData.chapters.forEach(chapter => {
+        const chapterX = chapter.x || 100;
+        const chapterY = chapter.y || 100;
+        minX = Math.min(minX, chapterX);
+        minY = Math.min(minY, chapterY);
+        maxX = Math.max(maxX, chapterX + 200);
+        maxY = Math.max(maxY, chapterY + 120);
+        
+        chapter.parts.forEach(part => {
+            const partX = part.x || (chapterX + 220);
+            const partY = part.y || (chapterY + 100);
+            minX = Math.min(minX, partX);
+            minY = Math.min(minY, partY);
+            maxX = Math.max(maxX, partX + 180);
+            maxY = Math.max(maxY, partY + 100);
+        });
+    });
+    
+    // Canvas boyutlarını al
+    const canvasRect = scenarioCanvas.getBoundingClientRect();
+    const canvasWidth = canvasRect.width;
+    const canvasHeight = canvasRect.height;
+    
+    // Node'ların merkez noktasını hesapla
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Scroll pozisyonunu hesapla (merkezi canvas'ın ortasına getir)
+    const scrollX = centerX - canvasWidth / 2;
+    const scrollY = centerY - canvasHeight / 2;
+    
+    // Smooth scroll
+    scenarioCanvas.scrollTo({
+        left: Math.max(0, scrollX),
+        top: Math.max(0, scrollY),
+        behavior: "smooth"
+    });
 }
 
 document.addEventListener("DOMContentLoaded", init);

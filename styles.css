@@ -2448,6 +2448,70 @@ textarea:valid:not(:placeholder-shown) {
     color: var(--text-muted);
 }
 
+.scenario-outline-item-container {
+    margin-bottom: 2px;
+}
+
+.scenario-outline-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.scenario-outline-item > span {
+    flex: 1;
+}
+
+.scenario-outline-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 8px;
+}
+
+.scenario-outline-item:hover .scenario-outline-actions {
+    opacity: 1;
+}
+
+.scenario-outline-action-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.scenario-outline-action-btn.add-btn {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.scenario-outline-action-btn.add-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: scale(1.1);
+}
+
+.scenario-outline-action-btn.delete-btn {
+    background: rgba(244, 91, 105, 0.2);
+    color: var(--danger);
+}
+
+.scenario-outline-action-btn.delete-btn:hover {
+    background: var(--danger);
+    color: white;
+    transform: scale(1.1);
+}
+
 /* Orta Panel: Canvas */
 .scenario-canvas-container {
     flex: 1;
