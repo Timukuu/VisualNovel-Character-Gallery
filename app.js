@@ -624,6 +624,13 @@ async function renderProjects() {
                 sidebarProjectTitle.textContent = project.name;
                 charactersSidebarSection.classList.remove("hidden");
                 
+                // Senaryo butonunu göster (admin için)
+                if (scenarioBtn && currentUser && currentUser.role === "admin") {
+                    scenarioBtn.style.display = "block";
+                } else if (scenarioBtn) {
+                    scenarioBtn.style.display = "none";
+                }
+                
                 // "Karakter Ekle" butonunu göster (admin ise)
                 if (addCharacterSidebarBtn && currentUser) {
                     addCharacterSidebarBtn.style.display = currentUser.role === "admin" ? "block" : "none";
