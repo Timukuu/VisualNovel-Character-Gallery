@@ -623,6 +623,12 @@ textarea {
     margin-top: 24px;
 }
 
+.character-images-section > h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
 .section-header {
     display: flex;
     justify-content: space-between;
@@ -1718,6 +1724,8 @@ textarea:valid:not(:placeholder-shown) {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap; /* Butonların alt satıra geçmesine izin ver */
+    margin-bottom: 16px;
+    justify-content: flex-start; /* Tag'leri sola hizala */
 }
 
 /* Tag Filtreleri */
