@@ -3811,39 +3811,41 @@ function renderImageCarousel() {
             // Container'ın mevcut boyutlarını al
             const containerRect = container.getBoundingClientRect();
             const containerWidth = containerRect.width - 40; // Padding için
-            const containerHeight = Math.min(containerRect.height - 40, window.innerHeight * 0.75);
+            const containerHeight = Math.min(containerRect.height - 40, window.innerHeight * 0.9);
             
-            // Görselin container'a sığacak şekilde boyutunu hesapla
+            // Görseli orijinal boyutlarında göster, sadece container'a sığdır
             let itemWidth, itemHeight;
-            const maxWidth = Math.min(containerWidth * 0.9, 900);
-            const maxHeight = Math.min(containerHeight * 0.9, 1000);
             
-            // Aspect ratio'ya göre boyutlandır
+            // Orijinal boyutları kullan, sadece container'dan taşmaması için sınırla
             if (aspectRatio > 1) {
-                // Yatay görsel
-                itemWidth = Math.min(maxWidth, naturalWidth);
+                // Yatay görsel - genişliği öncelikli
+                itemWidth = Math.min(containerWidth * 0.95, naturalWidth);
                 itemHeight = itemWidth / aspectRatio;
-                if (itemHeight > maxHeight) {
-                    itemHeight = maxHeight;
+                
+                // Yükseklik container'ı aşarsa, yüksekliği sınırla
+                if (itemHeight > containerHeight * 0.95) {
+                    itemHeight = containerHeight * 0.95;
                     itemWidth = itemHeight * aspectRatio;
                 }
             } else {
-                // Dikey görsel
-                itemHeight = Math.min(maxHeight, naturalHeight);
+                // Dikey görsel - yüksekliği öncelikli
+                itemHeight = Math.min(containerHeight * 0.95, naturalHeight);
                 itemWidth = itemHeight * aspectRatio;
-                if (itemWidth > maxWidth) {
-                    itemWidth = maxWidth;
+                
+                // Genişlik container'ı aşarsa, genişliği sınırla
+                if (itemWidth > containerWidth * 0.95) {
+                    itemWidth = containerWidth * 0.95;
                     itemHeight = itemWidth / aspectRatio;
                 }
             }
             
-            // Minimum boyut kontrolü
-            if (itemWidth < 200) {
-                itemWidth = 200;
+            // Minimum boyut kontrolü (çok küçük görseller için)
+            if (itemWidth < 150) {
+                itemWidth = 150;
                 itemHeight = itemWidth / aspectRatio;
             }
-            if (itemHeight < 200) {
-                itemHeight = 200;
+            if (itemHeight < 150) {
+                itemHeight = 150;
                 itemWidth = itemHeight * aspectRatio;
             }
             

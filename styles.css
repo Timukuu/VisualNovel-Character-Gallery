@@ -1042,17 +1042,18 @@ textarea:valid:not(:placeholder-shown) {
 
 /* Image Carousel */
 .image-carousel-modal {
-    max-width: 95vw;
+    max-width: 90vw;
     max-height: 95vh;
-    padding: 24px;
+    padding: 20px;
+    width: auto;
 }
 
 .image-carousel-container {
     position: relative;
     width: 100%;
-    max-width: 1200px;
+    max-width: 800px;
     min-height: 400px;
-    max-height: 85vh;
+    max-height: 90vh;
     margin: 0 auto;
     overflow: hidden;
     border-radius: var(--radius-md);
@@ -1077,10 +1078,10 @@ textarea:valid:not(:placeholder-shown) {
     flex: 0 0 auto;
     width: auto;
     height: auto;
-    min-width: 200px;
-    min-height: 200px;
-    max-width: 90vw;
-    max-height: 85vh;
+    min-width: 150px;
+    min-height: 150px;
+    max-width: none;
+    max-height: none;
     border-radius: var(--radius-md);
     overflow: visible;
     background: transparent;
