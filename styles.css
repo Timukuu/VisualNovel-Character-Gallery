@@ -2481,24 +2481,28 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .scenario-node.chapter {
-    width: 180px;
-    min-height: 80px;
+    width: 200px;
+    min-height: 120px;
     background: var(--accent);
     color: white;
     border-radius: var(--radius-md);
     padding: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
 }
 
 .scenario-node.part {
-    width: 140px;
-    min-height: 60px;
+    width: 180px;
+    min-height: 100px;
     background: var(--bg-elevated);
     color: var(--text);
     border: 2px solid var(--border-soft);
     border-radius: var(--radius-md);
     padding: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
 }
 
 .scenario-node.selected {
@@ -2522,6 +2526,72 @@ textarea:valid:not(:placeholder-shown) {
 
 .scenario-node.chapter .scenario-node-title {
     font-size: 15px;
+}
+
+.scenario-node-drag-handle {
+    cursor: move;
+    user-select: none;
+}
+
+.scenario-node-content {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text);
+    font-size: 12px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.scenario-node.chapter .scenario-node-content {
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+}
+
+.scenario-node.part .scenario-node-content {
+    background: var(--bg-soft);
+    color: var(--text);
+    border-color: var(--border-soft);
+}
+
+.scenario-node-content:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.scenario-node-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(244, 91, 105, 0.9);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+}
+
+.scenario-node:hover .scenario-node-delete {
+    opacity: 1;
+}
+
+.scenario-node-delete:hover {
+    background: var(--danger);
+    transform: scale(1.1);
 }
 
 /* Connector Lines */
@@ -2557,16 +2627,24 @@ textarea:valid:not(:placeholder-shown) {
     font-weight: 500;
 }
 
-.scenario-properties-content input {
+.scenario-properties-content input,
+.scenario-properties-content textarea {
     padding: 8px 12px;
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--bg-soft);
     color: var(--text);
     font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
 }
 
-.scenario-properties-content input:focus {
+.scenario-properties-content textarea {
+    min-height: 120px;
+}
+
+.scenario-properties-content input:focus,
+.scenario-properties-content textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent-soft);

@@ -4642,7 +4642,7 @@ async function deleteUser(userId) {
 
 // Senaryo veri yapısı
 let scenarioData = {
-    chapters: [] // { id, title, x, y, parts: [{ id, title, x, y }] }
+    chapters: [] // { id, title, content, x, y, parts: [{ id, title, content, x, y }] }
 };
 
 let selectedNodeId = null;
@@ -4788,21 +4788,56 @@ function renderScenarioCanvas() {
 function createChapterNode(chapter, index) {
     const node = document.createElement("div");
     node.className = `scenario-node chapter ${selectedNodeId === chapter.id ? "selected" : ""}`;
-    node.style.left = `${chapter.x || 100 + index * 220}px`;
+    node.style.left = `${chapter.x || 100 + index * 200}px`;
     node.style.top = `${chapter.y || 100}px`;
     node.dataset.nodeId = chapter.id;
     node.dataset.nodeType = "chapter";
     
-    node.innerHTML = `
+    // Drag handle (üst kısım)
+    const dragHandle = document.createElement("div");
+    dragHandle.className = "scenario-node-drag-handle";
+    dragHandle.innerHTML = `
         <div class="scenario-node-label">Bölüm</div>
-        <div class="scenario-node-title">${chapter.title}</div>
+        <div class="scenario-node-title">${chapter.title || "Yeni Bölüm"}</div>
     `;
     
-    // Drag & drop
-    makeNodeDraggable(node, chapter);
+    // İçerik textarea
+    const contentTextarea = document.createElement("textarea");
+    contentTextarea.className = "scenario-node-content";
+    contentTextarea.placeholder = "Senaryo içeriği...";
+    contentTextarea.value = chapter.content || "";
+    contentTextarea.rows = 4;
+    contentTextarea.addEventListener("input", (e) => {
+        chapter.content = e.target.value;
+        if (currentProjectId) {
+            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+        }
+    });
+    contentTextarea.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+    
+    // Sil butonu
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "scenario-node-delete";
+    deleteBtn.innerHTML = "×";
+    deleteBtn.title = "Sil";
+    deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteChapter(chapter.id);
+    });
+    
+    node.appendChild(dragHandle);
+    node.appendChild(contentTextarea);
+    node.appendChild(deleteBtn);
+    
+    // Drag & drop (sadece drag handle için)
+    makeNodeDraggable(node, chapter, dragHandle);
     
     // Click to select
     node.addEventListener("click", (e) => {
+        if (e.target === deleteBtn || e.target.closest(".scenario-node-delete")) return;
+        if (e.target === contentTextarea || e.target.closest("textarea")) return;
         e.stopPropagation();
         selectNode(chapter.id, "chapter");
     });
@@ -4816,23 +4851,61 @@ function createPartNode(part, chapterId, index) {
     if (!chapter) return null;
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
+    const chapterX = chapter.x || (100 + chapterIndex * 200);
+    const chapterY = chapter.y || 100;
+    
     const node = document.createElement("div");
     node.className = `scenario-node part ${selectedNodeId === part.id ? "selected" : ""}`;
-    node.style.left = `${part.x || ((chapter.x || 100 + chapterIndex * 220) + 20)}px`;
-    node.style.top = `${part.y || ((chapter.y || 100) + 120 + index * 80)}px`;
+    node.style.left = `${part.x || (chapterX + 220)}px`;
+    node.style.top = `${part.y || (chapterY + index * 100)}px`;
     node.dataset.nodeId = part.id;
     node.dataset.nodeType = "part";
     
-    node.innerHTML = `
+    // Drag handle (üst kısım)
+    const dragHandle = document.createElement("div");
+    dragHandle.className = "scenario-node-drag-handle";
+    dragHandle.innerHTML = `
         <div class="scenario-node-label">Kısım</div>
-        <div class="scenario-node-title">${part.title}</div>
+        <div class="scenario-node-title">${part.title || "Yeni Kısım"}</div>
     `;
     
-    // Drag & drop
-    makeNodeDraggable(node, part);
+    // İçerik textarea
+    const contentTextarea = document.createElement("textarea");
+    contentTextarea.className = "scenario-node-content";
+    contentTextarea.placeholder = "Senaryo içeriği...";
+    contentTextarea.value = part.content || "";
+    contentTextarea.rows = 3;
+    contentTextarea.addEventListener("input", (e) => {
+        part.content = e.target.value;
+        if (currentProjectId) {
+            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+        }
+    });
+    contentTextarea.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+    
+    // Sil butonu
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "scenario-node-delete";
+    deleteBtn.innerHTML = "×";
+    deleteBtn.title = "Sil";
+    deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deletePart(chapterId, part.id);
+    });
+    
+    node.appendChild(dragHandle);
+    node.appendChild(contentTextarea);
+    node.appendChild(deleteBtn);
+    
+    // Drag & drop (sadece drag handle için)
+    makeNodeDraggable(node, part, dragHandle);
     
     // Click to select
     node.addEventListener("click", (e) => {
+        if (e.target === deleteBtn || e.target.closest(".scenario-node-delete")) return;
+        if (e.target === contentTextarea || e.target.closest("textarea")) return;
         e.stopPropagation();
         selectNode(part.id, "part");
     });
@@ -4841,33 +4914,50 @@ function createPartNode(part, chapterId, index) {
 }
 
 // Node'u draggable yap
-function makeNodeDraggable(node, data) {
+function makeNodeDraggable(node, data, dragHandle) {
     let isDragging = false;
+    const handle = dragHandle || node;
     
-    node.addEventListener("mousedown", (e) => {
-        if (e.target.closest("input")) return; // Input içindeyse drag başlatma
+    handle.addEventListener("mousedown", (e) => {
+        // Textarea veya input içindeyse drag başlatma
+        if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT" || e.target.closest("textarea") || e.target.closest("input")) {
+            return;
+        }
         
         isDragging = true;
         draggedNode = node;
         
-        const rect = node.getBoundingClientRect();
+        // Node'un mevcut pozisyonunu al
+        const nodeRect = node.getBoundingClientRect();
         const canvasRect = scenarioCanvas.getBoundingClientRect();
-        dragOffset.x = e.clientX - rect.left - canvasRect.left + scenarioCanvas.scrollLeft;
-        dragOffset.y = e.clientY - rect.top - canvasRect.top + scenarioCanvas.scrollTop;
+        
+        // Mouse'un node içindeki offset'ini hesapla
+        dragOffset.x = e.clientX - nodeRect.left;
+        dragOffset.y = e.clientY - nodeRect.top;
         
         node.style.cursor = "grabbing";
+        node.style.zIndex = "1000";
         e.preventDefault();
+        e.stopPropagation();
     });
     
     const handleMouseMove = (e) => {
         if (!isDragging || !draggedNode) return;
         
         const canvasRect = scenarioCanvas.getBoundingClientRect();
+        
+        // Yeni pozisyonu hesapla (mouse pozisyonu - offset)
         const newX = e.clientX - canvasRect.left - dragOffset.x + scenarioCanvas.scrollLeft;
         const newY = e.clientY - canvasRect.top - dragOffset.y + scenarioCanvas.scrollTop;
         
-        draggedNode.style.left = `${newX}px`;
-        draggedNode.style.top = `${newY}px`;
+        // Minimum pozisyon kontrolü
+        const minX = 0;
+        const minY = 0;
+        const finalX = Math.max(minX, newX);
+        const finalY = Math.max(minY, newY);
+        
+        draggedNode.style.left = `${finalX}px`;
+        draggedNode.style.top = `${finalY}px`;
         
         // Data'yı güncelle
         const nodeId = draggedNode.dataset.nodeId;
@@ -4876,15 +4966,15 @@ function makeNodeDraggable(node, data) {
         if (nodeType === "chapter") {
             const chapter = scenarioData.chapters.find(c => c.id === nodeId);
             if (chapter) {
-                chapter.x = newX;
-                chapter.y = newY;
+                chapter.x = finalX;
+                chapter.y = finalY;
             }
         } else if (nodeType === "part") {
             scenarioData.chapters.forEach(chapter => {
                 const part = chapter.parts.find(p => p.id === nodeId);
                 if (part) {
-                    part.x = newX;
-                    part.y = newY;
+                    part.x = finalX;
+                    part.y = finalY;
                 }
             });
         }
@@ -4898,6 +4988,7 @@ function makeNodeDraggable(node, data) {
             isDragging = false;
             if (draggedNode) {
                 draggedNode.style.cursor = "move";
+                draggedNode.style.zIndex = "";
             }
             draggedNode = null;
             
@@ -4956,7 +5047,11 @@ function renderScenarioProperties() {
     scenarioPropertiesContent.innerHTML = `
         <label>
             ${label}
-            <input type="text" id="scenario-node-title-input" value="${nodeData.title}" />
+            <input type="text" id="scenario-node-title-input" value="${nodeData.title || ""}" />
+        </label>
+        <label>
+            İçerik
+            <textarea id="scenario-node-content-input" rows="6" placeholder="Senaryo içeriği...">${nodeData.content || ""}</textarea>
         </label>
     `;
     
@@ -4971,6 +5066,17 @@ function renderScenarioProperties() {
             }
         });
     }
+    
+    const contentInput = document.getElementById("scenario-node-content-input");
+    if (contentInput) {
+        contentInput.addEventListener("input", (e) => {
+            nodeData.content = e.target.value;
+            // Veriyi kaydet
+            if (currentProjectId) {
+                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            }
+        });
+    }
 }
 
 // Yeni chapter ekle
@@ -4978,7 +5084,8 @@ function addChapter() {
     const newChapter = {
         id: `chapter_${Date.now()}`,
         title: "Yeni Bölüm",
-        x: 100 + scenarioData.chapters.length * 220,
+        content: "",
+        x: 100 + scenarioData.chapters.length * 200,
         y: 100,
         parts: []
     };
@@ -4992,6 +5099,53 @@ function addChapter() {
     // Veriyi kaydet
     if (currentProjectId) {
         localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+    }
+}
+
+// Chapter sil
+function deleteChapter(chapterId) {
+    if (!confirm("Bu bölümü ve içindeki tüm kısımları silmek istediğinize emin misiniz?")) {
+        return;
+    }
+    
+    const index = scenarioData.chapters.findIndex(c => c.id === chapterId);
+    if (index !== -1) {
+        scenarioData.chapters.splice(index, 1);
+        selectedNodeId = null;
+        selectedNodeType = null;
+        renderScenarioEditor();
+        
+        // Veriyi kaydet
+        if (currentProjectId) {
+            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+        }
+        
+        showToast("Bölüm silindi", "success");
+    }
+}
+
+// Part sil
+function deletePart(chapterId, partId) {
+    if (!confirm("Bu kısmı silmek istediğinize emin misiniz?")) {
+        return;
+    }
+    
+    const chapter = scenarioData.chapters.find(c => c.id === chapterId);
+    if (chapter) {
+        const partIndex = chapter.parts.findIndex(p => p.id === partId);
+        if (partIndex !== -1) {
+            chapter.parts.splice(partIndex, 1);
+            selectedNodeId = null;
+            selectedNodeType = null;
+            renderScenarioEditor();
+            
+            // Veriyi kaydet
+            if (currentProjectId) {
+                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            }
+            
+            showToast("Kısım silindi", "success");
+        }
     }
 }
 
@@ -5022,11 +5176,14 @@ function addPart() {
     }
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === targetChapter.id);
+    const chapterX = targetChapter.x || (100 + chapterIndex * 200);
+    const chapterY = targetChapter.y || 100;
     const newPart = {
         id: `part_${Date.now()}`,
         title: "Yeni Kısım",
-        x: (targetChapter.x || 100 + chapterIndex * 220) + 20,
-        y: (targetChapter.y || 100) + 120 + targetChapter.parts.length * 80
+        content: "",
+        x: chapterX + 220,
+        y: chapterY + targetChapter.parts.length * 100
     };
     
     targetChapter.parts.push(newPart);
