@@ -3793,66 +3793,82 @@ function renderImageCarousel() {
         const imgEl = document.createElement("img");
         imgEl.src = img.url;
         imgEl.alt = img.title;
-        imgEl.style.objectFit = "contain"; // Görseli kırpmadan göster
-        imgEl.style.width = "100%";
-        imgEl.style.height = "100%";
+        imgEl.style.objectFit = "contain";
+        imgEl.style.width = "auto";
+        imgEl.style.height = "auto";
+        imgEl.style.maxWidth = "100%";
+        imgEl.style.maxHeight = "100%";
+        imgEl.style.display = "block";
         
         // Görsel yüklendikten sonra gerçek boyutlarına göre item'ı ayarla
-        imgEl.addEventListener("load", () => {
-            const naturalWidth = imgEl.naturalWidth;
-            const naturalHeight = imgEl.naturalHeight;
+        imgEl.addEventListener("load", function() {
+            const naturalWidth = this.naturalWidth;
+            const naturalHeight = this.naturalHeight;
+            if (!naturalWidth || !naturalHeight) return;
+            
             const aspectRatio = naturalWidth / naturalHeight;
             
-            // Container'ın maksimum boyutlarını al
-            const containerWidth = container.offsetWidth;
-            const containerHeight = container.offsetHeight || window.innerHeight * 0.7;
+            // Container'ın mevcut boyutlarını al
+            const containerRect = container.getBoundingClientRect();
+            const containerWidth = containerRect.width - 40; // Padding için
+            const containerHeight = Math.min(containerRect.height - 40, window.innerHeight * 0.75);
             
             // Görselin container'a sığacak şekilde boyutunu hesapla
             let itemWidth, itemHeight;
+            const maxWidth = Math.min(containerWidth * 0.9, 900);
+            const maxHeight = Math.min(containerHeight * 0.9, 1000);
+            
+            // Aspect ratio'ya göre boyutlandır
             if (aspectRatio > 1) {
                 // Yatay görsel
-                itemWidth = Math.min(containerWidth * 0.8, naturalWidth);
+                itemWidth = Math.min(maxWidth, naturalWidth);
                 itemHeight = itemWidth / aspectRatio;
+                if (itemHeight > maxHeight) {
+                    itemHeight = maxHeight;
+                    itemWidth = itemHeight * aspectRatio;
+                }
             } else {
                 // Dikey görsel
-                itemHeight = Math.min(containerHeight * 0.8, naturalHeight);
+                itemHeight = Math.min(maxHeight, naturalHeight);
                 itemWidth = itemHeight * aspectRatio;
+                if (itemWidth > maxWidth) {
+                    itemWidth = maxWidth;
+                    itemHeight = itemWidth / aspectRatio;
+                }
             }
             
-            // Maksimum boyutları kontrol et
-            const maxWidth = Math.min(containerWidth * 0.9, 800);
-            const maxHeight = Math.min(containerHeight * 0.9, 1200);
-            
-            if (itemWidth > maxWidth) {
-                itemWidth = maxWidth;
+            // Minimum boyut kontrolü
+            if (itemWidth < 200) {
+                itemWidth = 200;
                 itemHeight = itemWidth / aspectRatio;
             }
-            if (itemHeight > maxHeight) {
-                itemHeight = maxHeight;
+            if (itemHeight < 200) {
+                itemHeight = 200;
                 itemWidth = itemHeight * aspectRatio;
             }
             
             // Item'ın boyutunu ayarla
             item.style.width = `${itemWidth}px`;
             item.style.height = `${itemHeight}px`;
-            item.style.aspectRatio = "auto"; // Sabit aspect-ratio'yu kaldır
+            item.style.minWidth = `${itemWidth}px`;
+            item.style.minHeight = `${itemHeight}px`;
             
-            // Track pozisyonunu yeniden hesapla
-            setTimeout(() => {
-                const activeItem = track.querySelector(".image-carousel-item.active");
-                if (activeItem && visibleCount > 1) {
-                    const containerWidth = container.offsetWidth;
-                    const itemWidth = activeItem.offsetWidth;
-                    const gap = parseFloat(getComputedStyle(track).gap) || 20;
-                    
-                    const activePosition = activeItem.offsetLeft;
-                    const centerOffset = (containerWidth / 2) - (itemWidth / 2);
-                    const translateX = centerOffset - activePosition;
-                    
-                    track.style.transform = `translateX(${translateX}px)`;
-                }
-            }, 50);
+            // Tüm görseller yüklendikten sonra track pozisyonunu ayarla
+            const allImages = track.querySelectorAll("img");
+            let loadedCount = 0;
+            allImages.forEach(img => {
+                if (img.complete) loadedCount++;
+            });
+            
+            if (loadedCount === allImages.length) {
+                updateCarouselPosition();
+            }
         });
+        
+        // Görsel zaten yüklenmişse (cache'den)
+        if (imgEl.complete) {
+            imgEl.dispatchEvent(new Event('load'));
+        }
         
         item.appendChild(imgEl);
         
@@ -3947,15 +3963,18 @@ function renderImageCarousel() {
     });
 
     // Track pozisyonunu ayarla - aktif resmi tam ortaya getir
-    setTimeout(() => {
+    function updateCarouselPosition() {
         const activeItem = track.querySelector(".image-carousel-item.active");
         if (activeItem && visibleCount > 1) {
-            const containerWidth = container.offsetWidth;
-            const itemWidth = activeItem.offsetWidth;
-            const gap = parseFloat(getComputedStyle(track).gap) || 20;
+            const containerRect = container.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const activeItemRect = activeItem.getBoundingClientRect();
+            const itemWidth = activeItemRect.width;
+            const gap = parseFloat(getComputedStyle(track).gap) || 16;
             
             // Aktif resmin pozisyonunu hesapla
-            const activePosition = activeItem.offsetLeft;
+            const trackRect = track.getBoundingClientRect();
+            const activePosition = activeItemRect.left - trackRect.left;
             const centerOffset = (containerWidth / 2) - (itemWidth / 2);
             const translateX = centerOffset - activePosition;
             
@@ -3963,7 +3982,30 @@ function renderImageCarousel() {
         } else {
             track.style.transform = "translateX(0)";
         }
-    }, 50);
+    }
+    
+    // İlk pozisyon ayarı
+    setTimeout(updateCarouselPosition, 100);
+    
+    // Tüm görseller yüklendikten sonra tekrar ayarla
+    const allImages = track.querySelectorAll("img");
+    let loadedImages = 0;
+    allImages.forEach(img => {
+        if (img.complete) {
+            loadedImages++;
+        } else {
+            img.addEventListener("load", () => {
+                loadedImages++;
+                if (loadedImages === allImages.length) {
+                    setTimeout(updateCarouselPosition, 50);
+                }
+            }, { once: true });
+        }
+    });
+    
+    if (loadedImages === allImages.length) {
+        setTimeout(updateCarouselPosition, 100);
+    }
 
     // Indicator
     if (indicator) {
