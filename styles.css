@@ -247,18 +247,20 @@ textarea {
 /* Küçük font-size için padding ayarı */
 .btn[style*="font-size: 12px"],
 .btn[style*="font-size:11px"] {
-    padding: 6px 10px !important;
+    padding: 5px 8px !important;
     font-size: 12px !important;
     min-width: auto;
 }
 
 /* Resim Ekle butonu için özel ayar */
 #add-image-btn-panel {
-    padding: 6px 10px !important;
+    padding: 5px 8px !important;
     font-size: 12px !important;
     white-space: nowrap;
     min-width: auto;
     width: auto;
+    max-width: none;
+    box-sizing: border-box;
 }
 
 .btn.primary {
