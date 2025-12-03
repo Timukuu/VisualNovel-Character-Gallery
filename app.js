@@ -4771,14 +4771,14 @@ function renderScenarioCanvas() {
             // Connector çizgisi ekle
             const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("class", "scenario-connector");
-            const chapterX = chapter.x || (100 + chapterIndex * 220);
+            const chapterX = chapter.x || (100 + chapterIndex * 200);
             const chapterY = chapter.y || 100;
-            const partX = part.x || (chapterX + 20);
-            const partY = part.y || (chapterY + 120 + partIndex * 80);
-            line.setAttribute("x1", chapterX + 90);
-            line.setAttribute("y1", chapterY + 40);
-            line.setAttribute("x2", partX + 70);
-            line.setAttribute("y2", partY + 30);
+            const partX = part.x || (chapterX + 220);
+            const partY = part.y || (chapterY + partIndex * 100);
+            line.setAttribute("x1", chapterX + 100);
+            line.setAttribute("y1", chapterY + 60);
+            line.setAttribute("x2", partX + 90);
+            line.setAttribute("y2", partY + 50);
             svg.appendChild(line);
         });
     });
