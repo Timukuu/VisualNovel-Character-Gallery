@@ -4636,5 +4636,410 @@ async function deleteUser(userId) {
     }
 }
 
+// ========================================
+// SENARYO EDITOR - Story Graph Editor
+// ========================================
+
+// Senaryo veri yapısı
+let scenarioData = {
+    chapters: [] // { id, title, x, y, parts: [{ id, title, x, y }] }
+};
+
+let selectedNodeId = null;
+let selectedNodeType = null; // "chapter" veya "part"
+let draggedNode = null;
+let dragOffset = { x: 0, y: 0 };
+
+// Senaryo ekranını aç
+function openScenarioScreen() {
+    if (!currentProjectId) {
+        showToast("Önce bir proje seçin", "error");
+        return;
+    }
+    
+    const project = projects.find(p => p.id === currentProjectId);
+    if (!project) return;
+    
+    // Senaryo verilerini localStorage'dan yükle veya boş başlat
+    const savedData = localStorage.getItem(`scenario_${currentProjectId}`);
+    if (savedData) {
+        try {
+            scenarioData = JSON.parse(savedData);
+        } catch (e) {
+            scenarioData = { chapters: [] };
+        }
+    } else {
+        scenarioData = { chapters: [] };
+    }
+    
+    // Ekranı göster
+    if (mainScreen) mainScreen.classList.add("hidden");
+    if (scenarioScreen) {
+        scenarioScreen.classList.remove("hidden");
+        if (scenarioProjectTitle) {
+            scenarioProjectTitle.textContent = `${project.name} - Senaryo`;
+        }
+    }
+    
+    // Senaryo editor'ü render et
+    renderScenarioEditor();
+}
+
+// Senaryo ekranını kapat
+function closeScenarioScreen() {
+    if (scenarioScreen) scenarioScreen.classList.add("hidden");
+    if (mainScreen) mainScreen.classList.remove("hidden");
+    
+    // Senaryo verilerini kaydet
+    if (currentProjectId) {
+        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+    }
+}
+
+// Senaryo editor'ü render et
+function renderScenarioEditor() {
+    renderScenarioOutline();
+    renderScenarioCanvas();
+    renderScenarioProperties();
+}
+
+// Outline listesini render et
+function renderScenarioOutline() {
+    if (!scenarioOutlineList) return;
+    
+    scenarioOutlineList.innerHTML = "";
+    
+    if (scenarioData.chapters.length === 0) {
+        const emptyMsg = document.createElement("p");
+        emptyMsg.textContent = "Henüz bölüm eklenmedi";
+        emptyMsg.style.color = "var(--text-muted)";
+        emptyMsg.style.fontSize = "13px";
+        scenarioOutlineList.appendChild(emptyMsg);
+        return;
+    }
+    
+    scenarioData.chapters.forEach((chapter, chapterIndex) => {
+        // Chapter item
+        const chapterItem = document.createElement("div");
+        chapterItem.className = `scenario-outline-item chapter ${selectedNodeId === chapter.id && selectedNodeType === "chapter" ? "selected" : ""}`;
+        chapterItem.textContent = `${chapterIndex + 1}. ${chapter.title}`;
+        chapterItem.dataset.nodeId = chapter.id;
+        chapterItem.dataset.nodeType = "chapter";
+        chapterItem.addEventListener("click", () => selectNode(chapter.id, "chapter"));
+        scenarioOutlineList.appendChild(chapterItem);
+        
+        // Part items
+        chapter.parts.forEach((part, partIndex) => {
+            const partItem = document.createElement("div");
+            partItem.className = `scenario-outline-item part ${selectedNodeId === part.id && selectedNodeType === "part" ? "selected" : ""}`;
+            partItem.textContent = `  ${chapterIndex + 1}.${partIndex + 1} ${part.title}`;
+            partItem.dataset.nodeId = part.id;
+            partItem.dataset.nodeType = "part";
+            partItem.addEventListener("click", () => selectNode(part.id, "part"));
+            scenarioOutlineList.appendChild(partItem);
+        });
+    });
+}
+
+// Canvas'ı render et
+function renderScenarioCanvas() {
+    if (!scenarioCanvas) return;
+    
+    scenarioCanvas.innerHTML = "";
+    
+    // SVG için connector çizgileri
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.pointerEvents = "none";
+    svg.style.zIndex = "1";
+    scenarioCanvas.appendChild(svg);
+    
+    // Chapter node'larını render et
+    scenarioData.chapters.forEach((chapter, chapterIndex) => {
+        const chapterNode = createChapterNode(chapter, chapterIndex);
+        if (chapterNode) scenarioCanvas.appendChild(chapterNode);
+        
+        // Part node'larını render et
+        chapter.parts.forEach((part, partIndex) => {
+            const partNode = createPartNode(part, chapter.id, partIndex);
+            if (partNode) scenarioCanvas.appendChild(partNode);
+            
+            // Connector çizgisi ekle
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("class", "scenario-connector");
+            const chapterX = chapter.x || (100 + chapterIndex * 220);
+            const chapterY = chapter.y || 100;
+            const partX = part.x || (chapterX + 20);
+            const partY = part.y || (chapterY + 120 + partIndex * 80);
+            line.setAttribute("x1", chapterX + 90);
+            line.setAttribute("y1", chapterY + 40);
+            line.setAttribute("x2", partX + 70);
+            line.setAttribute("y2", partY + 30);
+            svg.appendChild(line);
+        });
+    });
+}
+
+// Chapter node oluştur
+function createChapterNode(chapter, index) {
+    const node = document.createElement("div");
+    node.className = `scenario-node chapter ${selectedNodeId === chapter.id ? "selected" : ""}`;
+    node.style.left = `${chapter.x || 100 + index * 220}px`;
+    node.style.top = `${chapter.y || 100}px`;
+    node.dataset.nodeId = chapter.id;
+    node.dataset.nodeType = "chapter";
+    
+    node.innerHTML = `
+        <div class="scenario-node-label">Bölüm</div>
+        <div class="scenario-node-title">${chapter.title}</div>
+    `;
+    
+    // Drag & drop
+    makeNodeDraggable(node, chapter);
+    
+    // Click to select
+    node.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectNode(chapter.id, "chapter");
+    });
+    
+    return node;
+}
+
+// Part node oluştur
+function createPartNode(part, chapterId, index) {
+    const chapter = scenarioData.chapters.find(c => c.id === chapterId);
+    if (!chapter) return null;
+    
+    const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
+    const node = document.createElement("div");
+    node.className = `scenario-node part ${selectedNodeId === part.id ? "selected" : ""}`;
+    node.style.left = `${part.x || ((chapter.x || 100 + chapterIndex * 220) + 20)}px`;
+    node.style.top = `${part.y || ((chapter.y || 100) + 120 + index * 80)}px`;
+    node.dataset.nodeId = part.id;
+    node.dataset.nodeType = "part";
+    
+    node.innerHTML = `
+        <div class="scenario-node-label">Kısım</div>
+        <div class="scenario-node-title">${part.title}</div>
+    `;
+    
+    // Drag & drop
+    makeNodeDraggable(node, part);
+    
+    // Click to select
+    node.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectNode(part.id, "part");
+    });
+    
+    return node;
+}
+
+// Node'u draggable yap
+function makeNodeDraggable(node, data) {
+    let isDragging = false;
+    
+    node.addEventListener("mousedown", (e) => {
+        if (e.target.closest("input")) return; // Input içindeyse drag başlatma
+        
+        isDragging = true;
+        draggedNode = node;
+        
+        const rect = node.getBoundingClientRect();
+        const canvasRect = scenarioCanvas.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left - canvasRect.left + scenarioCanvas.scrollLeft;
+        dragOffset.y = e.clientY - rect.top - canvasRect.top + scenarioCanvas.scrollTop;
+        
+        node.style.cursor = "grabbing";
+        e.preventDefault();
+    });
+    
+    const handleMouseMove = (e) => {
+        if (!isDragging || !draggedNode) return;
+        
+        const canvasRect = scenarioCanvas.getBoundingClientRect();
+        const newX = e.clientX - canvasRect.left - dragOffset.x + scenarioCanvas.scrollLeft;
+        const newY = e.clientY - canvasRect.top - dragOffset.y + scenarioCanvas.scrollTop;
+        
+        draggedNode.style.left = `${newX}px`;
+        draggedNode.style.top = `${newY}px`;
+        
+        // Data'yı güncelle
+        const nodeId = draggedNode.dataset.nodeId;
+        const nodeType = draggedNode.dataset.nodeType;
+        
+        if (nodeType === "chapter") {
+            const chapter = scenarioData.chapters.find(c => c.id === nodeId);
+            if (chapter) {
+                chapter.x = newX;
+                chapter.y = newY;
+            }
+        } else if (nodeType === "part") {
+            scenarioData.chapters.forEach(chapter => {
+                const part = chapter.parts.find(p => p.id === nodeId);
+                if (part) {
+                    part.x = newX;
+                    part.y = newY;
+                }
+            });
+        }
+        
+        // Connector'ları yeniden çiz
+        renderScenarioCanvas();
+    };
+    
+    const handleMouseUp = () => {
+        if (isDragging) {
+            isDragging = false;
+            if (draggedNode) {
+                draggedNode.style.cursor = "move";
+            }
+            draggedNode = null;
+            
+            // Veriyi kaydet
+            if (currentProjectId) {
+                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            }
+            
+            document.removeEventListener("mousemove", handleMouseMove);
+            document.removeEventListener("mouseup", handleMouseUp);
+        }
+    };
+    
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+}
+
+// Node seç
+function selectNode(nodeId, nodeType) {
+    selectedNodeId = nodeId;
+    selectedNodeType = nodeType;
+    
+    // Outline'ı güncelle
+    renderScenarioOutline();
+    
+    // Canvas'ı güncelle
+    renderScenarioCanvas();
+    
+    // Properties'i güncelle
+    renderScenarioProperties();
+}
+
+// Properties panel'i render et
+function renderScenarioProperties() {
+    if (!scenarioPropertiesContent) return;
+    
+    if (!selectedNodeId || !selectedNodeType) {
+        scenarioPropertiesContent.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">Bir node seçin</p>';
+        return;
+    }
+    
+    let nodeData = null;
+    if (selectedNodeType === "chapter") {
+        nodeData = scenarioData.chapters.find(c => c.id === selectedNodeId);
+    } else {
+        scenarioData.chapters.forEach(chapter => {
+            const part = chapter.parts.find(p => p.id === selectedNodeId);
+            if (part) nodeData = part;
+        });
+    }
+    
+    if (!nodeData) return;
+    
+    const label = selectedNodeType === "chapter" ? "Bölüm Başlığı" : "Kısım Başlığı";
+    
+    scenarioPropertiesContent.innerHTML = `
+        <label>
+            ${label}
+            <input type="text" id="scenario-node-title-input" value="${nodeData.title}" />
+        </label>
+    `;
+    
+    const titleInput = document.getElementById("scenario-node-title-input");
+    if (titleInput) {
+        titleInput.addEventListener("input", (e) => {
+            nodeData.title = e.target.value;
+            renderScenarioEditor(); // Tüm editor'ü yeniden render et
+            // Veriyi kaydet
+            if (currentProjectId) {
+                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            }
+        });
+    }
+}
+
+// Yeni chapter ekle
+function addChapter() {
+    const newChapter = {
+        id: `chapter_${Date.now()}`,
+        title: "Yeni Bölüm",
+        x: 100 + scenarioData.chapters.length * 220,
+        y: 100,
+        parts: []
+    };
+    
+    scenarioData.chapters.push(newChapter);
+    renderScenarioEditor();
+    
+    // Yeni chapter'ı seç
+    selectNode(newChapter.id, "chapter");
+    
+    // Veriyi kaydet
+    if (currentProjectId) {
+        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+    }
+}
+
+// Yeni part ekle
+function addPart() {
+    // Seçili chapter'ı bul veya ilk chapter'ı kullan
+    let targetChapter = null;
+    
+    if (selectedNodeType === "chapter" && selectedNodeId) {
+        targetChapter = scenarioData.chapters.find(c => c.id === selectedNodeId);
+    } else if (selectedNodeType === "part" && selectedNodeId) {
+        // Part seçiliyse, o part'ın chapter'ını bul
+        scenarioData.chapters.forEach(chapter => {
+            if (chapter.parts.some(p => p.id === selectedNodeId)) {
+                targetChapter = chapter;
+            }
+        });
+    }
+    
+    // Eğer chapter yoksa, ilk chapter'ı kullan veya yeni chapter oluştur
+    if (!targetChapter) {
+        if (scenarioData.chapters.length === 0) {
+            addChapter();
+            targetChapter = scenarioData.chapters[0];
+        } else {
+            targetChapter = scenarioData.chapters[0];
+        }
+    }
+    
+    const chapterIndex = scenarioData.chapters.findIndex(c => c.id === targetChapter.id);
+    const newPart = {
+        id: `part_${Date.now()}`,
+        title: "Yeni Kısım",
+        x: (targetChapter.x || 100 + chapterIndex * 220) + 20,
+        y: (targetChapter.y || 100) + 120 + targetChapter.parts.length * 80
+    };
+    
+    targetChapter.parts.push(newPart);
+    renderScenarioEditor();
+    
+    // Yeni part'ı seç
+    selectNode(newPart.id, "part");
+    
+    // Veriyi kaydet
+    if (currentProjectId) {
+        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+    }
+}
+
 document.addEventListener("DOMContentLoaded", init);
 
