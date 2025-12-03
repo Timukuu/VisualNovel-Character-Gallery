@@ -3808,52 +3808,49 @@ function renderImageCarousel() {
             
             const aspectRatio = naturalWidth / naturalHeight;
             
-            // Container'ın mevcut boyutlarını al
-            const containerRect = container.getBoundingClientRect();
-            const containerWidth = containerRect.width - 40; // Padding için
-            const containerHeight = Math.min(containerRect.height - 40, window.innerHeight * 0.9);
+            // Ekran boyutlarını al (viewport)
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
             
-            // Görseli orijinal boyutlarında göster, sadece container'a sığdır
+            // Görseli orijinal boyutlarında göster, sadece viewport'a sığdır
             let itemWidth, itemHeight;
             
-            // Orijinal boyutları kullan, sadece container'dan taşmaması için sınırla
+            // Orijinal boyutları kullan, sadece viewport'tan taşmaması için sınırla
+            const maxWidth = viewportWidth * 0.85; // Viewport'un %85'i
+            const maxHeight = viewportHeight * 0.85; // Viewport'un %85'i
+            
             if (aspectRatio > 1) {
                 // Yatay görsel - genişliği öncelikli
-                itemWidth = Math.min(containerWidth * 0.95, naturalWidth);
+                itemWidth = Math.min(maxWidth, naturalWidth);
                 itemHeight = itemWidth / aspectRatio;
                 
-                // Yükseklik container'ı aşarsa, yüksekliği sınırla
-                if (itemHeight > containerHeight * 0.95) {
-                    itemHeight = containerHeight * 0.95;
+                // Yükseklik viewport'u aşarsa, yüksekliği sınırla
+                if (itemHeight > maxHeight) {
+                    itemHeight = maxHeight;
                     itemWidth = itemHeight * aspectRatio;
                 }
             } else {
                 // Dikey görsel - yüksekliği öncelikli
-                itemHeight = Math.min(containerHeight * 0.95, naturalHeight);
+                itemHeight = Math.min(maxHeight, naturalHeight);
                 itemWidth = itemHeight * aspectRatio;
                 
-                // Genişlik container'ı aşarsa, genişliği sınırla
-                if (itemWidth > containerWidth * 0.95) {
-                    itemWidth = containerWidth * 0.95;
+                // Genişlik viewport'u aşarsa, genişliği sınırla
+                if (itemWidth > maxWidth) {
+                    itemWidth = maxWidth;
                     itemHeight = itemWidth / aspectRatio;
                 }
             }
             
-            // Minimum boyut kontrolü (çok küçük görseller için)
-            if (itemWidth < 150) {
-                itemWidth = 150;
-                itemHeight = itemWidth / aspectRatio;
-            }
-            if (itemHeight < 150) {
-                itemHeight = 150;
-                itemWidth = itemHeight * aspectRatio;
-            }
-            
-            // Item'ın boyutunu ayarla
+            // Item'ın boyutunu ayarla (orijinal boyutlar)
             item.style.width = `${itemWidth}px`;
             item.style.height = `${itemHeight}px`;
             item.style.minWidth = `${itemWidth}px`;
             item.style.minHeight = `${itemHeight}px`;
+            
+            // Aktif görsel ise container'ı da resize et
+            if (actualIndex === currentImageIndex) {
+                resizeContainerToImage(itemWidth, itemHeight);
+            }
             
             // Tüm görseller yüklendikten sonra track pozisyonunu ayarla
             const allImages = track.querySelectorAll("img");
@@ -3986,6 +3983,25 @@ function renderImageCarousel() {
         }
     }
     
+    // Container'ı aktif görsel boyutuna göre resize et
+    function resizeContainerToImage(imgWidth, imgHeight) {
+        if (!container) return;
+        
+        // Padding ve gap için ekstra alan
+        const padding = 40; // 20px her iki taraftan
+        const gap = 16;
+        
+        // Container'ı görsel boyutuna göre ayarla
+        const newWidth = imgWidth + padding;
+        const newHeight = imgHeight + padding;
+        
+        container.style.width = `${newWidth}px`;
+        container.style.height = `${newHeight}px`;
+        container.style.maxWidth = `${newWidth}px`;
+        container.style.minWidth = `${newWidth}px`;
+        container.style.minHeight = `${newHeight}px`;
+    }
+    
     // İlk pozisyon ayarı
     setTimeout(updateCarouselPosition, 100);
     
@@ -4000,6 +4016,14 @@ function renderImageCarousel() {
                 loadedImages++;
                 if (loadedImages === allImages.length) {
                     setTimeout(updateCarouselPosition, 50);
+                    // Aktif görseli bul ve container'ı resize et
+                    const activeItem = track.querySelector(".image-carousel-item.active");
+                    if (activeItem) {
+                        const activeImg = activeItem.querySelector("img");
+                        if (activeImg && activeImg.complete) {
+                            resizeContainerToImage(activeItem.offsetWidth, activeItem.offsetHeight);
+                        }
+                    }
                 }
             }, { once: true });
         }
@@ -4007,6 +4031,13 @@ function renderImageCarousel() {
     
     if (loadedImages === allImages.length) {
         setTimeout(updateCarouselPosition, 100);
+        // Aktif görseli bul ve container'ı resize et
+        const activeItem = track.querySelector(".image-carousel-item.active");
+        if (activeItem) {
+            setTimeout(() => {
+                resizeContainerToImage(activeItem.offsetWidth, activeItem.offsetHeight);
+            }, 150);
+        }
     }
 
     // Indicator
@@ -4552,3 +4583,4 @@ async function deleteUser(userId) {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
