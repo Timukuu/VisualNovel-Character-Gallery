@@ -4888,15 +4888,17 @@ function renderScenarioCanvas() {
 
 // Connector çizgisi çiz (4 bölgeden bağlantı)
 function drawConnector(svg, chapter, part) {
-    const chapterX = chapter.x || 100;
-    const chapterY = chapter.y || 100;
+    const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapter.id);
+    const chapterX = chapter.x || (150 + chapterIndex * 350);
+    const chapterY = chapter.y || 150;
     const chapterWidth = 200;
     const chapterHeight = 120;
     const chapterCenterX = chapterX + chapterWidth / 2;
     const chapterCenterY = chapterY + chapterHeight / 2;
     
-    const partX = part.x || (chapterX + 220);
-    const partY = part.y || (chapterY + 100);
+    const partIndex = chapter.parts.findIndex(p => p.id === part.id);
+    const partX = part.x || (chapterX + 250);
+    const partY = part.y || (chapterY + partIndex * 130);
     const partWidth = 180;
     const partHeight = 100;
     const partCenterX = partX + partWidth / 2;
