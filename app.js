@@ -5251,6 +5251,9 @@ function makeNodeDraggable(node, data, dragHandle) {
             }
             draggedNode = null;
             
+            // Canvas pan state'ini sıfırla (node drag bittiğinde)
+            canvasPanState.isPanning = false;
+            
             // Veriyi kaydet
             if (currentProjectId) {
                 localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
