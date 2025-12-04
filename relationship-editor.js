@@ -213,8 +213,28 @@ function createRelationshipNode(char) {
     node.addEventListener("click", (e) => {
         e.stopPropagation();
         if (isAddingRelationship) {
-            // İlişki ekleme modunda
+            // İlişki ekleme modunda - ikinci karakter seçildi
+            if (relationshipSourceNodeId === char.id) {
+                // Aynı karaktere tıklandı
+                showToast("Farklı bir karakter seçin", "error");
+                return;
+            }
+            
             if (relationshipSourceNodeId && relationshipSourceNodeId !== char.id) {
+                // Aynı ilişki zaten var mı kontrol et
+                const existingRel = relationshipData.relationships.find(r => 
+                    (r.from === relationshipSourceNodeId && r.to === char.id) ||
+                    (r.from === char.id && r.to === relationshipSourceNodeId)
+                );
+                
+                if (existingRel) {
+                    showToast("Bu karakterler arasında zaten bir ilişki var", "error");
+                    isAddingRelationship = false;
+                    relationshipSourceNodeId = null;
+                    renderRelationshipEditor();
+                    return;
+                }
+                
                 // Yeni ilişki oluştur
                 const newRel = {
                     id: `rel-${Date.now()}`,
@@ -228,17 +248,11 @@ function createRelationshipNode(char) {
                 renderRelationshipEditor();
                 isAddingRelationship = false;
                 relationshipSourceNodeId = null;
+                selectRelationshipEdge(newRel.id);
                 showToast("İlişki eklendi! İlişkiyi seçerek tip ve güç ayarlarını yapabilirsiniz.", "success");
-            } else if (!relationshipSourceNodeId) {
-                // İlk karakter seçildi
-                relationshipSourceNodeId = char.id;
-                selectRelationshipNode(char.id);
-                showToast("İkinci karakteri seçin", "info");
-            } else {
-                // Aynı karaktere tıklandı
-                showToast("Farklı bir karakter seçin", "error");
             }
         } else {
+            // Normal seçim modu
             selectRelationshipNode(char.id);
         }
     });
