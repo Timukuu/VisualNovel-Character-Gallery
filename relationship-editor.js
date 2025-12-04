@@ -103,7 +103,8 @@ async function openRelationshipScreen() {
                         relationshipData.relationships.push(newRel);
                         saveRelationshipData();
                         renderRelationshipEditor();
-                        showToast("İlişki eklendi", "success");
+                        selectRelationshipEdge(newRel.id);
+                        showToast("İlişki eklendi! İlişkiyi seçerek tip ve güç ayarlarını yapabilirsiniz.", "success");
                     }
                 }
             };
