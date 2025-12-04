@@ -212,6 +212,7 @@ function createRelationshipNode(char) {
     // Click to select
     node.addEventListener("click", (e) => {
         e.stopPropagation();
+        console.log("Node clicked:", char.id, "isAddingRelationship:", isAddingRelationship, "relationshipSourceNodeId:", relationshipSourceNodeId);
         if (isAddingRelationship) {
             // İlişki ekleme modunda - ikinci karakter seçildi
             if (relationshipSourceNodeId === char.id) {
@@ -221,6 +222,7 @@ function createRelationshipNode(char) {
             }
             
             if (relationshipSourceNodeId && relationshipSourceNodeId !== char.id) {
+                console.log("Creating relationship from", relationshipSourceNodeId, "to", char.id);
                 // Aynı ilişki zaten var mı kontrol et
                 const existingRel = relationshipData.relationships.find(r => 
                     (r.from === relationshipSourceNodeId && r.to === char.id) ||
@@ -612,9 +614,11 @@ function handleRelationshipGroupFormSubmit(e) {
 
 // İlişki ekleme modunu başlat
 function startAddingRelationship() {
+    console.log("startAddingRelationship called, selectedRelationshipNodeId:", selectedRelationshipNodeId);
     if (selectedRelationshipNodeId) {
         isAddingRelationship = true;
         relationshipSourceNodeId = selectedRelationshipNodeId;
+        console.log("İlişki ekleme modu aktif, kaynak karakter:", relationshipSourceNodeId);
         // Editor'ü yeniden render et ki seçili karakter vurgulansın
         renderRelationshipEditor();
         showToast("İkinci karakteri seçin (veya iptal için tekrar butona tıklayın)", "info");
