@@ -80,6 +80,36 @@ async function openRelationshipScreen() {
         setupRelationshipCanvasPan();
         if (relationshipCanvas) {
             relationshipCanvas.style.cursor = "grab";
+            
+            // Canvas'a Shift+Click ile ilişki ekleme (eski listener'ı kaldır, yenisini ekle)
+            const oldListener = relationshipCanvas._shiftClickListener;
+            if (oldListener) {
+                relationshipCanvas.removeEventListener("click", oldListener);
+            }
+            
+            const shiftClickHandler = (e) => {
+                if (e.shiftKey && selectedRelationshipNodeId) {
+                    const clickedNode = e.target.closest(".relationship-node");
+                    if (clickedNode && clickedNode.dataset.nodeId !== selectedRelationshipNodeId) {
+                        const targetNodeId = clickedNode.dataset.nodeId;
+                        // Yeni ilişki oluştur
+                        const newRel = {
+                            id: `rel-${Date.now()}`,
+                            from: selectedRelationshipNodeId,
+                            to: targetNodeId,
+                            type: "friend",
+                            strength: 50
+                        };
+                        relationshipData.relationships.push(newRel);
+                        saveRelationshipData();
+                        renderRelationshipEditor();
+                        showToast("İlişki eklendi", "success");
+                    }
+                }
+            };
+            
+            relationshipCanvas._shiftClickListener = shiftClickHandler;
+            relationshipCanvas.addEventListener("click", shiftClickHandler);
         }
     }, 100);
 }
