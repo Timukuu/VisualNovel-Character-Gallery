@@ -5083,8 +5083,8 @@ function createPartNode(part, chapterId, index) {
         part.content = e.target.value;
         if (currentProjectId) {
             // Debounce ile kaydetme
-            if (contentTimeout) clearTimeout(contentTimeout);
-            contentTimeout = setTimeout(() => {
+            if (partContentTimeout) clearTimeout(partContentTimeout);
+            partContentTimeout = setTimeout(() => {
                 saveScenarioToBackend().catch(err => {
                     console.error("Senaryo kaydedilemedi:", err);
                     localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
