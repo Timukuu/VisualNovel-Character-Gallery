@@ -5021,9 +5021,15 @@ function handleCanvasMouseMove(e) {
     const dx = e.clientX - canvasPanState.panStart.x;
     const dy = e.clientY - canvasPanState.panStart.y;
     
-    const container = scenarioCanvas.parentElement || scenarioCanvas;
-    container.scrollLeft = canvasPanState.scrollStart.x - dx;
-    container.scrollTop = canvasPanState.scrollStart.y - dy;
+    const canvasContainer = scenarioCanvas.parentElement;
+    if (canvasContainer) {
+        canvasContainer.scrollLeft = canvasPanState.scrollStart.x - dx;
+        canvasContainer.scrollTop = canvasPanState.scrollStart.y - dy;
+    } else {
+        // Fallback: canvas'ın kendisini scroll et
+        scenarioCanvas.scrollLeft = canvasPanState.scrollStart.x - dx;
+        scenarioCanvas.scrollTop = canvasPanState.scrollStart.y - dy;
+    }
 }
 
 function handleCanvasMouseUp() {
