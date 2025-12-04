@@ -2166,6 +2166,19 @@ function initializeEventListeners() {
     relationshipCanvas = document.getElementById("relationship-canvas");
     relationshipPropertiesContent = document.getElementById("relationship-properties-content");
     
+    // İlişki modal referansları
+    relationshipCharacterModal = document.getElementById("relationship-character-modal");
+    relationshipCharacterModalBackdrop = document.getElementById("relationship-character-modal-backdrop");
+    relationshipCharacterForm = document.getElementById("relationship-character-form");
+    relationshipCharacterNameInput = document.getElementById("relationship-character-name");
+    discardRelationshipCharacterBtn = document.getElementById("discard-relationship-character-btn");
+    
+    relationshipGroupModal = document.getElementById("relationship-group-modal");
+    relationshipGroupModalBackdrop = document.getElementById("relationship-group-modal-backdrop");
+    relationshipGroupForm = document.getElementById("relationship-group-form");
+    relationshipGroupNameInput = document.getElementById("relationship-group-name");
+    discardRelationshipGroupBtn = document.getElementById("discard-relationship-group-btn");
+    
     // Eski referanslar (geriye dönük uyumluluk için)
     currentProjectTitleEl = document.getElementById("current-project-title");
     addCharacterBtn = document.getElementById("add-character-btn");

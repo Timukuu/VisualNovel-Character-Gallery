@@ -524,21 +524,38 @@ function renderRelationshipProperties() {
     }
 }
 
-// Karakter ekle
-function addRelationshipCharacter() {
-    let name = null;
-    try {
-        name = window.prompt("Karakter adı:");
-    } catch (e) {
-        // prompt() desteklenmiyorsa, basit bir input alanı göster
-        name = window.prompt ? window.prompt("Karakter adı:") : null;
-        if (!name) {
-            // Alternatif: toast mesajı göster ve iptal et
-            showToast("Tarayıcı prompt() desteklemiyor. Lütfen başka bir tarayıcı kullanın.", "error");
-            return;
+// Karakter ekle modalını aç
+function openRelationshipCharacterModal() {
+    if (relationshipCharacterModal) {
+        relationshipCharacterModal.classList.remove("hidden");
+        if (relationshipCharacterNameInput) {
+            relationshipCharacterNameInput.value = "";
+            relationshipCharacterNameInput.focus();
         }
     }
-    if (!name) return;
+}
+
+// Karakter ekle modalını kapat
+function closeRelationshipCharacterModal() {
+    if (relationshipCharacterModal) {
+        relationshipCharacterModal.classList.add("hidden");
+        if (relationshipCharacterForm) {
+            relationshipCharacterForm.reset();
+        }
+    }
+}
+
+// Karakter ekle form submit
+function handleRelationshipCharacterFormSubmit(e) {
+    e.preventDefault();
+    
+    if (!relationshipCharacterNameInput) return;
+    
+    const name = relationshipCharacterNameInput.value.trim();
+    if (!name) {
+        showToast("Karakter adı gerekli", "error");
+        return;
+    }
     
     const newChar = {
         id: `char-${Date.now()}`,
@@ -550,23 +567,43 @@ function addRelationshipCharacter() {
     relationshipData.characters.push(newChar);
     saveRelationshipData();
     renderRelationshipEditor();
+    closeRelationshipCharacterModal();
     selectRelationshipNode(newChar.id);
     showToast("Karakter eklendi", "success");
 }
 
-// Grup ekle
-function addRelationshipGroup() {
-    let name = null;
-    try {
-        name = window.prompt("Grup adı:");
-    } catch (e) {
-        // prompt() desteklenmiyorsa
-        if (!name) {
-            showToast("Tarayıcı prompt() desteklemiyor. Lütfen başka bir tarayıcı kullanın.", "error");
-            return;
+// Grup ekle modalını aç
+function openRelationshipGroupModal() {
+    if (relationshipGroupModal) {
+        relationshipGroupModal.classList.remove("hidden");
+        if (relationshipGroupNameInput) {
+            relationshipGroupNameInput.value = "";
+            relationshipGroupNameInput.focus();
         }
     }
-    if (!name) return;
+}
+
+// Grup ekle modalını kapat
+function closeRelationshipGroupModal() {
+    if (relationshipGroupModal) {
+        relationshipGroupModal.classList.add("hidden");
+        if (relationshipGroupForm) {
+            relationshipGroupForm.reset();
+        }
+    }
+}
+
+// Grup ekle form submit
+function handleRelationshipGroupFormSubmit(e) {
+    e.preventDefault();
+    
+    if (!relationshipGroupNameInput) return;
+    
+    const name = relationshipGroupNameInput.value.trim();
+    if (!name) {
+        showToast("Grup adı gerekli", "error");
+        return;
+    }
     
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"];
     const color = colors[relationshipData.groups.length % colors.length];
@@ -580,6 +617,7 @@ function addRelationshipGroup() {
     relationshipData.groups.push(newGroup);
     saveRelationshipData();
     renderRelationshipEditor();
+    closeRelationshipGroupModal();
     showToast("Grup eklendi", "success");
 }
 
