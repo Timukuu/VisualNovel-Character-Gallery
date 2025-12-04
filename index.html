@@ -367,7 +367,10 @@
             <div class="scenario-editor">
                 <div class="scenario-header">
                     <h2 id="scenario-project-title">Senaryo</h2>
-                    <button id="scenario-back-btn" class="btn subtle">← Geri</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="reset-view-btn" class="btn subtle scenario-reset-btn">📍 Reset View</button>
+                        <button id="scenario-back-btn" class="btn subtle">← Geri</button>
+                    </div>
                 </div>
                 
                 <div class="scenario-layout">
@@ -388,7 +391,6 @@
                     
                     <!-- ORTA PANEL: Graph Canvas -->
                     <main class="scenario-canvas-container">
-                        <button id="reset-view-btn" class="btn subtle scenario-reset-btn">📍 Reset View</button>
                         <div id="scenario-canvas" class="scenario-canvas">
                             <!-- Graph node'ları buraya eklenecek -->
                         </div>

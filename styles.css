@@ -2540,10 +2540,6 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .scenario-reset-btn {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    z-index: 1000;
     padding: 8px 12px;
     font-size: 12px;
 }
@@ -2556,8 +2552,6 @@ textarea:valid:not(:placeholder-shown) {
     cursor: grab;
     min-height: 5000px;
     min-width: 5000px;
-    min-width: 5000px;
-    min-height: 500px;
     user-select: none;
 }
 
