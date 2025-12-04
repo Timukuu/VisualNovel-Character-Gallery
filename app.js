@@ -4982,6 +4982,8 @@ function setupCanvasPan() {
 function handleCanvasMouseDown(e) {
     if (!scenarioCanvas) return;
     
+    const canvasContainer = scenarioCanvas.parentElement;
+    
     const target = e.target;
     
     // Eğer bir node'a, button'a, textarea'ya, input'a veya SVG'ye tıklandıysa pan başlatma
@@ -4999,13 +5001,15 @@ function handleCanvasMouseDown(e) {
     
     // Canvas'ın kendisine veya boş alanına tıklandıysa pan başlat
     // Canvas container veya canvas'ın kendisine tıklandıysa pan başlat
-    if (target === scenarioCanvas || target === scenarioCanvas.parentElement || !target.closest(".scenario-node")) {
+    if (!target.closest(".scenario-node")) {
         canvasPanState.isPanning = true;
         canvasPanState.panStart.x = e.clientX;
         canvasPanState.panStart.y = e.clientY;
-        canvasPanState.scrollStart.x = scenarioCanvas.scrollLeft;
-        canvasPanState.scrollStart.y = scenarioCanvas.scrollTop;
-        scenarioCanvas.style.cursor = "grabbing";
+        
+        const container = canvasContainer || scenarioCanvas;
+        canvasPanState.scrollStart.x = container.scrollLeft;
+        canvasPanState.scrollStart.y = container.scrollTop;
+        container.style.cursor = "grabbing";
         e.preventDefault();
         e.stopPropagation();
     }
@@ -5017,14 +5021,16 @@ function handleCanvasMouseMove(e) {
     const dx = e.clientX - canvasPanState.panStart.x;
     const dy = e.clientY - canvasPanState.panStart.y;
     
-    scenarioCanvas.scrollLeft = canvasPanState.scrollStart.x - dx;
-    scenarioCanvas.scrollTop = canvasPanState.scrollStart.y - dy;
+    const container = scenarioCanvas.parentElement || scenarioCanvas;
+    container.scrollLeft = canvasPanState.scrollStart.x - dx;
+    container.scrollTop = canvasPanState.scrollStart.y - dy;
 }
 
 function handleCanvasMouseUp() {
     if (canvasPanState.isPanning && scenarioCanvas) {
         canvasPanState.isPanning = false;
-        scenarioCanvas.style.cursor = "grab";
+        const container = scenarioCanvas.parentElement || scenarioCanvas;
+        container.style.cursor = "grab";
     }
 }
 

@@ -2529,7 +2529,8 @@ textarea:valid:not(:placeholder-shown) {
 .scenario-canvas-container {
     flex: 1;
     position: relative;
-    overflow: hidden;
+    /* Canvas içinde pan/scroll yapabilmek için scroll açık olmalı */
+    overflow: auto;
     background: var(--bg-soft);
     background-image: 
         linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
