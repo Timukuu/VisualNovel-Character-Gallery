@@ -649,6 +649,48 @@ function cancelAddingRelationship() {
     showToast("İlişki ekleme iptal edildi", "info");
 }
 
+// İlişki canvas görünümünü sıfırla (tüm node'ları merkeze getir)
+function resetRelationshipCanvasView() {
+    if (!relationshipCanvas) return;
+    
+    const canvasContainer = relationshipCanvas.parentElement;
+    if (!canvasContainer) return;
+    
+    if (relationshipData.characters.length === 0) {
+        showToast("Görüntülenecek karakter yok", "info");
+        return;
+    }
+    
+    // Tüm karakter node'larının pozisyonlarını bul
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    relationshipData.characters.forEach(char => {
+        const x = char.position?.x || 300;
+        const y = char.position?.y || 200;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+    });
+    
+    // Node'ların merkez noktasını hesapla
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Canvas container'ın merkez noktasını hesapla
+    const containerWidth = canvasContainer.clientWidth;
+    const containerHeight = canvasContainer.clientHeight;
+    const targetX = containerWidth / 2 - centerX - 60; // 60 = node genişliği/2
+    const targetY = containerHeight / 2 - centerY - 20; // 20 = node yüksekliği/2
+    
+    // Canvas'ı scroll et
+    canvasContainer.scrollTo({
+        left: Math.max(0, -targetX),
+        top: Math.max(0, -targetY),
+        behavior: "smooth"
+    });
+}
+
 function setupRelationshipCanvasPan() {
     if (!relationshipCanvas) return;
     

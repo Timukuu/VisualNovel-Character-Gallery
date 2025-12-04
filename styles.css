@@ -2541,9 +2541,13 @@ textarea:valid:not(:placeholder-shown) {
     height: 100%;
 }
 
-.scenario-reset-btn {
+.scenario-reset-btn,
+.relationship-reset-btn {
     padding: 8px 12px;
     font-size: 12px;
+    position: fixed;
+    top: 16px;
+    right: 20px;
 }
 
 .scenario-canvas {

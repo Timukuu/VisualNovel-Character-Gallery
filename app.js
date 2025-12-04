@@ -2166,6 +2166,7 @@ function initializeEventListeners() {
     addRelationshipCharacterBtn = document.getElementById("add-relationship-character-btn");
     addRelationshipGroupBtn = document.getElementById("add-relationship-group-btn");
     addRelationshipBtn = document.getElementById("add-relationship-btn");
+    resetRelationshipViewBtn = document.getElementById("reset-relationship-view-btn");
     relationshipCharactersList = document.getElementById("relationship-characters-list");
     relationshipGroupsList = document.getElementById("relationship-groups-list");
     relationshipCanvas = document.getElementById("relationship-canvas");
