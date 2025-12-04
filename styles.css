@@ -2539,12 +2539,23 @@ textarea:valid:not(:placeholder-shown) {
     min-width: 0;
 }
 
+.scenario-reset-btn {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
 .scenario-canvas {
     width: 100%;
     height: 100%;
     position: relative;
-    overflow: auto;
+    overflow: visible;
     cursor: grab;
+    min-height: 5000px;
+    min-width: 5000px;
     min-width: 5000px;
     min-height: 500px;
     user-select: none;
