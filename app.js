@@ -4958,17 +4958,21 @@ function drawConnector(svg, chapter, part) {
 function setupCanvasPan() {
     if (!scenarioCanvas) return;
     
+    // Canvas container'ı bul
+    const canvasContainer = scenarioCanvas.parentElement;
+    if (!canvasContainer) return;
+    
     // Eğer zaten event listener'lar eklenmişse, önce kaldır
-    if (scenarioCanvas.dataset.panSetup === "true") {
-        scenarioCanvas.removeEventListener("mousedown", handleCanvasMouseDown);
+    if (canvasContainer.dataset.panSetup === "true") {
+        canvasContainer.removeEventListener("mousedown", handleCanvasMouseDown);
         document.removeEventListener("mousemove", handleCanvasMouseMove);
         document.removeEventListener("mouseup", handleCanvasMouseUp);
     }
     
-    scenarioCanvas.dataset.panSetup = "true";
+    canvasContainer.dataset.panSetup = "true";
     
-    // Canvas'a mousedown listener ekle (capture phase'de çalışsın ki diğer elementlerden önce yakalansın)
-    scenarioCanvas.addEventListener("mousedown", handleCanvasMouseDown, true);
+    // Canvas container'a mousedown listener ekle (capture phase'de çalışsın ki diğer elementlerden önce yakalansın)
+    canvasContainer.addEventListener("mousedown", handleCanvasMouseDown, true);
     
     // Global mouse move ve mouse up listener'ları
     document.addEventListener("mousemove", handleCanvasMouseMove);
@@ -4978,12 +4982,24 @@ function setupCanvasPan() {
 function handleCanvasMouseDown(e) {
     if (!scenarioCanvas) return;
     
-    // Canvas'ın kendisine veya boş alanına tıklandıysa pan başlat
-    // Node'a, button'a, textarea'ya, input'a veya SVG'ye tıklanmadıysa pan başlat
     const target = e.target;
     
-    // Eğer canvas'ın kendisine tıklandıysa (boş alan), pan başlat
-    if (target === scenarioCanvas) {
+    // Eğer bir node'a, button'a, textarea'ya, input'a veya SVG'ye tıklandıysa pan başlatma
+    if (target.closest(".scenario-node")) {
+        // Node'a tıklandı, pan başlatma
+        return;
+    }
+    if (target.closest("button")) return;
+    if (target.closest("textarea")) return;
+    if (target.closest("input")) return;
+    if (target.tagName === "svg" || target.tagName === "line" || target.closest("svg")) return;
+    
+    // Node drag işlemi devam ediyorsa pan başlatma
+    if (draggedNode) return;
+    
+    // Canvas'ın kendisine veya boş alanına tıklandıysa pan başlat
+    // Canvas container veya canvas'ın kendisine tıklandıysa pan başlat
+    if (target === scenarioCanvas || target === scenarioCanvas.parentElement || !target.closest(".scenario-node")) {
         canvasPanState.isPanning = true;
         canvasPanState.panStart.x = e.clientX;
         canvasPanState.panStart.y = e.clientY;
@@ -4992,25 +5008,7 @@ function handleCanvasMouseDown(e) {
         scenarioCanvas.style.cursor = "grabbing";
         e.preventDefault();
         e.stopPropagation();
-        return;
     }
-    
-    // Node'a, button'a, textarea'ya, input'a veya SVG'ye tıklanmadıysa pan başlat
-    if (target.closest(".scenario-node")) return;
-    if (target.closest("button")) return;
-    if (target.closest("textarea")) return;
-    if (target.closest("input")) return;
-    if (target.tagName === "svg" || target.tagName === "line" || target.closest("svg")) return;
-    
-    // Canvas içindeki boş alana tıklandıysa pan başlat
-    canvasPanState.isPanning = true;
-    canvasPanState.panStart.x = e.clientX;
-    canvasPanState.panStart.y = e.clientY;
-    canvasPanState.scrollStart.x = scenarioCanvas.scrollLeft;
-    canvasPanState.scrollStart.y = scenarioCanvas.scrollTop;
-    scenarioCanvas.style.cursor = "grabbing";
-    e.preventDefault();
-    e.stopPropagation();
 }
 
 function handleCanvasMouseMove(e) {
