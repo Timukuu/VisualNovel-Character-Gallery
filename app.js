@@ -4662,6 +4662,13 @@ let canvasPanState = {
     scrollStart: { x: 0, y: 0 }
 };
 
+// Canvas pan özelliği (mouse ile sürükleme) - Global state
+let canvasPanState = {
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+    scrollStart: { x: 0, y: 0 }
+};
+
 // Senaryo ekranını aç
 async function openScenarioScreen() {
     if (!currentProjectId) {
@@ -4953,13 +4960,6 @@ function drawConnector(svg, chapter, part) {
     line.setAttribute("y2", partPoint.y);
     svg.appendChild(line);
 }
-
-// Canvas pan özelliği (mouse ile sürükleme) - Global state
-let canvasPanState = {
-    isPanning: false,
-    panStart: { x: 0, y: 0 },
-    scrollStart: { x: 0, y: 0 }
-};
 
 // Canvas pan özelliğini başlat (sadece bir kez)
 function setupCanvasPan() {
