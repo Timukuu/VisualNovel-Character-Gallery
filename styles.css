@@ -2409,25 +2409,35 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .scenario-toolbox {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+}
+
+.scenario-toolbox .btn {
+    font-size: 11px;
+    padding: 6px 10px;
 }
 
 .scenario-outline {
     flex: 1;
 }
 
+.scenario-outline h3 {
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
 .scenario-outline-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
 .scenario-outline-item {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background var(--transition-fast);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .scenario-outline-item:hover {
@@ -2551,25 +2561,25 @@ textarea:valid:not(:placeholder-shown) {
 }
 
 .scenario-node.chapter {
-    width: 200px;
-    min-height: 120px;
+    width: 220px;
+    min-height: 110px;
     background: var(--accent);
     color: white;
     border-radius: var(--radius-md);
-    padding: 12px;
+    padding: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
 }
 
 .scenario-node.part {
-    width: 180px;
-    min-height: 100px;
+    width: 200px;
+    min-height: 90px;
     background: var(--bg-elevated);
     color: var(--text);
     border: 2px solid var(--border-soft);
     border-radius: var(--radius-md);
-    padding: 10px;
+    padding: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
