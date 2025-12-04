@@ -2571,6 +2571,7 @@ textarea:valid:not(:placeholder-shown) {
     cursor: move;
     user-select: none;
     transition: box-shadow 0.2s;
+    z-index: 1;
 }
 
 .scenario-node.chapter {

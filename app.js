@@ -4871,7 +4871,7 @@ function renderScenarioCanvas() {
     
     scenarioCanvas.innerHTML = "";
     
-    // SVG için connector çizgileri
+    // SVG için connector çizgileri (node'ların altında olmalı)
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.style.position = "absolute";
     svg.style.top = "0";
@@ -4879,7 +4879,7 @@ function renderScenarioCanvas() {
     svg.style.width = "100%";
     svg.style.height = "100%";
     svg.style.pointerEvents = "none";
-    svg.style.zIndex = "1";
+    svg.style.zIndex = "0";
     scenarioCanvas.appendChild(svg);
     
     // Chapter node'larını render et
