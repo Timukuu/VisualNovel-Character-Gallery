@@ -2350,6 +2350,9 @@ function initializeEventListeners() {
                     }
                 });
             }
+            if (resetRelationshipViewBtn) {
+                resetRelationshipViewBtn.addEventListener("click", resetRelationshipCanvasView);
+            }
             
             // İlişki modal event listeners
             if (relationshipCharacterForm) {
