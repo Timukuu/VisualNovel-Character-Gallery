@@ -496,7 +496,18 @@ function renderRelationshipProperties() {
 
 // Karakter ekle
 function addRelationshipCharacter() {
-    const name = prompt("Karakter adı:");
+    let name = null;
+    try {
+        name = window.prompt("Karakter adı:");
+    } catch (e) {
+        // prompt() desteklenmiyorsa, basit bir input alanı göster
+        name = window.prompt ? window.prompt("Karakter adı:") : null;
+        if (!name) {
+            // Alternatif: toast mesajı göster ve iptal et
+            showToast("Tarayıcı prompt() desteklemiyor. Lütfen başka bir tarayıcı kullanın.", "error");
+            return;
+        }
+    }
     if (!name) return;
     
     const newChar = {
@@ -515,7 +526,16 @@ function addRelationshipCharacter() {
 
 // Grup ekle
 function addRelationshipGroup() {
-    const name = prompt("Grup adı:");
+    let name = null;
+    try {
+        name = window.prompt("Grup adı:");
+    } catch (e) {
+        // prompt() desteklenmiyorsa
+        if (!name) {
+            showToast("Tarayıcı prompt() desteklemiyor. Lütfen başka bir tarayıcı kullanın.", "error");
+            return;
+        }
+    }
     if (!name) return;
     
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2"];
