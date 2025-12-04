@@ -87,6 +87,7 @@
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <h3 id="sidebar-project-title" style="margin: 0; font-size: 14px; font-weight: 600;"></h3>
                                 <button id="scenario-btn" class="btn subtle" style="font-size: 11px; padding: 3px 8px; display: none;">Senaryo</button>
+                                <button id="relationship-btn" class="btn subtle" style="font-size: 11px; padding: 3px 8px; display: none;">İlişki</button>
                             </div>
                             <div class="characters-sidebar-actions">
                                 <input type="text" id="character-search-input" placeholder="Ara..." class="search-input" />
@@ -467,6 +468,57 @@
                 </form>
             </div>
         </div>
+
+        <!-- İLİŞKİ EDITOR EKRANI -->
+        <section id="relationship-screen" class="screen hidden">
+            <div class="relationship-editor">
+                <div class="relationship-header">
+                    <h2 id="relationship-project-title">İlişki Ağı</h2>
+                    <button id="relationship-back-btn" class="btn subtle">← Geri</button>
+                </div>
+                
+                <div class="relationship-layout">
+                    <!-- SOL PANEL: Karakter ve Grup Listesi -->
+                    <aside class="relationship-left-panel">
+                        <div class="relationship-toolbox">
+                            <button id="add-relationship-character-btn" class="btn primary" style="width: 100%; margin-bottom: 8px;">+ Karakter Ekle</button>
+                            <button id="add-relationship-group-btn" class="btn primary" style="width: 100%;">+ Grup Ekle</button>
+                        </div>
+                        
+                        <div class="relationship-characters-list">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Karakterler</h3>
+                            <div id="relationship-characters-list" class="relationship-list">
+                                <!-- JS ile doldurulacak -->
+                            </div>
+                        </div>
+                        
+                        <div class="relationship-groups-list">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Gruplar</h3>
+                            <div id="relationship-groups-list" class="relationship-list">
+                                <!-- JS ile doldurulacak -->
+                            </div>
+                        </div>
+                    </aside>
+                    
+                    <!-- ORTA PANEL: Graph Canvas -->
+                    <main class="relationship-canvas-container">
+                        <div id="relationship-canvas" class="relationship-canvas">
+                            <!-- Graph node'ları ve edge'ler buraya eklenecek -->
+                        </div>
+                    </main>
+                    
+                    <!-- SAĞ PANEL: Özellikler -->
+                    <aside class="relationship-right-panel">
+                        <div class="relationship-properties">
+                            <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600;">Özellikler</h3>
+                            <div id="relationship-properties-content" class="relationship-properties-content">
+                                <p style="color: var(--text-muted); font-size: 12px;">Bir karakter veya ilişki seçin</p>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </section>
 
     </div>
 

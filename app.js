@@ -74,6 +74,12 @@ let scenarioBtn, scenarioScreen, scenarioBackBtn, scenarioProjectTitle;
 let addChapterBtn, addPartBtn, scenarioOutlineList, scenarioCanvas, scenarioPropertiesContent;
 let resetViewBtn;
 
+// İlişki Editor referansları
+let relationshipBtn, relationshipScreen, relationshipBackBtn, relationshipProjectTitle;
+let addRelationshipCharacterBtn, addRelationshipGroupBtn;
+let relationshipCharactersList, relationshipGroupsList;
+let relationshipCanvas, relationshipPropertiesContent;
+
 // Eski referanslar (geriye dönük uyumluluk için)
 let currentProjectTitleEl, addCharacterBtn, charactersContainer;
 
@@ -630,6 +636,13 @@ async function renderProjects() {
                     scenarioBtn.style.display = "block";
                 } else if (scenarioBtn) {
                     scenarioBtn.style.display = "none";
+                }
+                
+                // İlişki butonunu göster (admin için)
+                if (relationshipBtn && currentUser && currentUser.role === "admin") {
+                    relationshipBtn.style.display = "block";
+                } else if (relationshipBtn) {
+                    relationshipBtn.style.display = "none";
                 }
                 
                 // "Karakter Ekle" butonunu göster (admin ise)
@@ -2141,6 +2154,18 @@ function initializeEventListeners() {
     scenarioPropertiesContent = document.getElementById("scenario-properties-content");
     resetViewBtn = document.getElementById("reset-view-btn");
     
+    // İlişki Editor referansları
+    relationshipBtn = document.getElementById("relationship-btn");
+    relationshipScreen = document.getElementById("relationship-screen");
+    relationshipBackBtn = document.getElementById("relationship-back-btn");
+    relationshipProjectTitle = document.getElementById("relationship-project-title");
+    addRelationshipCharacterBtn = document.getElementById("add-relationship-character-btn");
+    addRelationshipGroupBtn = document.getElementById("add-relationship-group-btn");
+    relationshipCharactersList = document.getElementById("relationship-characters-list");
+    relationshipGroupsList = document.getElementById("relationship-groups-list");
+    relationshipCanvas = document.getElementById("relationship-canvas");
+    relationshipPropertiesContent = document.getElementById("relationship-properties-content");
+    
     // Eski referanslar (geriye dönük uyumluluk için)
     currentProjectTitleEl = document.getElementById("current-project-title");
     addCharacterBtn = document.getElementById("add-character-btn");
@@ -2281,6 +2306,20 @@ function initializeEventListeners() {
             }
             if (resetViewBtn) {
                 resetViewBtn.addEventListener("click", resetCanvasView);
+            }
+            
+            // İlişki Editor event listeners
+            if (relationshipBtn) {
+                relationshipBtn.addEventListener("click", openRelationshipScreen);
+            }
+            if (relationshipBackBtn) {
+                relationshipBackBtn.addEventListener("click", closeRelationshipScreen);
+            }
+            if (addRelationshipCharacterBtn) {
+                addRelationshipCharacterBtn.addEventListener("click", addRelationshipCharacter);
+            }
+            if (addRelationshipGroupBtn) {
+                addRelationshipGroupBtn.addEventListener("click", addRelationshipGroup);
             }
             
             // Yeni layout butonları
