@@ -4708,6 +4708,14 @@ async function openScenarioScreen() {
     
     // Senaryo editor'ü render et
     renderScenarioEditor();
+    
+    // Canvas pan özelliğini başlat (sadece bir kez)
+    setTimeout(() => {
+        setupCanvasPan();
+        if (scenarioCanvas) {
+            scenarioCanvas.style.cursor = "grab";
+        }
+    }, 100);
 }
 
 // Senaryo ekranını kapat
