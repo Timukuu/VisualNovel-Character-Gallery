@@ -5004,7 +5004,7 @@ function createChapterNode(chapter, index) {
     contentTextarea.className = "scenario-node-content";
     contentTextarea.placeholder = "Senaryo içeriği...";
     contentTextarea.value = chapter.content || "";
-    contentTextarea.rows = 4;
+    contentTextarea.rows = 3;
     let chapterContentTimeout = null;
     contentTextarea.addEventListener("input", (e) => {
         chapter.content = e.target.value;
