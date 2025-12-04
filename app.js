@@ -2332,10 +2332,10 @@ function initializeEventListeners() {
                 relationshipBackBtn.addEventListener("click", closeRelationshipScreen);
             }
             if (addRelationshipCharacterBtn) {
-                addRelationshipCharacterBtn.addEventListener("click", addRelationshipCharacter);
+                addRelationshipCharacterBtn.addEventListener("click", openRelationshipCharacterModal);
             }
             if (addRelationshipGroupBtn) {
-                addRelationshipGroupBtn.addEventListener("click", addRelationshipGroup);
+                addRelationshipGroupBtn.addEventListener("click", openRelationshipGroupModal);
             }
             
             // Yeni layout butonları
