@@ -2338,7 +2338,14 @@ function initializeEventListeners() {
                 addRelationshipGroupBtn.addEventListener("click", openRelationshipGroupModal);
             }
             if (addRelationshipBtn) {
-                addRelationshipBtn.addEventListener("click", startAddingRelationship);
+                addRelationshipBtn.addEventListener("click", () => {
+                    if (isAddingRelationship) {
+                        // Eğer zaten ilişki ekleme modundaysa iptal et
+                        cancelAddingRelationship();
+                    } else {
+                        startAddingRelationship();
+                    }
+                });
             }
             
             // İlişki modal event listeners

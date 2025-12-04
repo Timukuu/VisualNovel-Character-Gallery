@@ -258,10 +258,15 @@ function createRelationshipNode(char) {
                 renderRelationshipEditor();
                 isAddingRelationship = false;
                 relationshipSourceNodeId = null;
-                showToast("İlişki eklendi", "success");
-            } else {
+                showToast("İlişki eklendi! İlişkiyi seçerek tip ve güç ayarlarını yapabilirsiniz.", "success");
+            } else if (!relationshipSourceNodeId) {
+                // İlk karakter seçildi
                 relationshipSourceNodeId = char.id;
+                selectRelationshipNode(char.id);
                 showToast("İkinci karakteri seçin", "info");
+            } else {
+                // Aynı karaktere tıklandı
+                showToast("Farklı bir karakter seçin", "error");
             }
         } else {
             selectRelationshipNode(char.id);
