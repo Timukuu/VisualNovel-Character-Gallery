@@ -4656,7 +4656,7 @@ let draggedNode = null;
 let dragOffset = { x: 0, y: 0 };
 
 // Senaryo ekranını aç
-function openScenarioScreen() {
+async function openScenarioScreen() {
     if (!currentProjectId) {
         showToast("Önce bir proje seçin", "error");
         return;
@@ -4665,16 +4665,29 @@ function openScenarioScreen() {
     const project = projects.find(p => p.id === currentProjectId);
     if (!project) return;
     
-    // Senaryo verilerini localStorage'dan yükle veya boş başlat
-    const savedData = localStorage.getItem(`scenario_${currentProjectId}`);
-    if (savedData) {
-        try {
-            scenarioData = JSON.parse(savedData);
-        } catch (e) {
+    // Senaryo verilerini backend'den yükle
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/projects/${currentProjectId}/scenario`);
+        if (response.ok) {
+            const data = await response.json();
+            scenarioData = data;
+        } else {
+            // Backend'de yoksa boş başlat
             scenarioData = { chapters: [] };
         }
-    } else {
-        scenarioData = { chapters: [] };
+    } catch (err) {
+        console.error("Senaryo yüklenirken hata:", err);
+        // Hata durumunda localStorage'dan yükle (fallback)
+        const savedData = localStorage.getItem(`scenario_${currentProjectId}`);
+        if (savedData) {
+            try {
+                scenarioData = JSON.parse(savedData);
+            } catch (e) {
+                scenarioData = { chapters: [] };
+            }
+        } else {
+            scenarioData = { chapters: [] };
+        }
     }
     
     // Ekranı göster
@@ -4691,13 +4704,44 @@ function openScenarioScreen() {
 }
 
 // Senaryo ekranını kapat
-function closeScenarioScreen() {
+async function closeScenarioScreen() {
     if (scenarioScreen) scenarioScreen.classList.add("hidden");
     if (mainScreen) mainScreen.classList.remove("hidden");
     
-    // Senaryo verilerini kaydet
+    // Senaryo verilerini backend'e kaydet
     if (currentProjectId) {
-        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+        try {
+            await saveScenarioToBackend();
+        } catch (err) {
+            console.error("Senaryo kaydedilemedi:", err);
+            // Fallback: localStorage'a kaydet
+            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+        }
+    }
+}
+
+// Senaryoyu backend'e kaydet
+async function saveScenarioToBackend() {
+    if (!currentProjectId) return;
+    
+    try {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/projects/${currentProjectId}/scenario`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(scenarioData)
+        });
+        
+        if (!response.ok) {
+            throw new Error("Senaryo kaydedilemedi");
+        }
+        
+        // Başarılı kayıt sonrası localStorage'ı temizle (artık backend'de)
+        localStorage.removeItem(`scenario_${currentProjectId}`);
+    } catch (err) {
+        console.error("Senaryo kaydedilirken hata:", err);
+        throw err;
     }
 }
 
@@ -5030,7 +5074,14 @@ function createPartNode(part, chapterId, index) {
     contentTextarea.addEventListener("input", (e) => {
         part.content = e.target.value;
         if (currentProjectId) {
-            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            // Debounce ile kaydetme
+            if (contentTimeout) clearTimeout(contentTimeout);
+            contentTimeout = setTimeout(() => {
+                saveScenarioToBackend().catch(err => {
+                    console.error("Senaryo kaydedilemedi:", err);
+                    localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                });
+            }, 500);
         }
     });
     contentTextarea.addEventListener("click", (e) => {
@@ -5246,7 +5297,11 @@ function renderScenarioProperties() {
             if (titleTimeout) clearTimeout(titleTimeout);
             titleTimeout = setTimeout(() => {
                 if (currentProjectId) {
-                    localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                    saveScenarioToBackend().catch(err => {
+                        console.error("Senaryo kaydedilemedi:", err);
+                        // Fallback: localStorage'a kaydet
+                        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                    });
                 }
             }, 500);
         });
@@ -5302,7 +5357,10 @@ function deleteChapter(chapterId) {
         
         // Veriyi kaydet
         if (currentProjectId) {
-            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            saveScenarioToBackend().catch(err => {
+                console.error("Senaryo kaydedilemedi:", err);
+                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            });
         }
         
         showToast("Bölüm silindi", "success");
@@ -5326,7 +5384,10 @@ function deletePart(chapterId, partId) {
             
             // Veriyi kaydet
             if (currentProjectId) {
-                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                saveScenarioToBackend().catch(err => {
+                    console.error("Senaryo kaydedilemedi:", err);
+                    localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                });
             }
             
             showToast("Kısım silindi", "success");
@@ -5442,7 +5503,7 @@ function resetCanvasView() {
         left: Math.max(0, scrollX),
         top: Math.max(0, scrollY),
         behavior: "smooth"
-    });
+        });
 }
 
 document.addEventListener("DOMContentLoaded", init);
