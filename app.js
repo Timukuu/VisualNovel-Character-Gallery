@@ -4833,19 +4833,106 @@ function renderScenarioCanvas() {
             const partNode = createPartNode(part, chapter.id, partIndex);
             if (partNode) scenarioCanvas.appendChild(partNode);
             
-            // Connector çizgisi ekle
-            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            line.setAttribute("class", "scenario-connector");
-            const chapterX = chapter.x || (100 + chapterIndex * 200);
-            const chapterY = chapter.y || 100;
-            const partX = part.x || (chapterX + 220);
-            const partY = part.y || (chapterY + partIndex * 100);
-            line.setAttribute("x1", chapterX + 100);
-            line.setAttribute("y1", chapterY + 60);
-            line.setAttribute("x2", partX + 90);
-            line.setAttribute("y2", partY + 50);
-            svg.appendChild(line);
+            // Connector çizgisi ekle (4 bölgeden bağlantı)
+            drawConnector(svg, chapter, part);
         });
+    });
+    
+    // Canvas pan özelliği ekle
+    setupCanvasPan();
+}
+
+// Connector çizgisi çiz (4 bölgeden bağlantı)
+function drawConnector(svg, chapter, part) {
+    const chapterX = chapter.x || 100;
+    const chapterY = chapter.y || 100;
+    const chapterWidth = 200;
+    const chapterHeight = 120;
+    const chapterCenterX = chapterX + chapterWidth / 2;
+    const chapterCenterY = chapterY + chapterHeight / 2;
+    
+    const partX = part.x || (chapterX + 220);
+    const partY = part.y || (chapterY + 100);
+    const partWidth = 180;
+    const partHeight = 100;
+    const partCenterX = partX + partWidth / 2;
+    const partCenterY = partY + partHeight / 2;
+    
+    // Hangi bağlantı noktalarını kullanacağımızı belirle
+    let chapterPoint = { x: 0, y: 0 };
+    let partPoint = { x: 0, y: 0 };
+    
+    // Chapter'dan part'a en yakın noktaları bul
+    const dx = partCenterX - chapterCenterX;
+    const dy = partCenterY - chapterCenterY;
+    
+    // Chapter bağlantı noktası
+    if (Math.abs(dx) > Math.abs(dy)) {
+        // Yatay mesafe daha fazla
+        chapterPoint.x = dx > 0 ? chapterX + chapterWidth : chapterX; // Sağ veya Sol
+        chapterPoint.y = chapterY + chapterHeight / 2; // Orta
+    } else {
+        // Dikey mesafe daha fazla
+        chapterPoint.x = chapterX + chapterWidth / 2; // Orta
+        chapterPoint.y = dy > 0 ? chapterY + chapterHeight : chapterY; // Alt veya Üst
+    }
+    
+    // Part bağlantı noktası
+    if (Math.abs(dx) > Math.abs(dy)) {
+        partPoint.x = dx > 0 ? partX : partX + partWidth; // Sol veya Sağ
+        partPoint.y = partY + partHeight / 2; // Orta
+    } else {
+        partPoint.x = partX + partWidth / 2; // Orta
+        partPoint.y = dy > 0 ? partY : partY + partHeight; // Üst veya Alt
+    }
+    
+    // Çizgi çiz
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("class", "scenario-connector");
+    line.setAttribute("x1", chapterPoint.x);
+    line.setAttribute("y1", chapterPoint.y);
+    line.setAttribute("x2", partPoint.x);
+    line.setAttribute("y2", partPoint.y);
+    svg.appendChild(line);
+}
+
+// Canvas pan özelliği (mouse ile sürükleme)
+function setupCanvasPan() {
+    if (!scenarioCanvas) return;
+    
+    let isPanning = false;
+    let panStart = { x: 0, y: 0 };
+    let scrollStart = { x: 0, y: 0 };
+    
+    scenarioCanvas.addEventListener("mousedown", (e) => {
+        // Node'a tıklanmadıysa pan başlat
+        if (e.target.closest(".scenario-node")) return;
+        if (e.target.closest("button")) return;
+        
+        isPanning = true;
+        panStart.x = e.clientX;
+        panStart.y = e.clientY;
+        scrollStart.x = scenarioCanvas.scrollLeft;
+        scrollStart.y = scenarioCanvas.scrollTop;
+        scenarioCanvas.style.cursor = "grabbing";
+        e.preventDefault();
+    });
+    
+    document.addEventListener("mousemove", (e) => {
+        if (!isPanning) return;
+        
+        const dx = e.clientX - panStart.x;
+        const dy = e.clientY - panStart.y;
+        
+        scenarioCanvas.scrollLeft = scrollStart.x - dx;
+        scenarioCanvas.scrollTop = scrollStart.y - dy;
+    });
+    
+    document.addEventListener("mouseup", () => {
+        if (isPanning) {
+            isPanning = false;
+            scenarioCanvas.style.cursor = "grab";
+        }
     });
 }
 
@@ -5122,13 +5209,46 @@ function renderScenarioProperties() {
     
     const titleInput = document.getElementById("scenario-node-title-input");
     if (titleInput) {
+        // Debounce ile kaydetme
+        let titleTimeout = null;
         titleInput.addEventListener("input", (e) => {
             nodeData.title = e.target.value;
-            renderScenarioEditor(); // Tüm editor'ü yeniden render et
-            // Veriyi kaydet
-            if (currentProjectId) {
-                localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            
+            // Sadece node title'ını güncelle, tüm editor'ü render etme
+            const nodeElement = scenarioCanvas.querySelector(`[data-node-id="${selectedNodeId}"]`);
+            if (nodeElement) {
+                const titleElement = nodeElement.querySelector(".scenario-node-title");
+                if (titleElement) {
+                    titleElement.textContent = nodeData.title || (selectedNodeType === "chapter" ? "Yeni Bölüm" : "Yeni Kısım");
+                }
             }
+            
+            // Outline'ı güncelle
+            const outlineItem = scenarioOutlineList.querySelector(`[data-node-id="${selectedNodeId}"]`);
+            if (outlineItem) {
+                const span = outlineItem.querySelector("span");
+                if (span) {
+                    if (selectedNodeType === "chapter") {
+                        const chapterIndex = scenarioData.chapters.findIndex(c => c.id === selectedNodeId);
+                        span.textContent = `${chapterIndex + 1}. ${nodeData.title || "Yeni Bölüm"}`;
+                    } else {
+                        scenarioData.chapters.forEach((chapter, chapterIndex) => {
+                            const partIndex = chapter.parts.findIndex(p => p.id === selectedNodeId);
+                            if (partIndex !== -1) {
+                                span.textContent = `  ${chapterIndex + 1}.${partIndex + 1} ${nodeData.title || "Yeni Kısım"}`;
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // Debounce ile kaydetme (500ms)
+            if (titleTimeout) clearTimeout(titleTimeout);
+            titleTimeout = setTimeout(() => {
+                if (currentProjectId) {
+                    localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                }
+            }, 500);
         });
     }
     
@@ -5286,17 +5406,17 @@ function resetCanvasView() {
     let maxX = -Infinity;
     let maxY = -Infinity;
     
-    scenarioData.chapters.forEach(chapter => {
-        const chapterX = chapter.x || 100;
+    scenarioData.chapters.forEach((chapter, chapterIndex) => {
+        const chapterX = chapter.x || (100 + chapterIndex * 200);
         const chapterY = chapter.y || 100;
         minX = Math.min(minX, chapterX);
         minY = Math.min(minY, chapterY);
         maxX = Math.max(maxX, chapterX + 200);
         maxY = Math.max(maxY, chapterY + 120);
         
-        chapter.parts.forEach(part => {
+        chapter.parts.forEach((part, partIndex) => {
             const partX = part.x || (chapterX + 220);
-            const partY = part.y || (chapterY + 100);
+            const partY = part.y || (chapterY + partIndex * 100);
             minX = Math.min(minX, partX);
             minY = Math.min(minY, partY);
             maxX = Math.max(maxX, partX + 180);
