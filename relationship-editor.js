@@ -537,6 +537,30 @@ function startAddingRelationship() {
     }
 }
 
+// Canvas'a Shift+Click ile ilişki ekleme
+if (relationshipCanvas) {
+    relationshipCanvas.addEventListener("click", (e) => {
+        if (e.shiftKey && selectedRelationshipNodeId) {
+            const clickedNode = e.target.closest(".relationship-node");
+            if (clickedNode && clickedNode.dataset.nodeId !== selectedRelationshipNodeId) {
+                const targetNodeId = clickedNode.dataset.nodeId;
+                // Yeni ilişki oluştur
+                const newRel = {
+                    id: `rel-${Date.now()}`,
+                    from: selectedRelationshipNodeId,
+                    to: targetNodeId,
+                    type: "friend",
+                    strength: 50
+                };
+                relationshipData.relationships.push(newRel);
+                saveRelationshipData();
+                renderRelationshipEditor();
+                showToast("İlişki eklendi", "success");
+            }
+        }
+    });
+}
+
 // Canvas pan özelliği
 let relationshipCanvasPanState = {
     isPanning: false,
