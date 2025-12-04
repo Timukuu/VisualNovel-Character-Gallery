@@ -80,37 +80,6 @@ async function openRelationshipScreen() {
         setupRelationshipCanvasPan();
         if (relationshipCanvas) {
             relationshipCanvas.style.cursor = "grab";
-            
-            // Canvas'a Shift+Click ile ilişki ekleme (eski listener'ı kaldır, yenisini ekle)
-            const oldListener = relationshipCanvas._shiftClickListener;
-            if (oldListener) {
-                relationshipCanvas.removeEventListener("click", oldListener);
-            }
-            
-            const shiftClickHandler = (e) => {
-                if (e.shiftKey && selectedRelationshipNodeId) {
-                    const clickedNode = e.target.closest(".relationship-node");
-                    if (clickedNode && clickedNode.dataset.nodeId !== selectedRelationshipNodeId) {
-                        const targetNodeId = clickedNode.dataset.nodeId;
-                        // Yeni ilişki oluştur
-                        const newRel = {
-                            id: `rel-${Date.now()}`,
-                            from: selectedRelationshipNodeId,
-                            to: targetNodeId,
-                            type: "friend",
-                            strength: 50
-                        };
-                        relationshipData.relationships.push(newRel);
-                        saveRelationshipData();
-                        renderRelationshipEditor();
-                        selectRelationshipEdge(newRel.id);
-                        showToast("İlişki eklendi! İlişkiyi seçerek tip ve güç ayarlarını yapabilirsiniz.", "success");
-                    }
-                }
-            };
-            
-            relationshipCanvas._shiftClickListener = shiftClickHandler;
-            relationshipCanvas.addEventListener("click", shiftClickHandler);
         }
     }, 100);
 }
@@ -632,10 +601,20 @@ function startAddingRelationship() {
     if (selectedRelationshipNodeId) {
         isAddingRelationship = true;
         relationshipSourceNodeId = selectedRelationshipNodeId;
-        showToast("İkinci karakteri seçin", "info");
+        // Editor'ü yeniden render et ki seçili karakter vurgulansın
+        renderRelationshipEditor();
+        showToast("İkinci karakteri seçin (veya iptal için tekrar butona tıklayın)", "info");
     } else {
         showToast("Önce bir karakter seçin", "error");
     }
+}
+
+// İlişki ekleme modunu iptal et
+function cancelAddingRelationship() {
+    isAddingRelationship = false;
+    relationshipSourceNodeId = null;
+    renderRelationshipEditor();
+    showToast("İlişki ekleme iptal edildi", "info");
 }
 
 function setupRelationshipCanvasPan() {
