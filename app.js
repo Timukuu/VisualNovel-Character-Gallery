@@ -4889,8 +4889,8 @@ function renderScenarioCanvas() {
 // Connector çizgisi çiz (4 bölgeden bağlantı)
 function drawConnector(svg, chapter, part) {
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapter.id);
-    const chapterX = chapter.x || (150 + chapterIndex * 350);
-    const chapterY = chapter.y || 150;
+    const chapterX = chapter.x || (200 + chapterIndex * 400);
+    const chapterY = chapter.y || 100;
     const chapterWidth = 200;
     const chapterHeight = 120;
     const chapterCenterX = chapterX + chapterWidth / 2;
@@ -4898,7 +4898,7 @@ function drawConnector(svg, chapter, part) {
     
     const partIndex = chapter.parts.findIndex(p => p.id === part.id);
     const partX = part.x || (chapterX + 250);
-    const partY = part.y || (chapterY + partIndex * 130);
+    const partY = part.y || (chapterY + partIndex * 120);
     const partWidth = 180;
     const partHeight = 100;
     const partCenterX = partX + partWidth / 2;
@@ -4986,8 +4986,8 @@ function setupCanvasPan() {
 function createChapterNode(chapter, index) {
     const node = document.createElement("div");
     node.className = `scenario-node chapter ${selectedNodeId === chapter.id ? "selected" : ""}`;
-    node.style.left = `${chapter.x || (150 + index * 350)}px`;
-    node.style.top = `${chapter.y || 150}px`;
+    node.style.left = `${chapter.x || (200 + index * 400)}px`;
+    node.style.top = `${chapter.y || 100}px`;
     node.dataset.nodeId = chapter.id;
     node.dataset.nodeType = "chapter";
     
@@ -5057,13 +5057,13 @@ function createPartNode(part, chapterId, index) {
     if (!chapter) return null;
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
-    const chapterX = chapter.x || (150 + chapterIndex * 350);
-    const chapterY = chapter.y || 150;
+    const chapterX = chapter.x || (200 + chapterIndex * 400);
+    const chapterY = chapter.y || 100;
     
     const node = document.createElement("div");
     node.className = `scenario-node part ${selectedNodeId === part.id ? "selected" : ""}`;
     node.style.left = `${part.x || (chapterX + 250)}px`;
-    node.style.top = `${part.y || (chapterY + index * 130)}px`;
+    node.style.top = `${part.y || (chapterY + index * 120)}px`;
     node.dataset.nodeId = part.id;
     node.dataset.nodeType = "part";
     
@@ -5080,7 +5080,7 @@ function createPartNode(part, chapterId, index) {
     contentTextarea.className = "scenario-node-content";
     contentTextarea.placeholder = "Senaryo içeriği...";
     contentTextarea.value = part.content || "";
-    contentTextarea.rows = 3;
+    contentTextarea.rows = 2;
     contentTextarea.addEventListener("input", (e) => {
         part.content = e.target.value;
         if (currentProjectId) {
@@ -5335,8 +5335,8 @@ function addChapter() {
         id: `chapter_${Date.now()}`,
         title: "Yeni Bölüm",
         content: "",
-        x: 150 + scenarioData.chapters.length * 350,
-        y: 150,
+        x: 200 + scenarioData.chapters.length * 400,
+        y: 100,
         parts: []
     };
     
@@ -5440,14 +5440,14 @@ function addPartToChapter(chapterId) {
     if (!targetChapter) return;
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
-    const chapterX = targetChapter.x || (150 + chapterIndex * 350);
-    const chapterY = targetChapter.y || 150;
+    const chapterX = targetChapter.x || (200 + chapterIndex * 400);
+    const chapterY = targetChapter.y || 100;
     const newPart = {
         id: `part_${Date.now()}`,
         title: "Yeni Kısım",
         content: "",
         x: chapterX + 250,
-        y: chapterY + targetChapter.parts.length * 130
+        y: chapterY + targetChapter.parts.length * 120
     };
     
     targetChapter.parts.push(newPart);
@@ -5478,8 +5478,8 @@ function resetCanvasView() {
     let maxY = -Infinity;
     
     scenarioData.chapters.forEach((chapter, chapterIndex) => {
-        const chapterX = chapter.x || (150 + chapterIndex * 350);
-        const chapterY = chapter.y || 150;
+        const chapterX = chapter.x || (200 + chapterIndex * 400);
+        const chapterY = chapter.y || 100;
         minX = Math.min(minX, chapterX);
         minY = Math.min(minY, chapterY);
         maxX = Math.max(maxX, chapterX + 200);
@@ -5487,7 +5487,7 @@ function resetCanvasView() {
         
         chapter.parts.forEach((part, partIndex) => {
             const partX = part.x || (chapterX + 250);
-            const partY = part.y || (chapterY + partIndex * 130);
+            const partY = part.y || (chapterY + partIndex * 120);
             minX = Math.min(minX, partX);
             minY = Math.min(minY, partY);
             maxX = Math.max(maxX, partX + 180);
