@@ -5440,14 +5440,14 @@ function addPartToChapter(chapterId) {
     if (!targetChapter) return;
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
-    const chapterX = targetChapter.x || (100 + chapterIndex * 200);
-    const chapterY = targetChapter.y || 100;
+    const chapterX = targetChapter.x || (150 + chapterIndex * 350);
+    const chapterY = targetChapter.y || 150;
     const newPart = {
         id: `part_${Date.now()}`,
         title: "Yeni Kısım",
         content: "",
-        x: chapterX + 220,
-        y: chapterY + targetChapter.parts.length * 100
+        x: chapterX + 250,
+        y: chapterY + targetChapter.parts.length * 130
     };
     
     targetChapter.parts.push(newPart);
@@ -5478,16 +5478,16 @@ function resetCanvasView() {
     let maxY = -Infinity;
     
     scenarioData.chapters.forEach((chapter, chapterIndex) => {
-        const chapterX = chapter.x || (100 + chapterIndex * 200);
-        const chapterY = chapter.y || 100;
+        const chapterX = chapter.x || (150 + chapterIndex * 350);
+        const chapterY = chapter.y || 150;
         minX = Math.min(minX, chapterX);
         minY = Math.min(minY, chapterY);
         maxX = Math.max(maxX, chapterX + 200);
         maxY = Math.max(maxY, chapterY + 120);
         
         chapter.parts.forEach((part, partIndex) => {
-            const partX = part.x || (chapterX + 220);
-            const partY = part.y || (chapterY + partIndex * 100);
+            const partX = part.x || (chapterX + 250);
+            const partY = part.y || (chapterY + partIndex * 130);
             minX = Math.min(minX, partX);
             minY = Math.min(minY, partY);
             maxX = Math.max(maxX, partX + 180);
