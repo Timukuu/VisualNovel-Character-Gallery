@@ -4662,13 +4662,6 @@ let canvasPanState = {
     scrollStart: { x: 0, y: 0 }
 };
 
-// Canvas pan özelliği (mouse ile sürükleme) - Global state
-let canvasPanState = {
-    isPanning: false,
-    panStart: { x: 0, y: 0 },
-    scrollStart: { x: 0, y: 0 }
-};
-
 // Senaryo ekranını aç
 async function openScenarioScreen() {
     if (!currentProjectId) {
