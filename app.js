@@ -5023,8 +5023,12 @@ function handleCanvasMouseMove(e) {
     
     const canvasContainer = scenarioCanvas.parentElement;
     if (canvasContainer) {
-        canvasContainer.scrollLeft = canvasPanState.scrollStart.x - dx;
-        canvasContainer.scrollTop = canvasPanState.scrollStart.y - dy;
+        // Container'ın scroll değerlerini güncelle
+        const newScrollLeft = canvasPanState.scrollStart.x - dx;
+        const newScrollTop = canvasPanState.scrollStart.y - dy;
+        
+        canvasContainer.scrollLeft = newScrollLeft;
+        canvasContainer.scrollTop = newScrollTop;
     } else {
         // Fallback: canvas'ın kendisini scroll et
         scenarioCanvas.scrollLeft = canvasPanState.scrollStart.x - dx;
