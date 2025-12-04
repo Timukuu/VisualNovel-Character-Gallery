@@ -79,6 +79,7 @@ let relationshipBtn, relationshipScreen, relationshipBackBtn, relationshipProjec
 let addRelationshipCharacterBtn, addRelationshipGroupBtn, addRelationshipBtn;
 let relationshipCharactersList, relationshipGroupsList;
 let relationshipCanvas, relationshipPropertiesContent;
+let resetRelationshipViewBtn;
 let relationshipCharacterModal, relationshipCharacterModalBackdrop, relationshipCharacterForm, relationshipCharacterNameInput;
 let relationshipGroupModal, relationshipGroupModalBackdrop, relationshipGroupForm, relationshipGroupNameInput;
 let discardRelationshipCharacterBtn, discardRelationshipGroupBtn;
