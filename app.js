@@ -5531,8 +5531,11 @@ function addPartToChapter(chapterId) {
 function resetCanvasView() {
     if (!scenarioCanvas) return;
     
+    const canvasContainer = scenarioCanvas.parentElement;
+    if (!canvasContainer) return;
+    
     if (scenarioData.chapters.length === 0) {
-        scenarioCanvas.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+        canvasContainer.scrollTo({ top: 0, left: 0, behavior: "smooth" });
         return;
     }
     
@@ -5547,34 +5550,34 @@ function resetCanvasView() {
         const chapterY = chapter.y || 100;
         minX = Math.min(minX, chapterX);
         minY = Math.min(minY, chapterY);
-        maxX = Math.max(maxX, chapterX + 200);
-        maxY = Math.max(maxY, chapterY + 120);
+        maxX = Math.max(maxX, chapterX + 220); // Chapter genişliği
+        maxY = Math.max(maxY, chapterY + 110); // Chapter yüksekliği
         
         chapter.parts.forEach((part, partIndex) => {
             const partX = part.x || (chapterX + 250);
             const partY = part.y || (chapterY + partIndex * 120);
             minX = Math.min(minX, partX);
             minY = Math.min(minY, partY);
-            maxX = Math.max(maxX, partX + 180);
-            maxY = Math.max(maxY, partY + 100);
+            maxX = Math.max(maxX, partX + 200); // Part genişliği
+            maxY = Math.max(maxY, partY + 90); // Part yüksekliği
         });
     });
     
-    // Canvas boyutlarını al
-    const canvasRect = scenarioCanvas.getBoundingClientRect();
-    const canvasWidth = canvasRect.width;
-    const canvasHeight = canvasRect.height;
+    // Canvas container boyutlarını al
+    const containerRect = canvasContainer.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
     
     // Node'ların merkez noktasını hesapla
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
     
-    // Scroll pozisyonunu hesapla (merkezi canvas'ın ortasına getir)
-    const scrollX = centerX - canvasWidth / 2;
-    const scrollY = centerY - canvasHeight / 2;
+    // Scroll pozisyonunu hesapla (merkezi container'ın ortasına getir)
+    const scrollX = centerX - containerWidth / 2;
+    const scrollY = centerY - containerHeight / 2;
     
     // Smooth scroll
-    scenarioCanvas.scrollTo({
+    canvasContainer.scrollTo({
         left: Math.max(0, scrollX),
         top: Math.max(0, scrollY),
         behavior: "smooth"
