@@ -4984,8 +4984,8 @@ function setupCanvasPan() {
 function createChapterNode(chapter, index) {
     const node = document.createElement("div");
     node.className = `scenario-node chapter ${selectedNodeId === chapter.id ? "selected" : ""}`;
-    node.style.left = `${chapter.x || 100 + index * 200}px`;
-    node.style.top = `${chapter.y || 100}px`;
+    node.style.left = `${chapter.x || (150 + index * 350)}px`;
+    node.style.top = `${chapter.y || 150}px`;
     node.dataset.nodeId = chapter.id;
     node.dataset.nodeType = "chapter";
     
@@ -5055,13 +5055,13 @@ function createPartNode(part, chapterId, index) {
     if (!chapter) return null;
     
     const chapterIndex = scenarioData.chapters.findIndex(c => c.id === chapterId);
-    const chapterX = chapter.x || (100 + chapterIndex * 200);
-    const chapterY = chapter.y || 100;
+    const chapterX = chapter.x || (150 + chapterIndex * 350);
+    const chapterY = chapter.y || 150;
     
     const node = document.createElement("div");
     node.className = `scenario-node part ${selectedNodeId === part.id ? "selected" : ""}`;
-    node.style.left = `${part.x || (chapterX + 220)}px`;
-    node.style.top = `${part.y || (chapterY + index * 100)}px`;
+    node.style.left = `${part.x || (chapterX + 250)}px`;
+    node.style.top = `${part.y || (chapterY + index * 130)}px`;
     node.dataset.nodeId = part.id;
     node.dataset.nodeType = "part";
     
@@ -5333,8 +5333,8 @@ function addChapter() {
         id: `chapter_${Date.now()}`,
         title: "Yeni Bölüm",
         content: "",
-        x: 100 + scenarioData.chapters.length * 200,
-        y: 100,
+        x: 150 + scenarioData.chapters.length * 350,
+        y: 150,
         parts: []
     };
     

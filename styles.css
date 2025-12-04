@@ -343,7 +343,7 @@ textarea {
 
 @media (max-width: 1024px) {
     .layout {
-        gap: 16px;
+    gap: 16px;
     }
     .two-column-layout {
         grid-template-columns: 280px 1fr;
@@ -372,7 +372,7 @@ textarea {
 
 @media (max-width: 768px) {
     .sidebar {
-        padding: 16px;
+    padding: 16px;
         position: static;
     }
 }
@@ -2534,8 +2534,8 @@ textarea:valid:not(:placeholder-shown) {
     position: relative;
     overflow: auto;
     cursor: grab;
-    min-width: 2000px;
-    min-height: 1500px;
+    min-width: 4000px;
+    min-height: 800px;
 }
 
 .scenario-canvas:active {
