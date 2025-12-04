@@ -5003,10 +5003,18 @@ function createChapterNode(chapter, index) {
     contentTextarea.placeholder = "Senaryo içeriği...";
     contentTextarea.value = chapter.content || "";
     contentTextarea.rows = 4;
+    let chapterContentTimeout = null;
     contentTextarea.addEventListener("input", (e) => {
         chapter.content = e.target.value;
         if (currentProjectId) {
-            localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+            // Debounce ile kaydetme
+            if (chapterContentTimeout) clearTimeout(chapterContentTimeout);
+            chapterContentTimeout = setTimeout(() => {
+                saveScenarioToBackend().catch(err => {
+                    console.error("Senaryo kaydedilemedi:", err);
+                    localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                });
+            }, 500);
         }
     });
     contentTextarea.addEventListener("click", (e) => {
