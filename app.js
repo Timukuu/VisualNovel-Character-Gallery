@@ -76,9 +76,12 @@ let resetViewBtn;
 
 // İlişki Editor referansları
 let relationshipBtn, relationshipScreen, relationshipBackBtn, relationshipProjectTitle;
-let addRelationshipCharacterBtn, addRelationshipGroupBtn;
+let addRelationshipCharacterBtn, addRelationshipGroupBtn, addRelationshipBtn;
 let relationshipCharactersList, relationshipGroupsList;
 let relationshipCanvas, relationshipPropertiesContent;
+let relationshipCharacterModal, relationshipCharacterModalBackdrop, relationshipCharacterForm, relationshipCharacterNameInput;
+let relationshipGroupModal, relationshipGroupModalBackdrop, relationshipGroupForm, relationshipGroupNameInput;
+let discardRelationshipCharacterBtn, discardRelationshipGroupBtn;
 
 // Eski referanslar (geriye dönük uyumluluk için)
 let currentProjectTitleEl, addCharacterBtn, charactersContainer;
