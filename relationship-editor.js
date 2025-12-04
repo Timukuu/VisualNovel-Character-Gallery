@@ -296,17 +296,31 @@ function drawRelationshipEdge(svg, rel) {
     
     svg.appendChild(line);
     
-    // Strength badge (orta nokta)
+    // Strength badge (orta nokta, çizginin üstüne/altına offset ile)
     const midX = (fromX + toX) / 2;
     const midY = (fromY + toY) / 2;
     
+    // Çizginin açısını hesapla (radyan)
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    
+    // Çizgiye dik yönde offset (yukarı doğru)
+    // Perpendicular offset: çizgiye 90 derece dik
+    const offsetDistance = 15; // Çizgiden uzaklık
+    const offsetX = -Math.sin(angle) * offsetDistance;
+    const offsetY = Math.cos(angle) * offsetDistance;
+    
+    // Badge pozisyonu: orta nokta + offset
+    const badgeX = midX + offsetX;
+    const badgeY = midY + offsetY;
+    
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", midX);
-    text.setAttribute("y", midY);
+    text.setAttribute("x", badgeX);
+    text.setAttribute("y", badgeY);
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("dominant-baseline", "middle");
     text.setAttribute("fill", relType.color);
     text.setAttribute("font-size", "12");
+    text.setAttribute("font-weight", "bold");
     text.setAttribute("font-weight", "bold");
     text.setAttribute("pointer-events", "none");
     text.textContent = rel.strength;
