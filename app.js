@@ -4881,9 +4881,6 @@ function renderScenarioCanvas() {
             drawConnector(svg, chapter, part);
         });
     });
-    
-    // Canvas pan özelliği ekle
-    setupCanvasPan();
 }
 
 // Connector çizgisi çiz (4 bölgeden bağlantı)
@@ -4942,44 +4939,63 @@ function drawConnector(svg, chapter, part) {
     svg.appendChild(line);
 }
 
-// Canvas pan özelliği (mouse ile sürükleme)
+// Canvas pan özelliği (mouse ile sürükleme) - Global state
+let canvasPanState = {
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+    scrollStart: { x: 0, y: 0 }
+};
+
+// Canvas pan özelliğini başlat (sadece bir kez)
 function setupCanvasPan() {
     if (!scenarioCanvas) return;
     
-    let isPanning = false;
-    let panStart = { x: 0, y: 0 };
-    let scrollStart = { x: 0, y: 0 };
+    // Eğer zaten event listener'lar eklenmişse, tekrar ekleme
+    if (scenarioCanvas.dataset.panSetup === "true") return;
+    scenarioCanvas.dataset.panSetup = "true";
     
-    scenarioCanvas.addEventListener("mousedown", (e) => {
-        // Node'a tıklanmadıysa pan başlat
-        if (e.target.closest(".scenario-node")) return;
-        if (e.target.closest("button")) return;
-        
-        isPanning = true;
-        panStart.x = e.clientX;
-        panStart.y = e.clientY;
-        scrollStart.x = scenarioCanvas.scrollLeft;
-        scrollStart.y = scenarioCanvas.scrollTop;
-        scenarioCanvas.style.cursor = "grabbing";
-        e.preventDefault();
-    });
+    scenarioCanvas.addEventListener("mousedown", handleCanvasMouseDown);
     
-    document.addEventListener("mousemove", (e) => {
-        if (!isPanning) return;
-        
-        const dx = e.clientX - panStart.x;
-        const dy = e.clientY - panStart.y;
-        
-        scenarioCanvas.scrollLeft = scrollStart.x - dx;
-        scenarioCanvas.scrollTop = scrollStart.y - dy;
-    });
+    // Global mouse move ve mouse up listener'ları
+    document.addEventListener("mousemove", handleCanvasMouseMove);
+    document.addEventListener("mouseup", handleCanvasMouseUp);
+}
+
+function handleCanvasMouseDown(e) {
+    if (!scenarioCanvas) return;
     
-    document.addEventListener("mouseup", () => {
-        if (isPanning) {
-            isPanning = false;
-            scenarioCanvas.style.cursor = "grab";
-        }
-    });
+    // Node'a, button'a veya textarea'ya tıklanmadıysa pan başlat
+    if (e.target.closest(".scenario-node")) return;
+    if (e.target.closest("button")) return;
+    if (e.target.closest("textarea")) return;
+    if (e.target.closest("input")) return;
+    if (e.target.tagName === "svg" || e.target.tagName === "line") return;
+    
+    canvasPanState.isPanning = true;
+    canvasPanState.panStart.x = e.clientX;
+    canvasPanState.panStart.y = e.clientY;
+    canvasPanState.scrollStart.x = scenarioCanvas.scrollLeft;
+    canvasPanState.scrollStart.y = scenarioCanvas.scrollTop;
+    scenarioCanvas.style.cursor = "grabbing";
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function handleCanvasMouseMove(e) {
+    if (!canvasPanState.isPanning || !scenarioCanvas) return;
+    
+    const dx = e.clientX - canvasPanState.panStart.x;
+    const dy = e.clientY - canvasPanState.panStart.y;
+    
+    scenarioCanvas.scrollLeft = canvasPanState.scrollStart.x - dx;
+    scenarioCanvas.scrollTop = canvasPanState.scrollStart.y - dy;
+}
+
+function handleCanvasMouseUp() {
+    if (canvasPanState.isPanning && scenarioCanvas) {
+        canvasPanState.isPanning = false;
+        scenarioCanvas.style.cursor = "grab";
+    }
 }
 
 // Chapter node oluştur
