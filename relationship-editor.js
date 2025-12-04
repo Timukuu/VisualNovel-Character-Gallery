@@ -13,6 +13,13 @@ let relationshipDragOffset = { x: 0, y: 0 };
 let isAddingRelationship = false;
 let relationshipSourceNodeId = null;
 
+// Canvas pan özelliği - state
+let relationshipCanvasPanState = {
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+    scrollStart: { x: 0, y: 0 }
+};
+
 // İlişki tipleri
 const RELATIONSHIP_TYPES = [
     { id: "friend", name: "Arkadaş", color: "#4CAF50" },
@@ -536,37 +543,6 @@ function startAddingRelationship() {
         showToast("Önce bir karakter seçin", "error");
     }
 }
-
-// Canvas'a Shift+Click ile ilişki ekleme
-if (relationshipCanvas) {
-    relationshipCanvas.addEventListener("click", (e) => {
-        if (e.shiftKey && selectedRelationshipNodeId) {
-            const clickedNode = e.target.closest(".relationship-node");
-            if (clickedNode && clickedNode.dataset.nodeId !== selectedRelationshipNodeId) {
-                const targetNodeId = clickedNode.dataset.nodeId;
-                // Yeni ilişki oluştur
-                const newRel = {
-                    id: `rel-${Date.now()}`,
-                    from: selectedRelationshipNodeId,
-                    to: targetNodeId,
-                    type: "friend",
-                    strength: 50
-                };
-                relationshipData.relationships.push(newRel);
-                saveRelationshipData();
-                renderRelationshipEditor();
-                showToast("İlişki eklendi", "success");
-            }
-        }
-    });
-}
-
-// Canvas pan özelliği
-let relationshipCanvasPanState = {
-    isPanning: false,
-    panStart: { x: 0, y: 0 },
-    scrollStart: { x: 0, y: 0 }
-};
 
 function setupRelationshipCanvasPan() {
     if (!relationshipCanvas) return;
