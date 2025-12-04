@@ -2337,6 +2337,30 @@ function initializeEventListeners() {
             if (addRelationshipGroupBtn) {
                 addRelationshipGroupBtn.addEventListener("click", openRelationshipGroupModal);
             }
+            if (addRelationshipBtn) {
+                addRelationshipBtn.addEventListener("click", startAddingRelationship);
+            }
+            
+            // İlişki modal event listeners
+            if (relationshipCharacterForm) {
+                relationshipCharacterForm.addEventListener("submit", handleRelationshipCharacterFormSubmit);
+            }
+            if (discardRelationshipCharacterBtn) {
+                discardRelationshipCharacterBtn.addEventListener("click", closeRelationshipCharacterModal);
+            }
+            if (relationshipCharacterModalBackdrop) {
+                relationshipCharacterModalBackdrop.addEventListener("click", closeRelationshipCharacterModal);
+            }
+            
+            if (relationshipGroupForm) {
+                relationshipGroupForm.addEventListener("submit", handleRelationshipGroupFormSubmit);
+            }
+            if (discardRelationshipGroupBtn) {
+                discardRelationshipGroupBtn.addEventListener("click", closeRelationshipGroupModal);
+            }
+            if (relationshipGroupModalBackdrop) {
+                relationshipGroupModalBackdrop.addEventListener("click", closeRelationshipGroupModal);
+            }
             
             // Yeni layout butonları
             if (addCharacterSidebarBtn) {
