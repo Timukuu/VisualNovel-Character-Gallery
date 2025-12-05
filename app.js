@@ -600,6 +600,13 @@ async function renderProjects() {
         emptyMsg.style.color = "var(--text-muted)";
         emptyMsg.style.padding = "12px";
         projectListEl.appendChild(emptyMsg);
+        
+        // Proje yoksa sidebar karakter bölümünü gizle
+        if (charactersSidebarSection) charactersSidebarSection.classList.add("hidden");
+        if (sidebarProjectTitle) sidebarProjectTitle.textContent = "";
+        if (scenarioBtn) scenarioBtn.style.display = "none";
+        if (relationshipBtn) relationshipBtn.style.display = "none";
+        currentProjectId = null;
         return;
     }
 
