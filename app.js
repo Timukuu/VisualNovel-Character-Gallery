@@ -1704,7 +1704,7 @@ async function navigateToRoute(routeData) {
             if (currentUserInfoEl) {
                 currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
             }
-            if (currentUser.role === "admin" && usersManagementBtn) {
+            if (canEdit() && usersManagementBtn) {
                 usersManagementBtn.style.display = "block";
             }
             currentProjectId = null;
@@ -1723,7 +1723,7 @@ async function navigateToRoute(routeData) {
             if (currentUserInfoEl) {
                 currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
             }
-            if (currentUser.role === "admin" && usersManagementBtn) {
+            if (canEdit() && usersManagementBtn) {
                 usersManagementBtn.style.display = "block";
             }
             currentProjectId = routeData.projectId;
@@ -1746,7 +1746,7 @@ async function navigateToRoute(routeData) {
             if (currentUserInfoEl) {
                 currentUserInfoEl.textContent = `${currentUser.username} (${currentUser.role})`;
             }
-            if (currentUser.role === "admin" && usersManagementBtn) {
+            if (canEdit() && usersManagementBtn) {
                 usersManagementBtn.style.display = "block";
             }
             currentProjectId = routeData.projectId;
