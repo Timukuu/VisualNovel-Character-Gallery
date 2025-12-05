@@ -692,15 +692,15 @@ async function renderProjects() {
                 sidebarProjectTitle.textContent = project.name;
                 charactersSidebarSection.classList.remove("hidden");
                 
-                // Senaryo butonunu göster (admin için)
-                if (scenarioBtn && currentUser && currentUser.role === "admin") {
+                // Senaryo butonunu göster (admin ve SuperUser için)
+                if (scenarioBtn && currentUser && canViewAll()) {
                     scenarioBtn.style.display = "block";
                 } else if (scenarioBtn) {
                     scenarioBtn.style.display = "none";
                 }
                 
-                // İlişki butonunu göster (admin için)
-                if (relationshipBtn && currentUser && currentUser.role === "admin") {
+                // İlişki butonunu göster (admin ve SuperUser için)
+                if (relationshipBtn && currentUser && canViewAll()) {
                     relationshipBtn.style.display = "block";
                 } else if (relationshipBtn) {
                     relationshipBtn.style.display = "none";
