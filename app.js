@@ -342,37 +342,18 @@ async function handleLoginSubmit(event) {
         return;
     }
 
-    // Kullanıcıları yükle (öncelik: mevcut users array > frontend users.json > backend)
-    let usersToCheck = users || [];
+    // Login için her zaman frontend'deki users.json'u kullan (password'lar orada)
+    // Backend'deki /api/users endpoint'i güvenlik için password'ları gizliyor
+    let usersToCheck = [];
     
-    if (usersToCheck.length === 0) {
-        // Önce frontend'deki users.json'dan yüklemeyi dene (daha hızlı ve güvenilir)
-        try {
-            usersToCheck = await loadJSON("data/users.json");
-            users = usersToCheck;
-            console.log("Kullanıcılar frontend'den yüklendi:", usersToCheck.length);
-        } catch (err) {
-            console.warn("Frontend'den kullanıcılar yüklenemedi, backend deneniyor:", err);
-            // Frontend'den yüklenemezse backend'den dene
-            try {
-                const response = await fetch(`${BACKEND_BASE_URL}/api/users`, {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" }
-                });
-                if (response.ok) {
-                    const backendUsers = await response.json();
-                    usersToCheck = backendUsers;
-                    users = backendUsers;
-                    console.log("Kullanıcılar backend'den yüklendi:", usersToCheck.length);
-                } else {
-                    throw new Error(`Backend response: ${response.status}`);
-                }
-            } catch (backendErr) {
-                console.error("Backend'den de kullanıcılar yüklenemedi:", backendErr);
-                if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
-                return;
-            }
-        }
+    try {
+        usersToCheck = await loadJSON("data/users.json");
+        users = usersToCheck; // Global users array'ini de güncelle
+        console.log("Kullanıcılar frontend'den yüklendi (login için):", usersToCheck.length);
+    } catch (err) {
+        console.error("Frontend'den kullanıcılar yüklenemedi:", err);
+        if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
+        return;
     }
 
     if (usersToCheck.length === 0) {
@@ -386,26 +367,10 @@ async function handleLoginSubmit(event) {
     console.log("Yüklenen kullanıcılar:", usersToCheck.map(u => ({ 
         username: u.username, 
         role: u.role, 
-        hasPassword: !!u.password,
-        passwordLength: u.password ? u.password.length : 0
+        hasPassword: !!u.password
     })));
     
-    // Backend'den gelen kullanıcılarda password olmayabilir, o yüzden önce frontend'deki users.json'dan kontrol et
-    let user = usersToCheck.find((u) => u.username === username && u.password === password);
-    
-    // Eğer bulunamazsa ve backend'den yüklendiyse, frontend'deki users.json'dan tekrar yükle
-    if (!user) {
-        try {
-            const frontendUsers = await loadJSON("data/users.json");
-            const frontendUser = frontendUsers.find((u) => u.username === username && u.password === password);
-            if (frontendUser) {
-                user = frontendUser;
-                console.log("Kullanıcı frontend users.json'dan bulundu");
-            }
-        } catch (err) {
-            console.warn("Frontend users.json yüklenemedi:", err);
-        }
-    }
+    const user = usersToCheck.find((u) => u.username === username && u.password === password);
 
     if (!user) {
         console.error("Kullanıcı bulunamadı. Aranan:", username, "Mevcut kullanıcılar:", usersToCheck.map(u => u.username));
