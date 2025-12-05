@@ -72,7 +72,8 @@ let addImageBtnPanel, tagFiltersEl, characterImagesGrid;
 // Senaryo Editor referansları
 let scenarioBtn, scenarioScreen, scenarioBackBtn, scenarioProjectTitle;
 let addChapterBtn, addPartBtn, scenarioOutlineList, scenarioCanvas, scenarioPropertiesContent;
-let resetViewBtn;
+let resetViewBtn, zoomInBtn, zoomOutBtn, zoomLevelEl;
+let scenarioZoomLevel = 1; // 1 = 100%, 0.5 = 50%, 2 = 200%
 
 // İlişki Editor referansları
 let relationshipBtn, relationshipScreen, relationshipBackBtn, relationshipProjectTitle;

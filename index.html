@@ -368,8 +368,13 @@
             <div class="scenario-editor">
                 <div class="scenario-header">
                     <h2 id="scenario-project-title">Senaryo</h2>
-                    <div style="display: flex; gap: 8px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
                         <button id="reset-view-btn" class="btn subtle scenario-reset-btn">📍 Reset View</button>
+                        <div style="display: flex; gap: 4px; align-items: center; margin-left: 8px;">
+                            <button id="zoom-out-btn" class="btn subtle" style="padding: 6px 10px; font-size: 14px;">−</button>
+                            <span id="zoom-level" style="font-size: 12px; color: var(--text-muted); min-width: 50px; text-align: center;">100%</span>
+                            <button id="zoom-in-btn" class="btn subtle" style="padding: 6px 10px; font-size: 14px;">+</button>
+                        </div>
                         <button id="scenario-back-btn" class="btn subtle">← Geri</button>
                     </div>
                 </div>
