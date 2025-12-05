@@ -870,9 +870,11 @@ body.blur-images .character-image-card:hover img {
 /* Hata mesajı */
 
 .error-message {
-    margin-top: 8px;
+    margin-top: 16px;
+    margin-bottom: 0;
     font-size: 13px;
     color: var(--danger);
+    min-height: 20px;
 }
 
 /* Responsive */
