@@ -2330,6 +2330,30 @@ function initializeEventListeners() {
             if (resetViewBtn) {
                 resetViewBtn.addEventListener("click", resetCanvasView);
             }
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener("click", () => {
+                    scenarioZoomLevel = Math.min(2, scenarioZoomLevel + 0.1);
+                    updateScenarioZoom();
+                });
+            }
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener("click", () => {
+                    scenarioZoomLevel = Math.max(0.3, scenarioZoomLevel - 0.1);
+                    updateScenarioZoom();
+                });
+            }
+            
+            // Mouse wheel zoom (Ctrl/Cmd + Wheel)
+            if (scenarioCanvas) {
+                scenarioCanvas.addEventListener("wheel", (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                        scenarioZoomLevel = Math.max(0.3, Math.min(2, scenarioZoomLevel + delta));
+                        updateScenarioZoom();
+                    }
+                }, { passive: false });
+            }
             
             // İlişki Editor event listeners
             if (relationshipBtn) {
@@ -4805,6 +4829,9 @@ async function openScenarioScreen() {
     // Senaryo editor'ü render et
     renderScenarioEditor();
     
+    // Zoom'u başlat
+    updateScenarioZoom();
+    
     // Canvas pan özelliğini başlat (sadece bir kez)
     setTimeout(() => {
         setupCanvasPan();
@@ -5478,8 +5505,16 @@ function makeNodeResizable(node, data, nodeType) {
             });
         }
         
-        // Connector'ları yeniden çiz
-        renderScenarioCanvas();
+        // Connector'ları yeniden çiz (node'ları yeniden render etme, sadece connector'ları güncelle)
+        const svg = scenarioCanvas.querySelector("svg");
+        if (svg) {
+            svg.innerHTML = "";
+            scenarioData.chapters.forEach((chapter) => {
+                chapter.parts.forEach((part) => {
+                    drawConnector(svg, chapter, part);
+                });
+            });
+        }
     };
     
     const handleResizeUp = () => {
@@ -5507,6 +5542,20 @@ function makeNodeResizable(node, data, nodeType) {
     document.addEventListener("mouseup", handleResizeUp);
 }
 
+// Zoom seviyesini güncelle
+function updateScenarioZoom() {
+    if (!scenarioCanvas) return;
+    
+    // Transform uygula
+    scenarioCanvas.style.transform = `scale(${scenarioZoomLevel})`;
+    scenarioCanvas.style.transformOrigin = "top left";
+    
+    // Zoom level göster
+    if (zoomLevelEl) {
+        zoomLevelEl.textContent = `${Math.round(scenarioZoomLevel * 100)}%`;
+    }
+}
+
 // Node seç
 function selectNode(nodeId, nodeType) {
     selectedNodeId = nodeId;
@@ -5517,6 +5566,9 @@ function selectNode(nodeId, nodeType) {
     
     // Canvas'ı güncelle
     renderScenarioCanvas();
+    
+    // Zoom'u tekrar uygula
+    updateScenarioZoom();
     
     // Properties'i güncelle
     renderScenarioProperties();
