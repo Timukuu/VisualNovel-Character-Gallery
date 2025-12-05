@@ -383,9 +383,29 @@ async function handleLoginSubmit(event) {
 
     // Debug: Kullanıcıları konsola yazdır
     console.log("Login denemesi:", { username, passwordLength: password.length });
-    console.log("Yüklenen kullanıcılar:", usersToCheck.map(u => ({ username: u.username, role: u.role })));
+    console.log("Yüklenen kullanıcılar:", usersToCheck.map(u => ({ 
+        username: u.username, 
+        role: u.role, 
+        hasPassword: !!u.password,
+        passwordLength: u.password ? u.password.length : 0
+    })));
     
-    const user = usersToCheck.find((u) => u.username === username && u.password === password);
+    // Backend'den gelen kullanıcılarda password olmayabilir, o yüzden önce frontend'deki users.json'dan kontrol et
+    let user = usersToCheck.find((u) => u.username === username && u.password === password);
+    
+    // Eğer bulunamazsa ve backend'den yüklendiyse, frontend'deki users.json'dan tekrar yükle
+    if (!user) {
+        try {
+            const frontendUsers = await loadJSON("data/users.json");
+            const frontendUser = frontendUsers.find((u) => u.username === username && u.password === password);
+            if (frontendUser) {
+                user = frontendUser;
+                console.log("Kullanıcı frontend users.json'dan bulundu");
+            }
+        } catch (err) {
+            console.warn("Frontend users.json yüklenemedi:", err);
+        }
+    }
 
     if (!user) {
         console.error("Kullanıcı bulunamadı. Aranan:", username, "Mevcut kullanıcılar:", usersToCheck.map(u => u.username));
