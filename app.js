@@ -43,6 +43,30 @@ let currentCharacter = null;
 let previousScreen = null; // Modal açılmadan önce hangi ekrandaydık
 let isNavigating = false; // URL değişikliği sırasında infinite loop'u önlemek için
 
+// Role helper functions
+function isAdmin() {
+    return currentUser && currentUser.role === "admin";
+}
+
+function isSuperUser() {
+    return currentUser && currentUser.role === "superuser";
+}
+
+function canEdit() {
+    // Sadece admin düzenleme yapabilir
+    return isAdmin();
+}
+
+function canViewAll() {
+    // Admin ve SuperUser tüm projeleri görebilir
+    return isAdmin() || isSuperUser();
+}
+
+function canAccessChat() {
+    // Sadece admin chat'e erişebilir
+    return isAdmin();
+}
+
 // Backend endpoints (Render'da host edilmiş)
 const BACKEND_BASE_URL = "https://character-backend-buw3.onrender.com";
 const BACKEND_UPLOAD_URL = `${BACKEND_BASE_URL}/upload`;
@@ -364,7 +388,7 @@ async function handleLoginSubmit(event) {
     }
 
     // Admin ise kullanıcı yönetimi butonunu göster
-    if (currentUser.role === "admin" && usersManagementBtn) {
+    if (canEdit() && usersManagementBtn) {
         usersManagementBtn.style.display = "block";
     } else if (usersManagementBtn) {
         usersManagementBtn.style.display = "none";
@@ -544,7 +568,7 @@ async function renderProjects() {
 
     if (userProjects.length === 0) {
         const emptyMsg = document.createElement("div");
-        emptyMsg.textContent = currentUser.role === "admin" 
+        emptyMsg.textContent = canEdit() 
             ? "Henüz proje yok. Yeni proje ekleyin." 
             : "Bu kullanıcıya atanmış proje yok.";
         emptyMsg.style.fontSize = "13px";
@@ -604,7 +628,7 @@ async function renderProjects() {
         titleDiv.appendChild(badge);
 
         // Admin için menü butonu
-        if (currentUser.role === "admin") {
+        if (canEdit()) {
             const menuBtn = document.createElement("button");
             menuBtn.className = "project-menu-btn";
             menuBtn.textContent = "⋯";
@@ -754,7 +778,7 @@ async function onProjectSelected(project) {
     projectDesc.style.display = project.description ? "block" : "none";
 
     // Admin ise "Karakter Ekle" aktif, değilse pasif (sadece görüntüleme)
-    addCharacterBtn.disabled = currentUser.role !== "admin";
+    addCharacterBtn.disabled = !canEdit();
 
     await renderCharacters();
 }
@@ -1095,11 +1119,11 @@ async function showCharacterDetail(character) {
 
     // Admin butonları
     if (editTraitsBtn) {
-        editTraitsBtn.style.display = currentUser.role === "admin" ? "block" : "none";
+        editTraitsBtn.style.display = canEdit() ? "block" : "none";
         editTraitsBtn.textContent = "Düzenle";
     }
     if (addImageBtnPanel) {
-        addImageBtnPanel.style.display = currentUser.role === "admin" ? "block" : "none";
+        addImageBtnPanel.style.display = canEdit() ? "block" : "none";
     }
     
     // Traits düzenleme modunu sıfırla
@@ -1919,7 +1943,7 @@ function closeChatPanel() {
 }
 
 async function loadChatMessages() {
-    if (!chatMessages || !currentUser || currentUser.role !== "admin") return;
+    if (!chatMessages || !currentUser || !canAccessChat()) return;
     
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/api/chat/messages`);
@@ -1999,7 +2023,7 @@ function renderChatMessages(messages) {
 }
 
 function updateChatNotification(messages = null, lastReadId = null) {
-    if (!chatToggleBtn || !currentUser || currentUser.role !== "admin") return;
+    if (!chatToggleBtn || !currentUser || !canAccessChat()) return;
     
     // Eğer mesajlar verilmemişse, yükle
     if (!messages) {
@@ -2034,7 +2058,7 @@ function checkUnreadMessages(messages, lastReadId) {
 }
 
 async function sendChatMessage() {
-    if (!chatMessageInput || !currentUser || currentUser.role !== "admin") return;
+    if (!chatMessageInput || !currentUser || !canAccessChat()) return;
     
     const message = chatMessageInput.value.trim();
     if (!message) return;
@@ -2242,7 +2266,7 @@ function initializeEventListeners() {
     updateChatButtonVisibility();
     
     // Chat bildirimini kontrol et (her 5 saniyede bir)
-    if (currentUser && currentUser.role === "admin") {
+    if (currentUser && canAccessChat()) {
         setInterval(() => {
             updateChatNotification();
         }, 5000);
@@ -2578,7 +2602,7 @@ async function openCharacterDetail(character) {
     }
 
     // Admin butonları
-    if (currentUser.role === "admin") {
+    if (canEdit()) {
         editCharacterBtn.style.display = "block";
         addImageBtn.style.display = "block";
     } else {
@@ -2685,7 +2709,7 @@ function renderImagesInGrid(images, container) {
     if (!container) return;
     
     // Container'a drag & drop event listener'ları ekle (bir kez)
-    if (!container.dataset.dropListenerAdded && currentUser && currentUser.role === "admin") {
+    if (!container.dataset.dropListenerAdded && currentUser && canEdit()) {
         container.dataset.dropListenerAdded = "true";
         container.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -2775,7 +2799,7 @@ function renderImagesInGrid(images, container) {
         }
 
         // Admin ise drag & drop ekle
-        if (currentUser && currentUser.role === "admin") {
+        if (currentUser && canEdit()) {
             imageCard.classList.add("draggable");
             
             // Drag handle için özel bir alan ekle
@@ -3155,7 +3179,7 @@ async function renderCharacterImages() {
             imageCard.dataset.orderIndex = defaultImage.orderIndex !== undefined ? defaultImage.orderIndex : groupIndex;
 
             // Admin ise drag & drop ekle
-            if (currentUser.role === "admin") {
+            if (canEdit()) {
                 imageCard.classList.add("draggable");
                 // Kartın kendisini draggable yapma, sadece handle kullan
                 
@@ -4033,7 +4057,7 @@ function renderImageCarousel() {
         item.appendChild(imgEl);
         
         // Sıralama modunda yukarı/aşağı butonları ekle
-        if (isReorderMode && currentUser && currentUser.role === "admin") {
+        if (isReorderMode && currentUser && canEdit()) {
             const controls = document.createElement("div");
             controls.className = "reorder-controls";
             controls.style.position = "absolute";
@@ -4288,14 +4312,14 @@ function updateImageInfo() {
     
     // Silme ve sıralama butonlarını göster/gizle (sadece admin için)
     if (deleteImageFromViewBtn) {
-        if (currentUser && currentUser.role === "admin" && allImagesForCarousel.length > 0) {
+        if (currentUser && canEdit() && allImagesForCarousel.length > 0) {
             deleteImageFromViewBtn.style.display = "block";
         } else {
             deleteImageFromViewBtn.style.display = "none";
         }
     }
     if (reorderImagesInViewBtn) {
-        if (currentUser && currentUser.role === "admin" && allImagesForCarousel.length > 1) {
+        if (currentUser && canEdit() && allImagesForCarousel.length > 1) {
             reorderImagesInViewBtn.style.display = "block";
             reorderImagesInViewBtn.textContent = isReorderMode ? "✓ Sıralamayı Kaydet" : "↕️ Sıralamayı Değiştir";
         } else {
@@ -4334,8 +4358,8 @@ async function toggleReorderMode() {
         isReorderMode
     });
     
-    if (!currentUser || currentUser.role !== "admin") {
-        console.warn("Kullanıcı admin değil");
+    if (!currentUser || !canEdit()) {
+        console.warn("Kullanıcı düzenleme yetkisine sahip değil");
         return;
     }
     
