@@ -5727,11 +5727,11 @@ function renderScenarioProperties() {
     scenarioPropertiesContent.innerHTML = `
         <label>
             ${label}
-            <input type="text" id="scenario-node-title-input" value="${nodeData.title || ""}" />
+            <input type="text" id="scenario-node-title-input" value="${nodeData.title || ""}" ${canEdit() ? '' : 'disabled'} />
         </label>
         <label>
             İçerik
-            <textarea id="scenario-node-content-input" rows="6" placeholder="Senaryo içeriği...">${nodeData.content || ""}</textarea>
+            <textarea id="scenario-node-content-input" rows="6" placeholder="Senaryo içeriği..." ${canEdit() ? '' : 'disabled'}>${nodeData.content || ""}</textarea>
         </label>
     `;
     
