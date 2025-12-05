@@ -1855,8 +1855,13 @@ function init() {
 }
 
 function initializeApp() {
-    // users JSON'unu yükle, projects backend'den gelecek
-    Promise.all([loadJSON("data/users.json"), fetch(BACKEND_PROJECTS_URL).then(res => res.json())])
+    // Önce backend'den kullanıcıları yüklemeyi dene, yoksa frontend'deki users.json'dan yükle
+    Promise.all([
+        fetch(`${BACKEND_BASE_URL}/api/users`)
+            .then(res => res.ok ? res.json() : loadJSON("data/users.json"))
+            .catch(() => loadJSON("data/users.json")),
+        fetch(BACKEND_PROJECTS_URL).then(res => res.json())
+    ])
         .then(([usersData, projectsData]) => {
             users = usersData;
             projects = projectsData;
