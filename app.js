@@ -2157,6 +2157,9 @@ function initializeEventListeners() {
     scenarioCanvas = document.getElementById("scenario-canvas");
     scenarioPropertiesContent = document.getElementById("scenario-properties-content");
     resetViewBtn = document.getElementById("reset-view-btn");
+    zoomInBtn = document.getElementById("zoom-in-btn");
+    zoomOutBtn = document.getElementById("zoom-out-btn");
+    zoomLevelEl = document.getElementById("zoom-level");
     
     // İlişki Editor referansları
     relationshipBtn = document.getElementById("relationship-btn");
