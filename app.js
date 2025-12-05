@@ -708,6 +708,11 @@ async function renderProjects() {
             } else {
                 currentProjectId = null;
                 charactersSidebarSection.classList.add("hidden");
+                // Senaryo ve İlişki butonlarını gizle
+                if (scenarioBtn) scenarioBtn.style.display = "none";
+                if (relationshipBtn) relationshipBtn.style.display = "none";
+                // Sidebar proje başlığını temizle
+                if (sidebarProjectTitle) sidebarProjectTitle.textContent = "";
                 showEmptyState();
             }
         });
@@ -1011,7 +1016,8 @@ async function renderCharactersSidebar() {
         const actions = document.createElement("div");
         actions.className = "character-item-actions";
         
-        if (currentUser.role === "admin") {
+        // Sadece admin düzenleme/silme yapabilir (SuperUser yapamaz)
+        if (canEdit()) {
             const editBtn = document.createElement("button");
             editBtn.className = "character-item-action-btn";
             editBtn.textContent = "✎";
@@ -1235,6 +1241,14 @@ function showEmptyState() {
     emptyState.classList.remove("hidden");
     characterDetailContent.classList.add("hidden");
     currentCharacterId = null;
+    
+    // Proje seçilmediyse sidebar karakter bölümünü gizle
+    if (!currentProjectId) {
+        if (charactersSidebarSection) charactersSidebarSection.classList.add("hidden");
+        if (sidebarProjectTitle) sidebarProjectTitle.textContent = "";
+        if (scenarioBtn) scenarioBtn.style.display = "none";
+        if (relationshipBtn) relationshipBtn.style.display = "none";
+    }
 }
 
 async function renderCharacters() {
