@@ -5142,6 +5142,8 @@ function createChapterNode(chapter, index) {
     node.className = `scenario-node chapter ${selectedNodeId === chapter.id ? "selected" : ""}`;
     node.style.left = `${chapter.x || (200 + index * 400)}px`;
     node.style.top = `${chapter.y || 100}px`;
+    node.style.width = chapter.width ? `${chapter.width}px` : "220px";
+    node.style.height = chapter.height ? `${chapter.height}px` : "110px";
     node.dataset.nodeId = chapter.id;
     node.dataset.nodeType = "chapter";
     
@@ -5191,13 +5193,23 @@ function createChapterNode(chapter, index) {
     node.appendChild(contentTextarea);
     node.appendChild(deleteBtn);
     
+    // Resize handle ekle (sağ alt köşe)
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "scenario-node-resize-handle";
+    resizeHandle.style.cursor = "nwse-resize";
+    node.appendChild(resizeHandle);
+    
     // Drag & drop (sadece drag handle için)
     makeNodeDraggable(node, chapter, dragHandle);
+    
+    // Resize özelliği ekle
+    makeNodeResizable(node, chapter, "chapter");
     
     // Click to select
     node.addEventListener("click", (e) => {
         if (e.target === deleteBtn || e.target.closest(".scenario-node-delete")) return;
         if (e.target === contentTextarea || e.target.closest("textarea")) return;
+        if (e.target === resizeHandle || e.target.closest(".scenario-node-resize-handle")) return;
         e.stopPropagation();
         selectNode(chapter.id, "chapter");
     });

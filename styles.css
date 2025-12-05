@@ -2628,6 +2628,30 @@ textarea:valid:not(:placeholder-shown) {
     user-select: none;
 }
 
+.scenario-node-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 4px 0 var(--radius-md) 0;
+    cursor: nwse-resize;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 10;
+    box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.scenario-node:hover .scenario-node-resize-handle {
+    opacity: 0.7;
+}
+
+.scenario-node-resize-handle:hover {
+    opacity: 1;
+    background: var(--accent);
+}
+
 .scenario-node-content {
     width: 100%;
     margin-top: 8px;
