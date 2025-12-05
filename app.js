@@ -4932,6 +4932,14 @@ async function openScenarioScreen() {
     // Senaryo editor'ü render et
     renderScenarioEditor();
     
+    // Düzenleme butonlarını sadece admin için göster
+    if (addChapterBtn) {
+        addChapterBtn.style.display = canEdit() ? "block" : "none";
+    }
+    if (addPartBtn) {
+        addPartBtn.style.display = canEdit() ? "block" : "none";
+    }
+    
     // Zoom'u başlat
     updateScenarioZoom();
     
@@ -5029,26 +5037,29 @@ function renderScenarioOutline() {
         const chapterActions = document.createElement("div");
         chapterActions.className = "scenario-outline-actions";
         
-        const addPartToChapterBtn = document.createElement("button");
-        addPartToChapterBtn.className = "scenario-outline-action-btn add-btn";
-        addPartToChapterBtn.innerHTML = "+";
-        addPartToChapterBtn.title = "Kısım Ekle";
-        addPartToChapterBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            addPartToChapter(chapter.id);
-        });
-        
-        const deleteChapterBtn = document.createElement("button");
-        deleteChapterBtn.className = "scenario-outline-action-btn delete-btn";
-        deleteChapterBtn.innerHTML = "×";
-        deleteChapterBtn.title = "Sil";
-        deleteChapterBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            deleteChapter(chapter.id);
-        });
-        
-        chapterActions.appendChild(addPartToChapterBtn);
-        chapterActions.appendChild(deleteChapterBtn);
+        // Sadece admin düzenleme yapabilir
+        if (canEdit()) {
+            const addPartToChapterBtn = document.createElement("button");
+            addPartToChapterBtn.className = "scenario-outline-action-btn add-btn";
+            addPartToChapterBtn.innerHTML = "+";
+            addPartToChapterBtn.title = "Kısım Ekle";
+            addPartToChapterBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                addPartToChapter(chapter.id);
+            });
+            
+            const deleteChapterBtn = document.createElement("button");
+            deleteChapterBtn.className = "scenario-outline-action-btn delete-btn";
+            deleteChapterBtn.innerHTML = "×";
+            deleteChapterBtn.title = "Sil";
+            deleteChapterBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteChapter(chapter.id);
+            });
+            
+            chapterActions.appendChild(addPartToChapterBtn);
+            chapterActions.appendChild(deleteChapterBtn);
+        }
         chapterItem.appendChild(chapterActions);
         chapterItemContainer.appendChild(chapterItem);
         
@@ -5072,16 +5083,19 @@ function renderScenarioOutline() {
             const partActions = document.createElement("div");
             partActions.className = "scenario-outline-actions";
             
-            const deletePartBtn = document.createElement("button");
-            deletePartBtn.className = "scenario-outline-action-btn delete-btn";
-            deletePartBtn.innerHTML = "×";
-            deletePartBtn.title = "Sil";
-            deletePartBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                deletePart(chapter.id, part.id);
-            });
-            
-            partActions.appendChild(deletePartBtn);
+            // Sadece admin düzenleme yapabilir
+            if (canEdit()) {
+                const deletePartBtn = document.createElement("button");
+                deletePartBtn.className = "scenario-outline-action-btn delete-btn";
+                deletePartBtn.innerHTML = "×";
+                deletePartBtn.title = "Sil";
+                deletePartBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    deletePart(chapter.id, part.id);
+                });
+                
+                partActions.appendChild(deletePartBtn);
+            }
             partItem.appendChild(partActions);
             partItemContainer.appendChild(partItem);
             chapterItemContainer.appendChild(partItemContainer);

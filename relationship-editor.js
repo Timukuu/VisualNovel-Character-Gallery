@@ -75,6 +75,21 @@ async function openRelationshipScreen() {
     // Editor'ü render et
     renderRelationshipEditor();
     
+    // Düzenleme butonlarını sadece admin için göster
+    const addCharacterBtn = document.getElementById("add-relationship-character-btn");
+    const addGroupBtn = document.getElementById("add-relationship-group-btn");
+    const addRelationshipBtn = document.getElementById("add-relationship-btn");
+    
+    if (addCharacterBtn) {
+        addCharacterBtn.style.display = canEdit() ? "block" : "none";
+    }
+    if (addGroupBtn) {
+        addGroupBtn.style.display = canEdit() ? "block" : "none";
+    }
+    if (addRelationshipBtn) {
+        addRelationshipBtn.style.display = canEdit() ? "block" : "none";
+    }
+    
     // Canvas pan özelliğini başlat
     setTimeout(() => {
         setupRelationshipCanvasPan();
@@ -421,17 +436,17 @@ function renderRelationshipProperties() {
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 <label>
                     <div style="margin-bottom: 4px; font-size: 12px; font-weight: 500;">İsim</div>
-                    <input type="text" id="relationship-char-name" value="${char.name || ""}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);" />
+                    <input type="text" id="relationship-char-name" value="${char.name || ""}" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);" ${canEdit() ? '' : 'disabled'} />
                 </label>
                 <label>
                     <div style="margin-bottom: 4px; font-size: 12px; font-weight: 500;">Grup</div>
-                    <select id="relationship-char-group" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);">
+                    <select id="relationship-char-group" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);" ${canEdit() ? '' : 'disabled'}>
                         <option value="">Grup yok</option>
                         ${relationshipData.groups.map(g => `<option value="${g.id}" ${char.groupId === g.id ? "selected" : ""}>${g.name}</option>`).join("")}
                     </select>
                 </label>
-                <button class="btn primary" id="relationship-char-save" style="width: 100%; margin-top: 8px;">Kaydet</button>
-                <button class="btn subtle" id="relationship-char-delete" style="width: 100%;">Sil</button>
+                ${canEdit() ? '<button class="btn primary" id="relationship-char-save" style="width: 100%; margin-top: 8px;">Kaydet</button>' : ''}
+                ${canEdit() ? '<button class="btn subtle" id="relationship-char-delete" style="width: 100%;">Sil</button>' : ''}
             </div>
         `;
         
@@ -477,16 +492,16 @@ function renderRelationshipProperties() {
                 </div>
                 <label>
                     <div style="margin-bottom: 4px; font-size: 12px; font-weight: 500;">İlişki Tipi</div>
-                    <select id="relationship-type" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);">
+                    <select id="relationship-type" style="width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border-soft);" ${canEdit() ? '' : 'disabled'}>
                         ${RELATIONSHIP_TYPES.map(t => `<option value="${t.id}" ${rel.type === t.id ? "selected" : ""}>${t.name}</option>`).join("")}
                     </select>
                 </label>
                 <label>
                     <div style="margin-bottom: 4px; font-size: 12px; font-weight: 500;">Güç: <span id="relationship-strength-value">${rel.strength}</span></div>
-                    <input type="range" id="relationship-strength" min="0" max="100" value="${rel.strength}" style="width: 100%;" />
+                    <input type="range" id="relationship-strength" min="0" max="100" value="${rel.strength}" style="width: 100%;" ${canEdit() ? '' : 'disabled'} />
                 </label>
-                <button class="btn primary" id="relationship-save" style="width: 100%; margin-top: 8px;">Kaydet</button>
-                <button class="btn subtle" id="relationship-delete" style="width: 100%;">Sil</button>
+                ${canEdit() ? '<button class="btn primary" id="relationship-save" style="width: 100%; margin-top: 8px;">Kaydet</button>' : ''}
+                ${canEdit() ? '<button class="btn subtle" id="relationship-delete" style="width: 100%;">Sil</button>' : ''}
             </div>
         `;
         
