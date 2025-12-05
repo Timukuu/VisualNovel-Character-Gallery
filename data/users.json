@@ -10,5 +10,11 @@
     "password": "merycim",
     "role": "admin",
     "projects": ["proje-1", "proje-2"]
+  },
+  {
+    "username": "gawain",
+    "password": "gawain",
+    "role": "superuser",
+    "projects": []
   }
 ]
