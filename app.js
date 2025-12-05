@@ -5218,6 +5218,8 @@ function createPartNode(part, chapterId, index) {
     node.className = `scenario-node part ${selectedNodeId === part.id ? "selected" : ""}`;
     node.style.left = `${part.x || (chapterX + 250)}px`;
     node.style.top = `${part.y || (chapterY + index * 120)}px`;
+    node.style.width = part.width ? `${part.width}px` : "200px";
+    node.style.height = part.height ? `${part.height}px` : "90px";
     node.dataset.nodeId = part.id;
     node.dataset.nodeType = "part";
     
@@ -5374,6 +5376,109 @@ function makeNodeDraggable(node, data, dragHandle) {
     
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
+}
+
+// Node'u resizable yap (köşeden tutup resize)
+function makeNodeResizable(node, data, nodeType) {
+    const resizeHandle = node.querySelector(".scenario-node-resize-handle");
+    if (!resizeHandle) return;
+    
+    let isResizing = false;
+    let resizeStartX = 0;
+    let resizeStartY = 0;
+    let resizeStartWidth = 0;
+    let resizeStartHeight = 0;
+    let resizeStartLeft = 0;
+    let resizeStartTop = 0;
+    
+    resizeHandle.addEventListener("mousedown", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        isResizing = true;
+        resizeStartX = e.clientX;
+        resizeStartY = e.clientY;
+        
+        const nodeRect = node.getBoundingClientRect();
+        resizeStartWidth = nodeRect.width;
+        resizeStartHeight = nodeRect.height;
+        resizeStartLeft = nodeRect.left;
+        resizeStartTop = nodeRect.top;
+        
+        node.style.userSelect = "none";
+        document.body.style.cursor = "nwse-resize";
+    });
+    
+    const handleResizeMove = (e) => {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - resizeStartX;
+        const deltaY = e.clientY - resizeStartY;
+        
+        // Minimum ve maximum boyutlar
+        const minWidth = nodeType === "chapter" ? 180 : 160;
+        const minHeight = nodeType === "chapter" ? 100 : 80;
+        const maxWidth = 600;
+        const maxHeight = 500;
+        
+        // Yeni boyutları hesapla
+        let newWidth = resizeStartWidth + deltaX;
+        let newHeight = resizeStartHeight + deltaY;
+        
+        // Minimum ve maximum kontrolü
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        newHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+        
+        // Node'un boyutunu güncelle
+        node.style.width = `${newWidth}px`;
+        node.style.height = `${newHeight}px`;
+        
+        // Data'yı güncelle
+        const nodeId = node.dataset.nodeId;
+        
+        if (nodeType === "chapter") {
+            const chapter = scenarioData.chapters.find(c => c.id === nodeId);
+            if (chapter) {
+                chapter.width = newWidth;
+                chapter.height = newHeight;
+            }
+        } else if (nodeType === "part") {
+            scenarioData.chapters.forEach(chapter => {
+                const part = chapter.parts.find(p => p.id === nodeId);
+                if (part) {
+                    part.width = newWidth;
+                    part.height = newHeight;
+                }
+            });
+        }
+        
+        // Connector'ları yeniden çiz
+        renderScenarioCanvas();
+    };
+    
+    const handleResizeUp = () => {
+        if (isResizing) {
+            isResizing = false;
+            node.style.userSelect = "";
+            document.body.style.cursor = "";
+            
+            // Veriyi kaydet
+            if (currentProjectId) {
+                saveScenarioToBackend().catch(err => {
+                    console.error("Senaryo kaydedilemedi:", err);
+                    if (currentProjectId) {
+                        localStorage.setItem(`scenario_${currentProjectId}`, JSON.stringify(scenarioData));
+                    }
+                });
+            }
+            
+            document.removeEventListener("mousemove", handleResizeMove);
+            document.removeEventListener("mouseup", handleResizeUp);
+        }
+    };
+    
+    document.addEventListener("mousemove", handleResizeMove);
+    document.addEventListener("mouseup", handleResizeUp);
 }
 
 // Node seç
