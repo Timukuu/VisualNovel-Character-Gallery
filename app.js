@@ -5309,6 +5309,9 @@ function createChapterNode(chapter, index) {
     contentTextarea.placeholder = "Senaryo içeriği...";
     contentTextarea.value = chapter.content || "";
     contentTextarea.rows = 3;
+    if (!canEdit()) {
+        contentTextarea.disabled = true;
+    }
     let chapterContentTimeout = null;
     contentTextarea.addEventListener("input", (e) => {
         chapter.content = e.target.value;
@@ -5327,19 +5330,21 @@ function createChapterNode(chapter, index) {
         e.stopPropagation();
     });
     
-    // Sil butonu
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "scenario-node-delete";
-    deleteBtn.innerHTML = "×";
-    deleteBtn.title = "Sil";
-    deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        deleteChapter(chapter.id);
-    });
+    // Sil butonu (sadece admin için)
+    if (canEdit()) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "scenario-node-delete";
+        deleteBtn.innerHTML = "×";
+        deleteBtn.title = "Sil";
+        deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteChapter(chapter.id);
+        });
+        node.appendChild(deleteBtn);
+    }
     
     node.appendChild(dragHandle);
     node.appendChild(contentTextarea);
-    node.appendChild(deleteBtn);
     
     // Resize handle ekle (sağ alt köşe)
     const resizeHandle = document.createElement("div");
@@ -5397,6 +5402,9 @@ function createPartNode(part, chapterId, index) {
     contentTextarea.placeholder = "Senaryo içeriği...";
     contentTextarea.value = part.content || "";
     contentTextarea.rows = 2;
+    if (!canEdit()) {
+        contentTextarea.disabled = true;
+    }
     contentTextarea.addEventListener("input", (e) => {
         part.content = e.target.value;
         if (currentProjectId) {
@@ -5414,19 +5422,21 @@ function createPartNode(part, chapterId, index) {
         e.stopPropagation();
     });
     
-    // Sil butonu
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "scenario-node-delete";
-    deleteBtn.innerHTML = "×";
-    deleteBtn.title = "Sil";
-    deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        deletePart(chapterId, part.id);
-    });
+    // Sil butonu (sadece admin için)
+    if (canEdit()) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "scenario-node-delete";
+        deleteBtn.innerHTML = "×";
+        deleteBtn.title = "Sil";
+        deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deletePart(chapterId, part.id);
+        });
+        node.appendChild(deleteBtn);
+    }
     
     node.appendChild(dragHandle);
     node.appendChild(contentTextarea);
-    node.appendChild(deleteBtn);
     
     // Resize handle ekle (sağ alt köşe)
     const resizeHandle = document.createElement("div");
