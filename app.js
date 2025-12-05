@@ -1845,24 +1845,52 @@ function init() {
     initializeApp();
 }
 
-function initializeApp() {
-    // Önce backend'den kullanıcıları yüklemeyi dene, yoksa frontend'deki users.json'dan yükle
-    Promise.all([
-        fetch(`${BACKEND_BASE_URL}/api/users`)
-            .then(res => res.ok ? res.json() : loadJSON("data/users.json"))
-            .catch(() => loadJSON("data/users.json")),
-        fetch(BACKEND_PROJECTS_URL).then(res => res.json())
-    ])
-        .then(([usersData, projectsData]) => {
-            users = usersData;
-            projects = projectsData;
-            
-            initializeEventListeners();
-        })
-        .catch((err) => {
-            console.error("Başlangıç verileri yüklenemedi:", err);
-            alert("Veri dosyaları (users.json / projects.json) yüklenemedi. Konsolu kontrol edin.");
-        });
+async function initializeApp() {
+    try {
+        // Kullanıcıları yükle (öncelik: frontend users.json)
+        try {
+            users = await loadJSON("data/users.json");
+            console.log("Kullanıcılar frontend'den yüklendi:", users.length);
+        } catch (err) {
+            console.warn("Frontend'den kullanıcılar yüklenemedi, backend deneniyor:", err);
+            try {
+                const response = await fetch(`${BACKEND_BASE_URL}/api/users`);
+                if (response.ok) {
+                    users = await response.json();
+                    console.log("Kullanıcılar backend'den yüklendi:", users.length);
+                } else {
+                    console.warn("Backend'den kullanıcılar yüklenemedi:", response.status);
+                    users = []; // Boş array, login ekranında tekrar yüklenecek
+                }
+            } catch (backendErr) {
+                console.warn("Backend hatası:", backendErr);
+                users = []; // Boş array, login ekranında tekrar yüklenecek
+            }
+        }
+        
+        // Projeleri yükle (backend'den)
+        try {
+            const response = await fetch(BACKEND_PROJECTS_URL);
+            if (response.ok) {
+                projects = await response.json();
+                console.log("Projeler backend'den yüklendi:", projects.length);
+            } else {
+                console.warn("Backend'den projeler yüklenemedi:", response.status);
+                projects = []; // Boş array, backend uyanınca yüklenecek
+            }
+        } catch (err) {
+            console.warn("Backend projeler hatası:", err);
+            projects = []; // Boş array, backend uyanınca yüklenecek
+        }
+        
+        initializeEventListeners();
+    } catch (err) {
+        console.error("Başlangıç verileri yüklenirken beklenmeyen hata:", err);
+        // Hata olsa bile event listener'ları başlat (kullanıcı en azından login ekranını görebilsin)
+        users = users || [];
+        projects = projects || [];
+        initializeEventListeners();
+    }
 }
 
 // Tema yönetimi
