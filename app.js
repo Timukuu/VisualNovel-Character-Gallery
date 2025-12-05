@@ -342,13 +342,47 @@ async function handleLoginSubmit(event) {
         return;
     }
 
-    if (!users || users.length === 0) {
+    // Önce backend'den kullanıcıları yüklemeyi dene
+    let usersToCheck = users || [];
+    if (usersToCheck.length === 0) {
+        try {
+            const response = await fetch(`${BACKEND_BASE_URL}/api/users`);
+            if (response.ok) {
+                const backendUsers = await response.json();
+                usersToCheck = backendUsers;
+                // Frontend'deki users array'ini de güncelle
+                users = backendUsers;
+            } else {
+                // Backend'den yüklenemezse, frontend'deki users.json'dan yükle
+                try {
+                    usersToCheck = await loadJSON("data/users.json");
+                    users = usersToCheck;
+                } catch (err) {
+                    console.error("Kullanıcılar yüklenemedi:", err);
+                    if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
+                    return;
+                }
+            }
+        } catch (err) {
+            // Backend hatası, frontend'deki users.json'dan yükle
+            try {
+                usersToCheck = await loadJSON("data/users.json");
+                users = usersToCheck;
+            } catch (loadErr) {
+                console.error("Kullanıcılar yüklenemedi:", loadErr);
+                if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
+                return;
+            }
+        }
+    }
+
+    if (usersToCheck.length === 0) {
         if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
         console.error("users array boş!");
         return;
     }
 
-    const user = users.find((u) => u.username === username && u.password === password);
+    const user = usersToCheck.find((u) => u.username === username && u.password === password);
 
     if (!user) {
         if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı adı veya şifre hatalı.";
