@@ -342,34 +342,33 @@ async function handleLoginSubmit(event) {
         return;
     }
 
-    // Önce backend'den kullanıcıları yüklemeyi dene
+    // Kullanıcıları yükle (öncelik: mevcut users array > frontend users.json > backend)
     let usersToCheck = users || [];
+    
     if (usersToCheck.length === 0) {
+        // Önce frontend'deki users.json'dan yüklemeyi dene (daha hızlı ve güvenilir)
         try {
-            const response = await fetch(`${BACKEND_BASE_URL}/api/users`);
-            if (response.ok) {
-                const backendUsers = await response.json();
-                usersToCheck = backendUsers;
-                // Frontend'deki users array'ini de güncelle
-                users = backendUsers;
-            } else {
-                // Backend'den yüklenemezse, frontend'deki users.json'dan yükle
-                try {
-                    usersToCheck = await loadJSON("data/users.json");
-                    users = usersToCheck;
-                } catch (err) {
-                    console.error("Kullanıcılar yüklenemedi:", err);
-                    if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
-                    return;
-                }
-            }
+            usersToCheck = await loadJSON("data/users.json");
+            users = usersToCheck;
+            console.log("Kullanıcılar frontend'den yüklendi:", usersToCheck.length);
         } catch (err) {
-            // Backend hatası, frontend'deki users.json'dan yükle
+            console.warn("Frontend'den kullanıcılar yüklenemedi, backend deneniyor:", err);
+            // Frontend'den yüklenemezse backend'den dene
             try {
-                usersToCheck = await loadJSON("data/users.json");
-                users = usersToCheck;
-            } catch (loadErr) {
-                console.error("Kullanıcılar yüklenemedi:", loadErr);
+                const response = await fetch(`${BACKEND_BASE_URL}/api/users`, {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" }
+                });
+                if (response.ok) {
+                    const backendUsers = await response.json();
+                    usersToCheck = backendUsers;
+                    users = backendUsers;
+                    console.log("Kullanıcılar backend'den yüklendi:", usersToCheck.length);
+                } else {
+                    throw new Error(`Backend response: ${response.status}`);
+                }
+            } catch (backendErr) {
+                console.error("Backend'den de kullanıcılar yüklenemedi:", backendErr);
                 if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı verileri yüklenemedi. Sayfayı yenileyin.";
                 return;
             }
