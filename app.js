@@ -581,13 +581,13 @@ async function renderProjects() {
         addProjectBtn.style.display = "none";
     }
 
-    // Admin ise tüm projeleri göster, değilse sadece atanmış projeleri göster
+    // Admin ve SuperUser tüm projeleri görebilir, diğerleri sadece atanmış projeleri görebilir
     let userProjects;
-    if (currentUser.role === "admin") {
-        // Admin tüm projeleri görebilir
+    if (canViewAll()) {
+        // Admin ve SuperUser tüm projeleri görebilir
         userProjects = projects;
     } else {
-    const userProjectIds = currentUser.projects || [];
+        const userProjectIds = currentUser.projects || [];
         userProjects = projects.filter((p) => userProjectIds.includes(p.id));
     }
 
@@ -1828,7 +1828,7 @@ function init() {
             // users.json'dan tam kullanıcı bilgisini al
             loadJSON("data/users.json")
                 .then(usersData => {
-                    users = usersData;
+            users = usersData;
                     const user = users.find(u => u.username === userData.username);
                     if (user) {
                         currentUser = user;
