@@ -382,12 +382,19 @@ async function handleLoginSubmit(event) {
         return;
     }
 
+    // Debug: Kullanıcıları konsola yazdır
+    console.log("Login denemesi:", { username, passwordLength: password.length });
+    console.log("Yüklenen kullanıcılar:", usersToCheck.map(u => ({ username: u.username, role: u.role })));
+    
     const user = usersToCheck.find((u) => u.username === username && u.password === password);
 
     if (!user) {
+        console.error("Kullanıcı bulunamadı. Aranan:", username, "Mevcut kullanıcılar:", usersToCheck.map(u => u.username));
         if (loginErrorEl) loginErrorEl.textContent = "Kullanıcı adı veya şifre hatalı.";
         return;
     }
+    
+    console.log("Kullanıcı bulundu:", user.username, user.role);
 
     currentUser = user;
     
