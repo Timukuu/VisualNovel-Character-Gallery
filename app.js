@@ -5280,13 +5280,23 @@ function createPartNode(part, chapterId, index) {
     node.appendChild(contentTextarea);
     node.appendChild(deleteBtn);
     
+    // Resize handle ekle (sağ alt köşe)
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "scenario-node-resize-handle";
+    resizeHandle.style.cursor = "nwse-resize";
+    node.appendChild(resizeHandle);
+    
     // Drag & drop (sadece drag handle için)
     makeNodeDraggable(node, part, dragHandle);
+    
+    // Resize özelliği ekle
+    makeNodeResizable(node, part, "part");
     
     // Click to select
     node.addEventListener("click", (e) => {
         if (e.target === deleteBtn || e.target.closest(".scenario-node-delete")) return;
         if (e.target === contentTextarea || e.target.closest("textarea")) return;
+        if (e.target === resizeHandle || e.target.closest(".scenario-node-resize-handle")) return;
         e.stopPropagation();
         selectNode(part.id, "part");
     });
